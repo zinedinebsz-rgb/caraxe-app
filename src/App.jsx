@@ -1,8 +1,43 @@
 import { useState, useEffect } from 'react'
-import { supabase, getProfile, signOut } from './lib/supabase'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { supabase, getProfile } from './lib/supabase'
+import { c, f, size } from './lib/theme'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Admin from './pages/Admin'
+
+/* ── LOADER ── */
+const Loader = ({ text = 'Chargement\u2026' }) => (
+  <div style={{
+    height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: c.bg, flexDirection: 'column', gap: '20px',
+  }}>
+    {/* Diamond spinner — Art Deco motif */}
+    <div style={{
+      width: 32, height: 32,
+      border: `1.5px solid ${c.border}`,
+      borderTopColor: c.red,
+      transform: 'rotate(45deg)',
+      animation: 'spin 1s linear infinite',
+    }} />
+    <span style={{
+      color: c.textTertiary,
+      fontFamily: f.mono,
+      fontSize: size.xs,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+    }}>{text}</span>
+  </div>
+)
+
+/* ── PROTECTED ROUTE ── */
+function ProtectedRoute({ session, profile, loading, children, requiredRole }) {
+  if (loading) return <Loader />
+  if (!session) return <Navigate to="/login" replace />
+  if (!profile) return <Loader text="Chargement du profil\u2026" />
+  if (requiredRole && profile.role !== requiredRole) return <Navigate to="/" replace />
+  return children
+}
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -10,14 +45,12 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session?.user) loadProfile(session.user.id)
       else setLoading(false)
     })
 
-    // Listen for auth changes (magic link callback, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session?.user) {
@@ -42,47 +75,35 @@ export default function App() {
   }
 
   const handleSignOut = async () => {
-    await signOut()
+    await supabase.auth.signOut()
     setSession(null)
     setProfile(null)
   }
 
-  // Loading state
-  if (loading) {
-    return (
-      <div style={{
-        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#0A0A0A', color: '#5A5650',
-        fontFamily: "'JetBrains Mono', monospace", fontSize: '0.85rem',
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#E63946', fontSize: '2rem', marginBottom: '1rem' }}>{'\u2666'}</div>
-          Chargement...
-        </div>
-      </div>
-    )
-  }
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={
+          session ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />
+        } />
 
-  // Not logged in
-  if (!session) return <Login />
+        <Route path="/" element={
+          <ProtectedRoute session={session} profile={profile} loading={loading}>
+            {profile?.role === 'admin'
+              ? <Navigate to="/admin" replace />
+              : <Dashboard user={session?.user} profile={profile} onSignOut={handleSignOut} />
+            }
+          </ProtectedRoute>
+        } />
 
-  // Logged in but profile not loaded yet
-  if (!profile) {
-    return (
-      <div style={{
-        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: '#0A0A0A', color: '#5A5650',
-        fontFamily: "'JetBrains Mono', monospace", fontSize: '0.85rem',
-      }}>
-        Chargement du profil...
-      </div>
-    )
-  }
+        <Route path="/admin" element={
+          <ProtectedRoute session={session} profile={profile} loading={loading} requiredRole="admin">
+            <Admin user={session?.user} profile={profile} onSignOut={handleSignOut} />
+          </ProtectedRoute>
+        } />
 
-  // Route based on role
-  if (profile.role === 'admin') {
-    return <Admin user={session.user} profile={profile} onSignOut={handleSignOut} />
-  }
-
-  return <Dashboard user={session.user} profile={profile} onSignOut={handleSignOut} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }

@@ -1,30 +1,42 @@
-import { f, STATUSES } from '../lib/theme'
+import { c, f, size as sz, ease, STATUSES } from '../lib/theme'
 
 export default function StatusPill({ status, size = 'sm' }) {
   const s = STATUSES[status] || STATUSES[0]
   const isSm = size === 'sm'
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-      padding: isSm ? '0.25rem 0.6rem' : '0.35rem 0.85rem',
-      fontSize: isSm ? '0.65rem' : '0.75rem',
-      fontFamily: f.mono, letterSpacing: '0.05em', textTransform: 'uppercase',
-      background: `${s.color}14`, color: s.color,
-      border: `1px solid ${s.color}28`, borderRadius: '2px', whiteSpace: 'nowrap',
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      padding: isSm ? '3px 10px' : '5px 14px',
+      fontSize: isSm ? sz.xs : sz.sm,
+      fontFamily: f.mono, fontWeight: 500,
+      letterSpacing: '0.04em',
+      background: s.bg,
+      color: s.color,
+      whiteSpace: 'nowrap',
+      lineHeight: 1.4,
     }}>
-      <span style={{ fontSize: isSm ? '0.7rem' : '0.85rem' }}>{s.icon}</span>
+      <span style={{
+        width: isSm ? 6 : 7, height: isSm ? 6 : 7,
+        borderRadius: '50%', background: s.color,
+        flexShrink: 0,
+      }} />
       {s.label}
     </span>
   )
 }
 
-export function ProgressBar({ value, color, height = 4 }) {
+export function ProgressBar({ value, color, height = 3 }) {
   return (
-    <div style={{ width: '100%', height, background: '#252220', borderRadius: 2, overflow: 'hidden' }}>
+    <div style={{
+      width: '100%', height,
+      background: 'oklch(15% 0.008 50)',
+      overflow: 'hidden',
+    }}>
       <div style={{
-        width: `${Math.min(100, Math.max(0, value))}%`, height: '100%',
-        background: color, borderRadius: 2,
-        transition: 'width 0.6s cubic-bezier(0.16,1,0.3,1)',
+        width: `${Math.min(100, Math.max(0, value))}%`,
+        height: '100%',
+        background: color,
+        transition: `width 0.8s ${ease.out}`,
       }} />
     </div>
   )

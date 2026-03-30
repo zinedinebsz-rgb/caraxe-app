@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { c, f, STATUSES } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, STATUSES } from '../lib/theme'
 import {
   getOrders, updateOrder, deleteOrder, getMessages, sendMessage,
   getDocuments, uploadDocument, getDocumentUrl, getAllClients,
@@ -7,9 +7,28 @@ import {
 } from '../lib/supabase'
 import StatusPill, { ProgressBar } from '../components/StatusPill'
 
-const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+/* ── SVG ICONS ── */
+const Icon = ({ d, size: s = 18, color = 'currentColor', sw = 1.5 }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+)
+const icons = {
+  search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+  send: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
+  file: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6',
+  edit: 'M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z',
+  upload: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
+  download: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3',
+  close: 'M18 6L6 18M6 6l12 12',
+  check: 'M20 6L9 17l-5-5',
+  logout: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9',
+  msg: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
+  doc: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+}
 
-// ─── ADMIN PANEL ───
+const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+
 export default function Admin({ user, profile, onSignOut }) {
   const [orders, setOrders] = useState([])
   const [clients, setClients] = useState([])
@@ -28,14 +47,10 @@ export default function Admin({ user, profile, onSignOut }) {
 
   const loadAll = useCallback(async () => {
     const [ordersData, clientsData] = await Promise.all([getOrders(), getAllClients()])
-    setOrders(ordersData)
-    setClients(clientsData)
-    setLoading(false)
+    setOrders(ordersData); setClients(clientsData); setLoading(false)
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
-
-  // Realtime
   useEffect(() => {
     const ch = subscribeToOrders(() => loadAll())
     return () => { supabase.removeChannel(ch) }
@@ -58,7 +73,7 @@ export default function Admin({ user, profile, onSignOut }) {
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
 
   const clientName = (clientId) => {
-    const cl = clients.find(c => c.id === clientId)
+    const cl = clients.find(x => x.id === clientId)
     return cl ? (cl.full_name || cl.email) : 'Inconnu'
   }
 
@@ -67,8 +82,7 @@ export default function Admin({ user, profile, onSignOut }) {
     if (filter === 'done' && o.status < 6) return false
     if (search) {
       const q = search.toLowerCase()
-      return o.product.toLowerCase().includes(q) || o.ref?.toLowerCase().includes(q) ||
-        clientName(o.client_id).toLowerCase().includes(q)
+      return o.product.toLowerCase().includes(q) || o.ref?.toLowerCase().includes(q) || clientName(o.client_id).toLowerCase().includes(q)
     }
     return true
   })
@@ -90,8 +104,7 @@ export default function Admin({ user, profile, onSignOut }) {
   const handleSaveEdit = async () => {
     if (!selectedId) return
     await updateOrder(selectedId, editData)
-    setEditMode(false)
-    await loadAll()
+    setEditMode(false); await loadAll()
   }
 
   const handleFileUpload = async (e) => {
@@ -99,8 +112,7 @@ export default function Admin({ user, profile, onSignOut }) {
     if (!file || !selectedId) return
     await uploadDocument(selectedId, file, user.id)
     const docs = await getDocuments(selectedId)
-    setDocuments(docs)
-    fileInputRef.current.value = ''
+    setDocuments(docs); fileInputRef.current.value = ''
   }
 
   const handleDownloadDoc = async (doc) => {
@@ -109,203 +121,275 @@ export default function Admin({ user, profile, onSignOut }) {
   }
 
   const inputStyle = {
-    width:'100%', padding:'0.7rem 0.85rem', background:c.bg, border:`1px solid ${c.border}`,
-    color:c.text, fontFamily:f.body, fontSize:'0.85rem', outline:'none', borderRadius:'2px',
+    width: '100%', padding: '12px 14px', background: c.bg,
+    border: `1px solid ${c.border}`, color: c.text,
+    fontSize: size.xs, outline: 'none', fontFamily: f.body,
+    transition: `border-color 0.2s ${ease.smooth}`,
   }
   const labelStyle = {
-    display:'block', fontSize:'0.65rem', fontFamily:f.mono, letterSpacing:'0.08em',
-    textTransform:'uppercase', color:c.textMuted, marginBottom:'0.35rem',
+    display: 'block', fontSize: size.xs, fontWeight: 500,
+    color: c.textTertiary, marginBottom: '6px', fontFamily: f.mono,
+    letterSpacing: '0.06em', textTransform: 'uppercase',
   }
 
+  const filters = [
+    { key: 'all', label: 'Toutes' },
+    { key: 'active', label: 'En cours' },
+    { key: 'done', label: 'Termin\u00e9es' },
+  ]
+
   if (loading) return (
-    <div style={{ height:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:c.bg }}>
-      <span style={{ fontFamily:f.mono, color:c.textMuted }}>Chargement\u2026</span>
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg, flexDirection: 'column', gap: sp[2] }}>
+      <div style={{ width: 32, height: 32, border: `1.5px solid ${c.border}`, borderTopColor: c.red, transform: 'rotate(45deg)', animation: 'spin 1s linear infinite' }} />
+      <span style={{ color: c.textTertiary, fontFamily: f.mono, fontSize: size.xs, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Chargement{'\u2026'}</span>
     </div>
   )
 
   return (
-    <div style={{ fontFamily:f.body, background:c.bg, color:c.text, height:'100vh', display:'flex', flexDirection:'column' }}>
-      <style>{`input:focus,textarea:focus,select:focus{border-color:${c.goldDim}!important}`}</style>
+    <div style={{ fontFamily: f.body, background: c.bg, color: c.text, height: '100vh', display: 'flex', flexDirection: 'column' }}>
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <header style={{
-        padding:'0.75rem 1.25rem', borderBottom:`1px solid ${c.border}`,
-        display:'flex', alignItems:'center', justifyContent:'space-between', background:c.bgE, flexShrink:0,
+        padding: `0 ${sp[3]}`, height: '56px', borderBottom: `1px solid ${c.borderSubtle}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: c.bgWarm, flexShrink: 0,
       }}>
-        <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
-          <span style={{ color:c.red, fontSize:'1.1rem' }}>{'\u2666'}</span>
-          <span style={{ fontFamily:f.display, fontWeight:900, fontSize:'1.15rem', letterSpacing:'0.08em' }}>CARAXE</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+          <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+            <rect x="2" y="2" width="32" height="32" fill={c.red} />
+            <path d="M10 18L18 10L26 18L18 26Z" fill="oklch(98% 0.005 70)" opacity="0.9"/>
+          </svg>
+          <span style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.base, letterSpacing: '0.06em' }}>CARAXES</span>
           <span style={{
-            fontFamily:f.mono, fontSize:'0.55rem', color:c.red, letterSpacing:'0.06em',
-            textTransform:'uppercase', padding:'0.15rem 0.45rem', border:`1px solid ${c.red}40`,
-            background:`${c.red}15`, marginLeft:'0.25rem', borderRadius:'2px',
+            fontSize: '10px', color: c.red, padding: '3px 10px',
+            border: `1px solid ${c.redGlow}`, fontFamily: f.mono,
+            background: c.redSoft, fontWeight: 600, letterSpacing: '0.06em',
           }}>Admin</span>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-          <span style={{ fontFamily:f.mono, fontSize:'0.7rem', color:c.textMuted }}>
-            {orders.filter(o=>o.status<6).length} en cours \u00b7 {orders.length} total
+        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+          <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary }}>
+            {orders.filter(o => o.status < 6).length} en cours {'\u00b7'} {orders.length} total
           </span>
           <button onClick={onSignOut} style={{
-            background:'transparent', border:`1px solid ${c.border}`, color:c.textMuted,
-            padding:'0.45rem 0.75rem', fontFamily:f.mono, fontSize:'0.6rem',
-            cursor:'pointer', borderRadius:'2px', textTransform:'uppercase',
-          }}>D\u00e9co</button>
+            background: 'transparent', border: `1px solid ${c.border}`,
+            width: 36, height: 36, display: 'flex',
+            alignItems: 'center', justifyContent: 'center', color: c.textTertiary, cursor: 'pointer',
+          }}>
+            <Icon d={icons.logout} size={15} />
+          </button>
         </div>
       </header>
 
-      <div style={{ display:'flex', flex:1, minHeight:0 }}>
-        {/* SIDEBAR */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+
+        {/* ── SIDEBAR ── */}
         <aside style={{
-          width:'360px', borderRight:`1px solid ${c.border}`, display:'flex',
-          flexDirection:'column', background:c.bg, flexShrink:0, overflow:'hidden',
+          width: '360px', borderRight: `1px solid ${c.borderSubtle}`, display: 'flex',
+          flexDirection: 'column', background: c.bg, flexShrink: 0,
         }}>
-          <div style={{ padding:'0.75rem 1rem', borderBottom:`1px solid ${c.border}` }}>
+          <div style={{ padding: `${sp[2]} ${sp[2]}`, borderBottom: `1px solid ${c.borderSubtle}` }}>
+            {/* Search */}
             <div style={{
-              display:'flex', alignItems:'center', gap:'0.5rem', padding:'0.5rem 0.75rem',
-              background:c.bgC, border:`1px solid ${c.border}`, borderRadius:'2px', marginBottom:'0.6rem',
+              display: 'flex', alignItems: 'center', gap: sp[1], padding: `${sp[1]} ${sp[2]}`,
+              background: c.bgWarm, border: `1px solid ${c.border}`, marginBottom: sp[1],
             }}>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher client, produit\u2026"
-                style={{ flex:1, background:'transparent', border:'none', outline:'none', color:c.text, fontFamily:f.body, fontSize:'0.85rem' }} />
+              <Icon d={icons.search} size={14} color={c.textTertiary} />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Rechercher client, produit\u2026"
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: c.text, fontSize: size.xs, fontFamily: f.body }} />
             </div>
-            <div style={{ display:'flex', gap:'0.4rem' }}>
-              {[{key:'all',label:'Toutes'},{key:'active',label:'En cours'},{key:'done',label:'Termin\u00e9es'}].map(({key,label}) => (
-                <button key={key} onClick={()=>setFilter(key)} style={{
-                  flex:1, padding:'0.4rem', border:`1px solid ${filter===key?c.goldDim:c.border}`,
-                  background:filter===key?`${c.gold}12`:'transparent', color:filter===key?c.gold:c.textMuted,
-                  fontFamily:f.mono, fontSize:'0.65rem', letterSpacing:'0.06em', textTransform:'uppercase',
-                  cursor:'pointer', borderRadius:'2px',
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {filters.map(({ key, label }) => (
+                <button key={key} onClick={() => setFilter(key)} style={{
+                  flex: 1, padding: '7px', border: `1px solid ${filter === key ? c.redGlow : c.border}`,
+                  background: filter === key ? c.redSoft : 'transparent',
+                  color: filter === key ? c.red : c.textTertiary,
+                  fontSize: size.xs, fontWeight: 500, cursor: 'pointer', fontFamily: f.body,
+                  transition: `all 0.15s ${ease.smooth}`,
                 }}>{label}</button>
               ))}
             </div>
           </div>
-          <div style={{ flex:1, overflowY:'auto' }}>
-            {filtered.map(order => (
-              <div key={order.id} onClick={()=>{setSelectedId(order.id);setTab('messages');setEditMode(false)}}
-                style={{
-                  padding:'0.85rem 1rem', cursor:'pointer', borderBottom:`1px solid ${c.border}`,
-                  borderLeft: order.id===selectedId ? `3px solid ${c.gold}` : '3px solid transparent',
-                  background: order.id===selectedId ? c.bgE : 'transparent',
-                }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.3rem' }}>
-                  <span style={{ fontFamily:f.mono, fontSize:'0.6rem', color:c.textMuted }}>{order.ref}</span>
-                  <StatusPill status={order.status} />
+
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {filtered.map(order => {
+              const isSelected = order.id === selectedId
+              const statusObj = STATUSES.find(s => s.key === order.status) || STATUSES[0]
+              return (
+                <div key={order.id}
+                  onClick={() => { setSelectedId(order.id); setTab('messages'); setEditMode(false) }}
+                  style={{
+                    padding: `${sp[2]} ${sp[2]}`, cursor: 'pointer',
+                    borderBottom: `1px solid ${c.borderSubtle}`,
+                    borderLeft: `2px solid ${isSelected ? c.red : 'transparent'}`,
+                    background: isSelected ? c.bgElevated : 'transparent',
+                    transition: `all 0.15s ${ease.smooth}`,
+                  }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary, letterSpacing: '0.03em' }}>{order.ref}</span>
+                    <StatusPill status={order.status} />
+                  </div>
+                  <div style={{ fontWeight: 600, fontSize: size.sm, marginBottom: '4px', color: c.text }}>{order.product}</div>
+                  <div style={{ fontSize: size.xs, color: c.textSecondary }}>
+                    {clientName(order.client_id)} {'\u00b7'} {(order.quantity || 0).toLocaleString('fr-FR')} unit{'\u00e9'}s {'\u00b7'} {order.budget}
+                  </div>
+                  <div style={{ marginTop: sp[1] }}>
+                    <ProgressBar value={order.progress} color={statusObj.color} />
+                  </div>
                 </div>
-                <div style={{ fontWeight:600, fontSize:'0.88rem', marginBottom:'0.2rem' }}>{order.product}</div>
-                <div style={{ fontSize:'0.72rem', color:c.textDim }}>
-                  {clientName(order.client_id)} \u00b7 {(order.quantity||0).toLocaleString('fr-FR')} unit\u00e9s \u00b7 {order.budget}
-                </div>
-                <div style={{ marginTop:'0.4rem' }}>
-                  <ProgressBar value={order.progress} color={STATUSES[order.status]?.color||c.textMuted} />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </aside>
 
-        {/* MAIN */}
-        <main style={{ flex:1, display:'flex', flexDirection:'column', minHeight:0, overflow:'hidden' }}>
+        {/* ── MAIN ── */}
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
           {selected ? (
             <>
-              {/* Order Header */}
-              <div style={{ padding:'1.25rem 1.5rem', borderBottom:`1px solid ${c.border}`, background:c.bgE }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'1rem', marginBottom:'0.75rem' }}>
+              {/* Order header */}
+              <div style={{ padding: `${sp[3]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: sp[2], marginBottom: sp[2] }}>
                   <div>
-                    <div style={{ fontFamily:f.mono, fontSize:'0.65rem', color:c.textMuted, marginBottom:'0.3rem' }}>
-                      {selected.ref} \u00b7 Client : {clientName(selected.client_id)}
+                    <div style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary, marginBottom: '4px', letterSpacing: '0.03em' }}>
+                      {selected.ref} {'\u00b7'} Client{'\u00a0'}: {clientName(selected.client_id)}
                     </div>
-                    <h2 style={{ fontFamily:f.display, fontSize:'1.3rem', fontWeight:700 }}>{selected.product}</h2>
+                    <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 600, letterSpacing: '-0.02em' }}>
+                      {selected.product}
+                    </h2>
                   </div>
-                  <div style={{ display:'flex', gap:'0.5rem', flexShrink:0 }}>
-                    <button onClick={()=>{setEditMode(!editMode);setEditData({
-                      supplier:selected.supplier, city:selected.city, status:selected.status, progress:selected.progress,
-                    })}} style={{
-                      padding:'0.4rem 0.8rem', background:editMode?c.gold:'transparent',
-                      border:`1px solid ${editMode?c.gold:c.border}`, color:editMode?c.bg:c.textDim,
-                      fontFamily:f.mono, fontSize:'0.6rem', cursor:'pointer', borderRadius:'2px',
-                      textTransform:'uppercase', letterSpacing:'0.04em',
-                    }}>{editMode?'Annuler':'\u270F\uFE0F Modifier'}</button>
-                  </div>
+                  <button onClick={() => {
+                    setEditMode(!editMode)
+                    setEditData({ supplier: selected.supplier, city: selected.city, status: selected.status, progress: selected.progress })
+                  }} style={{
+                    padding: `${sp[1]} ${sp[2]}`, background: editMode ? c.bgElevated : 'transparent',
+                    border: `1px solid ${c.border}`,
+                    color: c.textSecondary, fontSize: size.xs, fontWeight: 500, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '6px', fontFamily: f.body,
+                    transition: `all 0.15s ${ease.smooth}`,
+                  }}>
+                    <Icon d={editMode ? icons.close : icons.edit} size={13} />
+                    {editMode ? 'Annuler' : 'Modifier'}
+                  </button>
                 </div>
 
-                {/* Status changer (admin quick buttons) */}
-                <div style={{ display:'flex', gap:'0.35rem', flexWrap:'wrap', marginBottom:'0.75rem' }}>
-                  {STATUSES.map((s,i) => (
-                    <button key={i} onClick={()=>handleStatusChange(i)} style={{
-                      padding:'0.3rem 0.6rem', fontSize:'0.6rem', fontFamily:f.mono,
-                      border:`1px solid ${i===selected.status?s.color:c.border}`,
-                      background:i===selected.status?`${s.color}20`:'transparent',
-                      color:i===selected.status?s.color:c.textMuted,
-                      cursor:'pointer', borderRadius:'2px', transition:'all 0.2s',
-                    }}>{s.icon} {s.label}</button>
-                  ))}
+                {/* Status quick buttons */}
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: sp[2] }}>
+                  {STATUSES.map((s, i) => {
+                    const isActive = i === selected.status
+                    return (
+                      <button key={i} onClick={() => handleStatusChange(i)} style={{
+                        padding: '5px 12px', fontSize: size.xs, fontWeight: 500,
+                        border: `1px solid ${isActive ? s.color : c.border}`,
+                        background: isActive ? `${s.color}15` : 'transparent',
+                        color: isActive ? s.color : c.textTertiary,
+                        cursor: 'pointer', fontFamily: f.body,
+                        transition: `all 0.2s ${ease.smooth}`,
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                      }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                        {s.label}
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {/* Edit form */}
                 {editMode && (
                   <div style={{
-                    display:'grid', gridTemplateColumns:'1fr 1fr 1fr auto', gap:'0.75rem',
-                    padding:'1rem', background:c.bgC, border:`1px solid ${c.border}`, marginBottom:'0.75rem',
+                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: sp[2],
+                    padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`,
+                    marginBottom: sp[2],
                   }}>
                     <div>
                       <label style={labelStyle}>Fournisseur</label>
-                      <input style={inputStyle} value={editData.supplier||''} onChange={e=>setEditData({...editData,supplier:e.target.value})} />
+                      <input style={inputStyle} value={editData.supplier || ''}
+                        onChange={e => setEditData({ ...editData, supplier: e.target.value })}
+                        onFocus={(e) => e.target.style.borderColor = c.red}
+                        onBlur={(e) => e.target.style.borderColor = c.border} />
                     </div>
                     <div>
                       <label style={labelStyle}>Ville</label>
-                      <input style={inputStyle} value={editData.city||''} onChange={e=>setEditData({...editData,city:e.target.value})} />
+                      <input style={inputStyle} value={editData.city || ''}
+                        onChange={e => setEditData({ ...editData, city: e.target.value })}
+                        onFocus={(e) => e.target.style.borderColor = c.red}
+                        onBlur={(e) => e.target.style.borderColor = c.border} />
                     </div>
                     <div>
                       <label style={labelStyle}>Progression %</label>
-                      <input style={inputStyle} type="number" min="0" max="100" value={editData.progress||0}
-                        onChange={e=>setEditData({...editData,progress:parseInt(e.target.value)||0})} />
+                      <input style={inputStyle} type="number" min="0" max="100" value={editData.progress || 0}
+                        onChange={e => setEditData({ ...editData, progress: parseInt(e.target.value) || 0 })}
+                        onFocus={(e) => e.target.style.borderColor = c.red}
+                        onBlur={(e) => e.target.style.borderColor = c.border} />
                     </div>
-                    <div style={{ display:'flex', alignItems:'flex-end' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                       <button onClick={handleSaveEdit} style={{
-                        padding:'0.7rem 1.25rem', background:c.green, border:'none', color:c.bg,
-                        fontFamily:f.body, fontSize:'0.75rem', fontWeight:700, cursor:'pointer',
-                        borderRadius:'2px', textTransform:'uppercase',
-                      }}>Sauver</button>
+                        padding: `${sp[1]} ${sp[3]}`, background: c.green, border: 'none',
+                        color: c.black, fontSize: size.xs, fontWeight: 600, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '6px', fontFamily: f.body,
+                      }}>
+                        <Icon d={icons.check} size={14} color={c.black} sw={2} /> Sauver
+                      </button>
                     </div>
                   </div>
                 )}
 
-                <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-                  <div style={{ flex:1 }}><ProgressBar value={selected.progress} color={STATUSES[selected.status]?.color} height={6} /></div>
-                  <span style={{ fontFamily:f.mono, fontSize:'0.7rem', color:c.textMuted }}>{selected.progress}%</span>
+                {/* Progress bar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                  <div style={{ flex: 1 }}>
+                    <ProgressBar value={selected.progress} color={(STATUSES[selected.status] || STATUSES[0]).color} height={3} />
+                  </div>
+                  <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary, fontWeight: 500 }}>{selected.progress}%</span>
                 </div>
               </div>
 
               {/* Tabs */}
-              <div style={{ display:'flex', borderBottom:`1px solid ${c.border}` }}>
-                {['messages','documents'].map(t => (
-                  <button key={t} onClick={()=>setTab(t)} style={{
-                    flex:1, padding:'0.65rem', background:tab===t?c.bgE:'transparent',
-                    border:'none', borderBottom:tab===t?`2px solid ${c.gold}`:'2px solid transparent',
-                    color:tab===t?c.gold:c.textMuted, fontFamily:f.mono, fontSize:'0.7rem',
-                    letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer',
-                  }}>{t==='messages'?`Messages (${messages.length})`:`Documents (${documents.length})`}</button>
+              <div style={{ display: 'flex', borderBottom: `1px solid ${c.borderSubtle}` }}>
+                {[
+                  { key: 'messages', label: 'Messages', icon: icons.msg, count: messages.length },
+                  { key: 'documents', label: 'Documents', icon: icons.doc, count: documents.length },
+                ].map(t => (
+                  <button key={t.key} onClick={() => setTab(t.key)} style={{
+                    flex: 1, padding: sp[2], background: 'transparent',
+                    border: 'none', borderBottom: `2px solid ${tab === t.key ? c.red : 'transparent'}`,
+                    color: tab === t.key ? c.text : c.textTertiary,
+                    fontSize: size.xs, fontWeight: 500, cursor: 'pointer', fontFamily: f.body,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    transition: `all 0.15s ${ease.smooth}`,
+                  }}>
+                    <Icon d={t.icon} size={14} color={tab === t.key ? c.red : c.textTertiary} />
+                    {t.label} ({t.count})
+                  </button>
                 ))}
               </div>
 
+              {/* Tab content */}
               {tab === 'messages' ? (
                 <>
-                  <div style={{ flex:1, overflowY:'auto', padding:'1.25rem 1.5rem' }}>
-                    {messages.map((msg,i) => {
+                  <div style={{ flex: 1, overflowY: 'auto', padding: `${sp[3]} ${sp[3]}` }}>
+                    {messages.map((msg, i) => {
                       const isAgent = msg.sender_role === 'admin'
                       return (
-                        <div key={msg.id||i} style={{ display:'flex', justifyContent:isAgent?'flex-end':'flex-start', marginBottom:'0.6rem' }}>
+                        <div key={msg.id || i} style={{
+                          display: 'flex', justifyContent: isAgent ? 'flex-end' : 'flex-start',
+                          marginBottom: sp[1],
+                        }}>
                           <div style={{
-                            maxWidth:'85%', padding:'0.75rem 1rem',
-                            background:isAgent?`${c.gold}10`:c.bgC,
-                            border:`1px solid ${isAgent?c.goldDim+'30':c.border}`,
-                            borderRadius:isAgent?'8px 2px 8px 8px':'2px 8px 8px 8px',
-                            fontSize:'0.88rem', lineHeight:1.6,
+                            maxWidth: '80%', padding: `${sp[1]} ${sp[2]}`,
+                            background: isAgent ? c.redSoft : c.bgElevated,
+                            border: `1px solid ${isAgent ? c.redGlow : c.border}`,
+                            fontSize: size.sm, lineHeight: 1.65,
                           }}>
-                            <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.65rem', color:c.textMuted, marginBottom:'0.35rem', fontFamily:f.mono }}>
-                              <span style={{ color:isAgent?c.gold:c.teal, fontWeight:600 }}>{isAgent?'Vous (Admin)':'Client'}</span>
-                              <span>{fmtDate(msg.created_at)}</span>
+                            <div style={{
+                              display: 'flex', justifyContent: 'space-between', gap: sp[2],
+                              fontSize: size.xs, color: c.textTertiary, marginBottom: '6px',
+                            }}>
+                              <span style={{ color: isAgent ? c.red : c.teal, fontWeight: 600, fontFamily: f.mono, letterSpacing: '0.04em' }}>
+                                {isAgent ? 'Vous (Admin)' : 'Client'}
+                              </span>
+                              <span style={{ fontFamily: f.mono, fontSize: '10px' }}>{fmtDate(msg.created_at)}</span>
                             </div>
-                            <div style={{ whiteSpace:'pre-wrap' }}>{msg.content}</div>
+                            <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
                           </div>
                         </div>
                       )
@@ -313,53 +397,85 @@ export default function Admin({ user, profile, onSignOut }) {
                     <div ref={chatEndRef} />
                   </div>
                   <form onSubmit={handleSendMsg} style={{
-                    padding:'0.75rem 1.25rem', borderTop:`1px solid ${c.border}`,
-                    display:'flex', gap:'0.5rem', background:c.bgE,
+                    padding: `${sp[2]} ${sp[3]}`, borderTop: `1px solid ${c.borderSubtle}`,
+                    display: 'flex', gap: sp[1], background: c.bgWarm,
                   }}>
-                    <input value={newMsg} onChange={e=>setNewMsg(e.target.value)}
+                    <input value={newMsg} onChange={e => setNewMsg(e.target.value)}
                       placeholder="R\u00e9pondre au client\u2026"
                       style={{
-                        flex:1, padding:'0.75rem 1rem', background:c.bg, border:`1px solid ${c.border}`,
-                        color:c.text, fontFamily:f.body, fontSize:'0.88rem', outline:'none', borderRadius:'2px',
-                      }} />
+                        flex: 1, padding: `${sp[1]} ${sp[2]}`, background: c.bg,
+                        border: `1px solid ${c.border}`, color: c.text,
+                        fontSize: size.sm, outline: 'none', fontFamily: f.body,
+                        transition: `border-color 0.2s ${ease.smooth}`,
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = c.red}
+                      onBlur={(e) => e.target.style.borderColor = c.border}
+                    />
                     <button type="submit" style={{
-                      background:newMsg.trim()?c.gold:c.bgC, color:newMsg.trim()?c.bg:c.textMuted,
-                      border:`1px solid ${newMsg.trim()?c.gold:c.border}`,
-                      padding:'0.75rem 1.25rem', fontFamily:f.body, fontSize:'0.8rem', fontWeight:700,
-                      cursor:newMsg.trim()?'pointer':'default', borderRadius:'2px',
-                      textTransform:'uppercase', letterSpacing:'0.04em',
-                    }}>Envoyer</button>
+                      background: newMsg.trim() ? c.red : c.bgElevated,
+                      color: newMsg.trim() ? c.white : c.textTertiary,
+                      border: 'none', padding: `${sp[1]} ${sp[3]}`,
+                      fontSize: size.xs, fontWeight: 600,
+                      cursor: newMsg.trim() ? 'pointer' : 'default', fontFamily: f.body,
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      transition: `all 0.15s ${ease.smooth}`,
+                    }}>
+                      <Icon d={icons.send} size={14} color={newMsg.trim() ? c.white : c.textTertiary} /> Envoyer
+                    </button>
                   </form>
                 </>
               ) : (
-                <div style={{ flex:1, overflowY:'auto', padding:'1.25rem 1.5rem' }}>
-                  {/* Upload */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: `${sp[3]} ${sp[3]}` }}>
+                  {/* Upload zone */}
                   <div style={{
-                    padding:'1rem', border:`2px dashed ${c.border}`, textAlign:'center',
-                    marginBottom:'1rem', cursor:'pointer', borderRadius:'2px',
-                  }} onClick={()=>fileInputRef.current?.click()}>
-                    <input ref={fileInputRef} type="file" style={{display:'none'}} onChange={handleFileUpload} />
-                    <span style={{ fontFamily:f.mono, fontSize:'0.75rem', color:c.textMuted }}>
+                    padding: sp[3], border: `2px dashed ${c.border}`,
+                    textAlign: 'center', cursor: 'pointer', marginBottom: sp[2],
+                    transition: `border-color 0.2s ${ease.smooth}`,
+                  }} onClick={() => fileInputRef.current?.click()}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = c.red}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = c.border}
+                  >
+                    <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileUpload} />
+                    <Icon d={icons.upload} size={20} color={c.textTertiary} />
+                    <p style={{ fontSize: size.xs, color: c.textTertiary, marginTop: sp[1] }}>
                       Cliquez pour uploader un document
-                    </span>
+                    </p>
                   </div>
                   {documents.map(doc => (
-                    <div key={doc.id} onClick={()=>handleDownloadDoc(doc)} style={{
-                      display:'flex', alignItems:'center', gap:'0.6rem', padding:'0.6rem 0.75rem',
-                      background:c.bgC, border:`1px solid ${c.border}`, borderRadius:'2px',
-                      fontSize:'0.8rem', cursor:'pointer', marginBottom:'0.5rem',
-                    }}>
-                      <span style={{ flex:1, color:c.text, fontWeight:500 }}>{doc.name}</span>
-                      <span style={{ color:c.textMuted, fontSize:'0.7rem', fontFamily:f.mono }}>{doc.size}</span>
+                    <div key={doc.id} onClick={() => handleDownloadDoc(doc)} style={{
+                      display: 'flex', alignItems: 'center', gap: sp[2], padding: `${sp[2]} ${sp[2]}`,
+                      background: c.bgSurface, border: `1px solid ${c.border}`,
+                      fontSize: size.xs, cursor: 'pointer', marginBottom: sp[1],
+                      transition: `border-color 0.15s ${ease.smooth}`,
+                    }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = c.textTertiary}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = c.border}
+                    >
+                      <div style={{
+                        width: 32, height: 32,
+                        background: c.redSoft, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Icon d={icons.file} size={14} color={c.red} />
+                      </div>
+                      <span style={{ flex: 1, color: c.text, fontWeight: 500 }}>{doc.name}</span>
+                      <span style={{ color: c.textTertiary, fontFamily: f.mono }}>{doc.size}</span>
+                      <Icon d={icons.download} size={14} color={c.textSecondary} />
                     </div>
                   ))}
                 </div>
               )}
             </>
           ) : (
-            <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'0.75rem', color:c.textMuted }}>
-              <span style={{ fontSize:'2rem' }}>{'\u2666'}</span>
-              <span style={{ fontFamily:f.mono, fontSize:'0.85rem' }}>S\u00e9lectionnez une commande \u00e0 g\u00e9rer</span>
+            /* Empty state */
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'column', gap: sp[2], color: c.textTertiary,
+            }}>
+              <svg width="48" height="48" viewBox="0 0 36 36" fill="none" style={{ opacity: 0.25 }}>
+                <rect x="2" y="2" width="32" height="32" fill={c.red} />
+                <path d="M10 18L18 10L26 18L18 26Z" fill="oklch(98% 0.005 70)" opacity="0.9"/>
+              </svg>
+              <span style={{ fontSize: size.sm }}>S{'\u00e9'}lectionnez une commande {'\u00e0'} g{'\u00e9'}rer</span>
             </div>
           )}
         </main>
