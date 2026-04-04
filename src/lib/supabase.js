@@ -13,6 +13,27 @@ export async function signInWithEmail(email) {
   })
 }
 
+export async function signInWithPassword(email, password) {
+  return supabase.auth.signInWithPassword({ email, password })
+}
+
+export async function signUpWithPassword(email, password, fullName) {
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin,
+      data: { full_name: fullName },
+    },
+  })
+}
+
+export async function resetPassword(email) {
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/login`,
+  })
+}
+
 export async function signOut() {
   return supabase.auth.signOut()
 }

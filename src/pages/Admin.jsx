@@ -155,9 +155,15 @@ export default function Admin({ user, profile, onSignOut }) {
         background: c.bgWarm, flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
-          <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
-            <rect x="2" y="2" width="32" height="32" fill={c.red} />
-            <path d="M10 18L18 10L26 18L18 26Z" fill="oklch(98% 0.005 70)" opacity="0.9"/>
+          <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+            <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.9"/>
+            <path d="M12 11L7 5M28 11L33 5" stroke="#D4A843" strokeWidth="1.5" opacity="0.8"/>
+            <path d="M16 7L14 3M24 7L26 3" stroke="#D4A843" strokeWidth="1" opacity="0.5"/>
+            <circle cx="16" cy="19" r="2" fill="#FFD700" opacity="0.9"/>
+            <circle cx="24" cy="19" r="2" fill="#FFD700" opacity="0.9"/>
+            <ellipse cx="16" cy="19" rx="0.8" ry="1.8" fill="#0D0D0D"/>
+            <ellipse cx="24" cy="19" rx="0.8" ry="1.8" fill="#0D0D0D"/>
+            <path d="M14 15L12 13M26 15L28 13" stroke="#4A0A10" strokeWidth="1.5" opacity="0.6"/>
           </svg>
           <span style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.base, letterSpacing: '0.06em' }}>CARAXES</span>
           <span style={{

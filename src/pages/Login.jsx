@@ -1,13 +1,18 @@
 import { useState } from 'react'
-import { signInWithEmail } from '../lib/supabase'
+import { signInWithPassword, signUpWithPassword, resetPassword, signInWithEmail } from '../lib/supabase'
 import { c, f, size, sp, ease } from '../lib/theme'
 
-/* ── Dragon mark — Art Deco diamond ── */
+/* ── Dragon mark — CARAXES fierce dragon icon ── */
 const DragonMark = ({ s = 36 }) => (
-  <svg width={s} height={s} viewBox="0 0 36 36" fill="none">
-    <rect x="2" y="2" width="32" height="32" fill={c.red} />
-    <path d="M10 18L18 10L26 18L18 26Z" fill="oklch(98% 0.005 70)" opacity="0.9"/>
-    <path d="M14 18L18 14L22 18L18 22Z" fill={c.red} />
+  <svg width={s} height={s} viewBox="0 0 40 40" fill="none">
+    <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.9"/>
+    <path d="M12 11L7 5M28 11L33 5" stroke={c.gold || '#D4A843'} strokeWidth="1.5" opacity="0.8"/>
+    <path d="M16 7L14 3M24 7L26 3" stroke={c.gold || '#D4A843'} strokeWidth="1" opacity="0.5"/>
+    <circle cx="16" cy="19" r="2" fill="#FFD700" opacity="0.9"/>
+    <circle cx="24" cy="19" r="2" fill="#FFD700" opacity="0.9"/>
+    <ellipse cx="16" cy="19" rx="0.8" ry="1.8" fill="#0D0D0D"/>
+    <ellipse cx="24" cy="19" rx="0.8" ry="1.8" fill="#0D0D0D"/>
+    <path d="M14 15L12 13M26 15L28 13" stroke="#4A0A10" strokeWidth="1.5" opacity="0.6"/>
   </svg>
 )
 
@@ -20,23 +25,123 @@ const FilmGrain = () => (
 )
 
 export default function Login() {
+  const [mode, setMode] = useState('login') // 'login' | 'signup' | 'forgot' | 'magic'
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [focused, setFocused] = useState(false)
+  const [success, setSuccess] = useState(null)
+  const [focused, setFocused] = useState(null)
 
-  const handleSubmit = async (e) => {
+  const resetForm = () => {
+    setError(null)
+    setSuccess(null)
+    setSent(false)
+  }
+
+  const switchMode = (newMode) => {
+    resetForm()
+    setMode(newMode)
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    const { error } = await signInWithPassword(email, password)
+    setLoading(false)
+    if (error) {
+      if (error.message.includes('Invalid login')) {
+        setError('Email ou mot de passe incorrect.')
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Veuillez confirmer votre email avant de vous connecter.')
+      } else {
+        setError(error.message)
+      }
+    }
+    // Auth state change will handle redirect via App.jsx
+  }
+
+  const handleSignup = async (e) => {
+    e.preventDefault()
+    if (password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caract\u00e8res.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    const { error } = await signUpWithPassword(email, password, fullName)
+    setLoading(false)
+    if (error) {
+      if (error.message.includes('already registered')) {
+        setError('Cet email est d\u00e9j\u00e0 utilis\u00e9. Connectez-vous ou r\u00e9initialisez votre mot de passe.')
+      } else {
+        setError(error.message)
+      }
+    } else {
+      setSent(true)
+      setSuccess('Compte cr\u00e9\u00e9 ! V\u00e9rifiez votre email pour confirmer votre inscription.')
+    }
+  }
+
+  const handleForgot = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    const { error } = await resetPassword(email)
+    setLoading(false)
+    if (error) setError(error.message)
+    else {
+      setSent(true)
+      setSuccess('Un email de r\u00e9initialisation a \u00e9t\u00e9 envoy\u00e9.')
+    }
+  }
+
+  const handleMagicLink = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
     const { error } = await signInWithEmail(email)
     setLoading(false)
     if (error) setError(error.message)
-    else setSent(true)
+    else {
+      setSent(true)
+      setSuccess('Un lien de connexion a \u00e9t\u00e9 envoy\u00e9 \u00e0 votre email.')
+    }
   }
 
   const active = email.trim().length > 0
+
+  const inputStyle = (field) => ({
+    width: '100%', padding: '14px 16px',
+    background: c.bgSurface,
+    border: `1px solid ${focused === field ? c.red : c.border}`,
+    color: c.text, fontSize: size.sm, fontFamily: f.body,
+    outline: 'none', transition: `border-color 0.2s ${ease.smooth}`,
+    boxSizing: 'border-box',
+  })
+
+  const labelStyle = {
+    display: 'block', fontSize: size.xs, fontWeight: 500,
+    color: c.textTertiary, marginBottom: sp[1],
+    fontFamily: f.mono, letterSpacing: '0.08em', textTransform: 'uppercase',
+  }
+
+  const titles = {
+    login: 'Connexion',
+    signup: 'Cr\u00e9er un compte',
+    forgot: 'Mot de passe oubli\u00e9',
+    magic: 'Lien magique',
+  }
+
+  const subtitles = {
+    login: 'Connectez-vous \u00e0 votre espace client.',
+    signup: 'Inscrivez-vous pour suivre vos commandes.',
+    forgot: 'Entrez votre email pour r\u00e9initialiser votre mot de passe.',
+    magic: 'Recevez un lien de connexion s\u00e9curis\u00e9 par email.',
+  }
 
   return (
     <div style={{
@@ -134,76 +239,14 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ── Right panel — Login form ── */}
+      {/* ── Right panel — Auth form ── */}
       <div className="login-right" style={{
         width: '480px', display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: sp[5], borderLeft: `1px solid ${c.borderSubtle}`,
         background: c.bgWarm,
       }}>
         <div style={{ width: '100%', maxWidth: '360px' }}>
-          {!sent ? (
-            <>
-              <h2 style={{
-                fontFamily: f.display, fontSize: size.lg, fontWeight: 500,
-                marginBottom: sp[1], color: c.text, letterSpacing: '-0.01em',
-              }}>Connexion</h2>
-              <p style={{
-                fontSize: size.sm, color: c.textSecondary, marginBottom: sp[4],
-                lineHeight: 1.6, fontFamily: f.body,
-              }}>
-                Entrez votre email pour recevoir un lien de connexion s{'\u00e9'}curis{'\u00e9'}.
-              </p>
-
-              <form onSubmit={handleSubmit}>
-                <label style={{
-                  display: 'block', fontSize: size.xs, fontWeight: 500,
-                  color: c.textTertiary, marginBottom: sp[1],
-                  fontFamily: f.mono, letterSpacing: '0.08em', textTransform: 'uppercase',
-                }}>Adresse email</label>
-                <input type="email" required value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="vous@exemple.com" autoFocus
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  style={{
-                    width: '100%', padding: '14px 16px',
-                    background: c.bgSurface,
-                    border: `1px solid ${focused ? c.red : c.border}`,
-                    color: c.text, fontSize: size.sm, fontFamily: f.body,
-                    outline: 'none', transition: `border-color 0.2s ${ease.smooth}`,
-                  }}
-                />
-
-                {error && (
-                  <p style={{
-                    fontSize: size.xs, color: c.red, marginTop: sp[1],
-                    padding: `${sp[1]} ${sp[2]}`, background: c.redSoft, lineHeight: 1.5,
-                    border: `1px solid ${c.redGlow}`,
-                  }}>{error}</p>
-                )}
-
-                <button type="submit" disabled={loading || !active} style={{
-                  width: '100%', padding: '14px', marginTop: sp[3],
-                  background: active ? c.red : c.bgElevated,
-                  color: active ? c.white : c.textTertiary,
-                  border: 'none', fontSize: size.sm, fontWeight: 600,
-                  fontFamily: f.body, letterSpacing: '0.02em',
-                  cursor: active ? 'pointer' : 'default',
-                  transition: `all 0.25s ${ease.smooth}`,
-                  opacity: loading ? 0.7 : 1,
-                }}>
-                  {loading ? 'Envoi\u2026' : 'Continuer'}
-                </button>
-              </form>
-
-              <p style={{
-                fontSize: size.xs, color: c.textTertiary, marginTop: sp[3],
-                textAlign: 'center', lineHeight: 1.7, fontFamily: f.body,
-              }}>
-                Pas de mot de passe requis. Un lien s{'\u00e9'}curis{'\u00e9'} vous sera envoy{'\u00e9'} par email.
-              </p>
-            </>
-          ) : (
+          {sent ? (
             /* ── Confirmation state ── */
             <div style={{ textAlign: 'center', animation: `fadeIn 0.4s ${ease.out}` }}>
               <div style={{
@@ -225,7 +268,7 @@ export default function Login() {
                 fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6,
                 marginBottom: sp[1],
               }}>
-                Un lien de connexion a {'\u00e9'}t{'\u00e9'} envoy{'\u00e9'} {'\u00e0'}
+                {success}
               </p>
               <p style={{
                 fontFamily: f.mono, fontSize: size.xs, color: c.red,
@@ -234,9 +277,13 @@ export default function Login() {
                 letterSpacing: '0.02em',
               }}>{email}</p>
               <p style={{ fontSize: size.xs, color: c.textTertiary, lineHeight: 1.6 }}>
-                Cliquez sur le lien dans l{'\u2019'}email pour acc{'\u00e9'}der {'\u00e0'} votre espace.
+                {mode === 'signup'
+                  ? 'Cliquez sur le lien dans l\u2019email pour activer votre compte.'
+                  : mode === 'forgot'
+                  ? 'Cliquez sur le lien pour d\u00e9finir un nouveau mot de passe.'
+                  : 'Cliquez sur le lien dans l\u2019email pour acc\u00e9der \u00e0 votre espace.'}
               </p>
-              <button onClick={() => { setSent(false); setEmail('') }} style={{
+              <button onClick={() => { switchMode('login'); setEmail(''); setPassword('') }} style={{
                 marginTop: sp[3], padding: `${sp[1]} ${sp[3]}`,
                 background: 'transparent', border: `1px solid ${c.border}`,
                 color: c.textSecondary, fontSize: size.xs, cursor: 'pointer',
@@ -244,8 +291,156 @@ export default function Login() {
               }}
                 onMouseEnter={(e) => e.target.style.borderColor = c.textSecondary}
                 onMouseLeave={(e) => e.target.style.borderColor = c.border}
-              >Utiliser un autre email</button>
+              >Retour {'\u00e0'} la connexion</button>
             </div>
+          ) : (
+            <>
+              <h2 style={{
+                fontFamily: f.display, fontSize: size.lg, fontWeight: 500,
+                marginBottom: sp[1], color: c.text, letterSpacing: '-0.01em',
+              }}>{titles[mode]}</h2>
+              <p style={{
+                fontSize: size.sm, color: c.textSecondary, marginBottom: sp[4],
+                lineHeight: 1.6, fontFamily: f.body,
+              }}>
+                {subtitles[mode]}
+              </p>
+
+              <form onSubmit={
+                mode === 'login' ? handleLogin :
+                mode === 'signup' ? handleSignup :
+                mode === 'forgot' ? handleForgot :
+                handleMagicLink
+              }>
+                {/* Full name — only on signup */}
+                {mode === 'signup' && (
+                  <div style={{ marginBottom: sp[2] }}>
+                    <label style={labelStyle}>Nom complet</label>
+                    <input type="text" required value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Votre nom"
+                      onFocus={() => setFocused('name')}
+                      onBlur={() => setFocused(null)}
+                      style={inputStyle('name')}
+                    />
+                  </div>
+                )}
+
+                {/* Email — always */}
+                <div style={{ marginBottom: sp[2] }}>
+                  <label style={labelStyle}>Adresse email</label>
+                  <input type="email" required value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="vous@exemple.com" autoFocus
+                    onFocus={() => setFocused('email')}
+                    onBlur={() => setFocused(null)}
+                    style={inputStyle('email')}
+                  />
+                </div>
+
+                {/* Password — on login and signup */}
+                {(mode === 'login' || mode === 'signup') && (
+                  <div style={{ marginBottom: sp[1] }}>
+                    <label style={labelStyle}>Mot de passe</label>
+                    <input type="password" required value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={mode === 'signup' ? 'Min. 6 caract\u00e8res' : 'Votre mot de passe'}
+                      minLength={mode === 'signup' ? 6 : undefined}
+                      onFocus={() => setFocused('pass')}
+                      onBlur={() => setFocused(null)}
+                      style={inputStyle('pass')}
+                    />
+                  </div>
+                )}
+
+                {/* Forgot password link — on login */}
+                {mode === 'login' && (
+                  <div style={{ textAlign: 'right', marginBottom: sp[2] }}>
+                    <button type="button" onClick={() => switchMode('forgot')} style={{
+                      background: 'none', border: 'none', padding: 0,
+                      color: c.red, fontSize: size.xs, cursor: 'pointer',
+                      fontFamily: f.body, opacity: 0.8,
+                      transition: `opacity 0.2s ${ease.smooth}`,
+                    }}
+                      onMouseEnter={(e) => e.target.style.opacity = 1}
+                      onMouseLeave={(e) => e.target.style.opacity = 0.8}
+                    >Mot de passe oubli{'\u00e9'} ?</button>
+                  </div>
+                )}
+
+                {error && (
+                  <p style={{
+                    fontSize: size.xs, color: c.red, marginTop: sp[1], marginBottom: sp[1],
+                    padding: `${sp[1]} ${sp[2]}`, background: c.redSoft, lineHeight: 1.5,
+                    border: `1px solid ${c.redGlow}`,
+                  }}>{error}</p>
+                )}
+
+                <button type="submit" disabled={loading || !active} style={{
+                  width: '100%', padding: '14px', marginTop: sp[2],
+                  background: active ? c.red : c.bgElevated,
+                  color: active ? c.white : c.textTertiary,
+                  border: 'none', fontSize: size.sm, fontWeight: 600,
+                  fontFamily: f.body, letterSpacing: '0.02em',
+                  cursor: active ? 'pointer' : 'default',
+                  transition: `all 0.25s ${ease.smooth}`,
+                  opacity: loading ? 0.7 : 1,
+                }}>
+                  {loading ? 'Chargement\u2026' :
+                   mode === 'login' ? 'Se connecter' :
+                   mode === 'signup' ? 'Cr\u00e9er mon compte' :
+                   mode === 'forgot' ? 'Envoyer le lien' :
+                   'Envoyer le lien magique'}
+                </button>
+              </form>
+
+              {/* ── Mode switchers ── */}
+              <div style={{
+                marginTop: sp[3], textAlign: 'center',
+                fontSize: size.xs, color: c.textTertiary, lineHeight: 1.8,
+                fontFamily: f.body,
+              }}>
+                {mode === 'login' && (
+                  <>
+                    <span>Pas encore de compte ?{' '}</span>
+                    <button type="button" onClick={() => switchMode('signup')} style={{
+                      background: 'none', border: 'none', padding: 0,
+                      color: c.red, cursor: 'pointer', fontFamily: f.body,
+                      fontSize: size.xs, fontWeight: 500,
+                    }}>Cr{'\u00e9'}er un compte</button>
+                    <br />
+                    <button type="button" onClick={() => switchMode('magic')} style={{
+                      background: 'none', border: 'none', padding: 0,
+                      color: c.textTertiary, cursor: 'pointer', fontFamily: f.body,
+                      fontSize: size.xs, opacity: 0.7,
+                      transition: `opacity 0.2s ${ease.smooth}`,
+                    }}
+                      onMouseEnter={(e) => e.target.style.opacity = 1}
+                      onMouseLeave={(e) => e.target.style.opacity = 0.7}
+                    >Connexion sans mot de passe</button>
+                  </>
+                )}
+                {mode === 'signup' && (
+                  <>
+                    <span>D{'\u00e9'}j{'\u00e0'} un compte ?{' '}</span>
+                    <button type="button" onClick={() => switchMode('login')} style={{
+                      background: 'none', border: 'none', padding: 0,
+                      color: c.red, cursor: 'pointer', fontFamily: f.body,
+                      fontSize: size.xs, fontWeight: 500,
+                    }}>Se connecter</button>
+                  </>
+                )}
+                {(mode === 'forgot' || mode === 'magic') && (
+                  <>
+                    <button type="button" onClick={() => switchMode('login')} style={{
+                      background: 'none', border: 'none', padding: 0,
+                      color: c.red, cursor: 'pointer', fontFamily: f.body,
+                      fontSize: size.xs, fontWeight: 500,
+                    }}>Retour {'\u00e0'} la connexion</button>
+                  </>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
