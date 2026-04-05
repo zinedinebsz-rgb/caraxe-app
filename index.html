@@ -6,6 +6,24 @@
     <title>CARAXES — Sourcing Platform</title>
     <meta name="description" content="CARAXES — Votre agent de sourcing Chine premium. Suivi commandes, messagerie, documents.">
     <link rel="icon" href="/favicon.ico">
+
+    <!-- Open Graph / WhatsApp / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CARAXES — Agent de Sourcing Chine Premium">
+    <meta property="og:description" content="Sourcez vos produits directement depuis la Chine. Suivi en temps reel, messagerie, documents. Yiwu, Guangzhou, Shenzhen.">
+    <meta property="og:url" content="https://caraxe-app.vercel.app">
+    <meta property="og:site_name" content="CARAXES">
+    <meta property="og:locale" content="fr_FR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="CARAXES — Sourcing Chine Premium">
+    <meta name="twitter:description" content="Votre agent de sourcing depuis Yiwu, Guangzhou et Shenzhen. Suivi commandes en temps reel.">
+
+    <!-- Theme color (mobile browsers) -->
+    <meta name="theme-color" content="#1a1412">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -29,15 +47,19 @@
         background: oklch(55% 0.22 25 / 0.25);
         color: oklch(98% 0.005 70);
       }
-      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb {
         background: oklch(22% 0.008 50);
-        border-radius: 3px;
+        border-radius: 0;
       }
-      ::-webkit-scrollbar-thumb:hover { background: oklch(30% 0.008 50); }
+      ::-webkit-scrollbar-thumb:hover { background: oklch(30% 0.010 50); }
       input, textarea, button, select { font-family: inherit; }
       a { color: inherit; text-decoration: none; }
+      /* Premium focus ring */
+      :focus-visible { outline: 1px solid oklch(55% 0.22 25 / 0.5); outline-offset: 2px; }
+      /* Smooth transitions globally */
+      * { -webkit-tap-highlight-color: transparent; }
 
       @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

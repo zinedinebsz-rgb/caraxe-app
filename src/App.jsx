@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { supabase, getProfile } from './lib/supabase'
-import { c, f, size } from './lib/theme'
+import { c, f, size, sp, ease } from './lib/theme'
 import { ToastProvider } from './components/Toast'
+import ErrorBoundary from './components/ErrorBoundary'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Admin from './pages/Admin'
-import Onboarding from './pages/Onboarding'
-import Settings from './pages/Settings'
+
+/* ── LAZY LOADED PAGES ── */
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Admin = lazy(() => import('./pages/Admin'))
+const Onboarding = lazy(() => import('./pages/Onboarding'))
+const Settings = lazy(() => import('./pages/Settings'))
 
 /* ── LOADER ── */
 const Loader = ({ text = 'Chargement\u2026' }) => (
@@ -15,7 +18,6 @@ const Loader = ({ text = 'Chargement\u2026' }) => (
     height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: c.bg, flexDirection: 'column', gap: '20px',
   }}>
-    {/* Diamond spinner — Art Deco motif */}
     <div style={{
       width: 32, height: 32,
       border: `1.5px solid ${c.border}`,
@@ -33,13 +35,50 @@ const Loader = ({ text = 'Chargement\u2026' }) => (
   </div>
 )
 
+/* ── 404 PAGE ── */
+const NotFound = () => {
+  const navigate = useNavigate()
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: c.bg, fontFamily: f.body, color: c.text, flexDirection: 'column',
+      gap: sp[3], padding: sp[4], textAlign: 'center',
+    }}>
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.5 }}>
+        <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.6"/>
+        <circle cx="16" cy="19" r="2" fill={c.gold} opacity="0.8"/>
+        <circle cx="24" cy="19" r="2" fill={c.gold} opacity="0.8"/>
+      </svg>
+      <div style={{ fontFamily: f.display, fontSize: '48px', fontWeight: 700, color: c.gold, letterSpacing: '-0.02em' }}>
+        404
+      </div>
+      <p style={{ fontSize: size.sm, color: c.textSecondary, margin: 0, maxWidth: 320, lineHeight: 1.6 }}>
+        Cette page n'existe pas ou a ete deplacee.
+      </p>
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          padding: `${sp[2]} ${sp[4]}`, background: c.red, border: 'none',
+          color: c.text, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+          fontFamily: f.body, transition: `all 0.2s ${ease.smooth}`,
+          marginTop: sp[1],
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}
+      >
+        Retour a l'accueil
+      </button>
+    </div>
+  )
+}
+
 /* ── PROTECTED ROUTE ── */
 function ProtectedRoute({ session, profile, loading, children, requiredRole, onRetry }) {
   if (loading) return <Loader />
   if (!session) return <Navigate to="/login" replace />
   if (!profile) return <ProfileError onRetry={onRetry} />
   if (requiredRole && profile.role !== requiredRole) return <Navigate to="/" replace />
-  return children
+  return <Suspense fallback={<Loader />}>{children}</Suspense>
 }
 
 /* ── PROFILE ERROR ── */
@@ -61,19 +100,19 @@ const ProfileError = ({ onRetry }) => (
       color: c.textSecondary, fontFamily: f.body, fontSize: size.sm,
       textAlign: 'center', maxWidth: 320, lineHeight: 1.6,
     }}>
-      Vérifiez votre connexion ou réessayez.
+      Verifiez votre connexion ou reessayez.
     </span>
     <div style={{ display: 'flex', gap: '12px' }}>
       <button onClick={onRetry} style={{
         padding: '10px 24px', background: c.red, border: `1px solid ${c.red}`,
         color: c.white, fontSize: size.sm, fontWeight: 600, cursor: 'pointer',
         fontFamily: f.body,
-      }}>Réessayer</button>
+      }}>Reessayer</button>
       <button onClick={() => window.location.reload()} style={{
         padding: '10px 24px', background: c.bgSurface, border: `1px solid ${c.border}`,
         color: c.textSecondary, fontSize: size.sm, cursor: 'pointer',
         fontFamily: f.body,
-      }}>Rafraîchir</button>
+      }}>Rafraichir</button>
     </div>
   </div>
 )
@@ -119,10 +158,10 @@ export default function App() {
     setProfile(null)
   }
 
-  // Check if client needs onboarding
   const needsOnboarding = profile && profile.role === 'client' && !profile.onboarding_done
 
   return (
+    <ErrorBoundary>
     <ToastProvider>
     <BrowserRouter>
       <Routes>
@@ -165,10 +204,11 @@ export default function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
     </ToastProvider>
+    </ErrorBoundary>
   )
 }
 

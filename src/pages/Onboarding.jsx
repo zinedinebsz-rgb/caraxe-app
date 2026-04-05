@@ -1,12 +1,46 @@
 import { useState } from 'react'
-import { c, f, size, sp, ease } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, transition } from '../lib/theme'
 import { TIERS, DEFAULT_TIER, getTierByKey } from '../lib/clientTiers'
 import { getCatalog } from '../lib/catalogsByProfile'
 import { updateProfile } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
-/* ─── STEP LABELS ─── */
-const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnées']
+/* ── KEYFRAMES — premium ── */
+const keyframes = `
+@keyframes fadeSlideIn { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+@keyframes scaleIn { from { opacity:0; transform:scale(0.95) } to { opacity:1; transform:scale(1) } }
+@keyframes pulseGold { 0%,100% { opacity:0.4 } 50% { opacity:0.8 } }
+@keyframes dragonFloat { 0%,100% { transform:translateY(0) rotate(0deg) } 50% { transform:translateY(-8px) rotate(1deg) } }
+@keyframes stepReveal { from { opacity:0; transform:translateY(20px) scale(0.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+@keyframes goldShimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+`
+
+const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonn\u00e9es']
+
+/* ── ART DECO DIVIDER ── */
+const ArtDecoDivider = ({ width = 80, center = true }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: `${width}px`, margin: center ? `${sp[2]} auto` : `${sp[2]} 0` }}>
+    <div style={{ flex: 1, height: '1px', background: `linear-gradient(to right, transparent, ${c.gold})` }} />
+    <div style={{ width: 5, height: 5, background: c.gold, transform: 'rotate(45deg)', opacity: 0.6, flexShrink: 0 }} />
+    <div style={{ flex: 1, height: '1px', background: `linear-gradient(to left, transparent, ${c.gold})` }} />
+  </div>
+)
+
+/* ── DRAGON ILLUSTRATION ── */
+const DragonWelcome = () => (
+  <div style={{ animation: 'dragonFloat 3s ease-in-out infinite', margin: '0 auto', width: 'fit-content' }}>
+    <svg width="80" height="80" viewBox="0 0 120 120" fill="none">
+      <path d="M60 15L75 35Q80 42 75 55Q70 65 60 70Q50 65 45 55Q40 42 55 35L60 15Z" fill={c.red} opacity="0.7"/>
+      <path d="M50 45Q45 50 45 60Q45 75 60 85Q75 75 75 60Q75 50 70 45" fill={c.gold} opacity="0.35"/>
+      <circle cx="55" cy="55" r="2.5" fill={c.gold} opacity="0.8"/>
+      <circle cx="65" cy="55" r="2.5" fill={c.gold} opacity="0.8"/>
+      <path d="M40 70Q30 75 25 90M80 70Q90 75 95 90" stroke={c.gold} strokeWidth="1.5" opacity="0.4"/>
+      <path d="M60 85Q55 95 60 110M60 85Q65 95 60 110" stroke={c.red} strokeWidth="2" opacity="0.5"/>
+    </svg>
+  </div>
+)
+
+const focusGlow = `0 0 0 3px ${c.redSoft}`
 
 export default function Onboarding({ user, profile, onComplete }) {
   const toast = useToast()
@@ -26,16 +60,10 @@ export default function Onboarding({ user, profile, onComplete }) {
   const currentTier = getTierByKey(selectedTier)
   const catalog = getCatalog(selectedTier)
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }))
 
   const toggleCategory = (catId) => {
-    setSelectedCategories(prev =>
-      prev.includes(catId)
-        ? prev.filter(c => c !== catId)
-        : [...prev, catId]
-    )
+    setSelectedCategories(prev => prev.includes(catId) ? prev.filter(c => c !== catId) : [...prev, catId])
   }
 
   const handleFinish = async () => {
@@ -50,215 +78,175 @@ export default function Onboarding({ user, profile, onComplete }) {
       toast.success('Bienvenue chez CARAXES !')
       onComplete()
     } catch (err) {
-      toast.error('Erreur lors de la finalisation. Réessayez.')
+      toast.error('Erreur lors de la finalisation. R\u00e9essayez.')
       setSaving(false)
     }
   }
 
   const inputStyle = {
-    width: '100%',
-    padding: `${sp[2]} ${sp[2]}`,
-    fontSize: size.sm,
-    fontFamily: f.body,
-    background: c.bgSurface,
-    border: `1px solid ${c.border}`,
-    color: c.text,
-    boxSizing: 'border-box',
-    transition: `border 0.15s ${ease.smooth}`,
-    outline: 'none',
+    width: '100%', padding: `${sp[2]} ${sp[2]}`,
+    fontSize: size.sm, fontFamily: f.body,
+    background: c.bgSurface, border: `1px solid ${c.border}`,
+    color: c.text, boxSizing: 'border-box',
+    transition: `all 0.2s ${ease.smooth}`, outline: 'none',
   }
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: c.bg,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: f.body,
-      color: c.text,
-      padding: sp[4],
+      minHeight: '100vh', background: c.bg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: f.body, color: c.text, padding: sp[4],
     }}>
+      <style>{keyframes}</style>
+
       <div style={{
         width: '100%',
-        maxWidth: step === 2 ? 840 : step === 1 ? 780 : 480,
-        transition: `max-width 0.3s ${ease.smooth}`,
+        maxWidth: step === 2 ? 860 : step === 1 ? 800 : 500,
+        transition: `max-width 0.4s ${ease.out}`,
       }}>
-        {/* ── Logo ── */}
-        <div style={{ textAlign: 'center', marginBottom: sp[3] }}>
-          <div style={{
-            fontSize: size['2xl'],
-            fontFamily: f.display,
-            color: c.gold,
-            letterSpacing: '0.06em',
-            fontWeight: 700,
-            marginBottom: sp[1],
-          }}>
-            ◆ CARAXES
+
+        {/* ── LOGO ── */}
+        <div style={{ textAlign: 'center', marginBottom: sp[3], animation: 'fadeSlideIn 0.5s ease-out' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: sp[2], marginBottom: sp[1] }}>
+            <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+              <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.95"/>
+              <circle cx="16" cy="19" r="2" fill={c.gold} opacity="0.95"/>
+              <circle cx="24" cy="19" r="2" fill={c.gold} opacity="0.95"/>
+            </svg>
+            <span style={{ fontSize: size.xl, fontFamily: f.display, color: c.gold, letterSpacing: '0.08em', fontWeight: 700 }}>
+              CARAXES
+            </span>
           </div>
-          <div style={{
-            width: 60, height: 3, background: c.red, margin: '0 auto',
-          }} />
+          <div style={{ width: 50, height: 2, background: c.red, margin: '0 auto' }} />
         </div>
 
-        {/* ── Progress bar ── */}
-        <div style={{ marginBottom: sp[4] }}>
-          <div style={{
-            display: 'flex', gap: '3px',
-            padding: '0 15%',
-            marginBottom: sp[1],
-          }}>
+        {/* ── PROGRESS ── */}
+        <div style={{ marginBottom: sp[4], animation: 'fadeSlideIn 0.5s ease-out 0.1s both' }}>
+          <div style={{ display: 'flex', gap: '3px', padding: '0 15%', marginBottom: sp[1] }}>
             {STEPS.map((_, i) => (
               <div key={i} style={{
-                flex: 1, height: 3,
-                background: i <= step ? c.red : c.border,
-                transition: `background 0.3s ${ease.smooth}`,
-              }} />
+                flex: 1, height: 3, position: 'relative', overflow: 'hidden',
+                background: c.border,
+              }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: i < step ? c.red : i === step ? c.gold : 'transparent',
+                  transition: `all 0.4s ${ease.out}`,
+                  transformOrigin: 'left',
+                  transform: i <= step ? 'scaleX(1)' : 'scaleX(0)',
+                }} />
+              </div>
             ))}
           </div>
           <div style={{
-            textAlign: 'center',
-            fontSize: size.xs,
-            fontFamily: f.mono,
-            color: c.textTertiary,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            textAlign: 'center', fontSize: '10px', fontFamily: f.mono,
+            color: c.textTertiary, letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
-            {step + 1}/{STEPS.length} — {STEPS[step]}
+            {step + 1}/{STEPS.length} \u2014 {STEPS[step]}
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════ */}
-        {/* STEP 0 — Welcome                        */}
-        {/* ═══════════════════════════════════════ */}
+        {/* ════════ STEP 0 — Welcome ════════ */}
         {step === 0 && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: sp[3] }}>🐉</div>
+          <div style={{ textAlign: 'center', animation: 'fadeSlideIn 0.5s ease-out 0.15s both' }}>
+            <DragonWelcome />
             <h1 style={{
               fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700,
-              margin: 0, marginBottom: sp[2], letterSpacing: '-0.01em',
+              margin: 0, marginBottom: sp[1], letterSpacing: '-0.01em', marginTop: sp[3],
             }}>
               Bienvenue chez CARAXES
             </h1>
+            <ArtDecoDivider width={100} />
             <p style={{
               fontSize: size.sm, color: c.textSecondary, lineHeight: 1.7,
-              maxWidth: 380, margin: '0 auto', marginBottom: sp[4],
+              maxWidth: 380, margin: `${sp[2]} auto ${sp[4]}`,
             }}>
               Votre agent de sourcing en Chine. En 2 minutes, on configure votre compte pour vous proposer les bons produits, aux bons prix.
             </p>
-            <button
-              onClick={() => setStep(1)}
-              style={btnPrimary}
-            >
+            <div style={{ display: 'flex', gap: sp[2], justifyContent: 'center', fontSize: '10px', fontFamily: f.mono, color: c.textTertiary, letterSpacing: '0.04em', marginBottom: sp[4] }}>
+              <span>Yiwu</span><span style={{ color: c.gold }}>\u00b7</span>
+              <span>Guangzhou</span><span style={{ color: c.gold }}>\u00b7</span>
+              <span>Shenzhen</span>
+            </div>
+            <button onClick={() => setStep(1)} style={btnPrimary}
+              onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = shadow.glow }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.boxShadow = 'none' }}>
               Commencer
             </button>
           </div>
         )}
 
-        {/* ═══════════════════════════════════════ */}
-        {/* STEP 1 — Choose Profile                 */}
-        {/* ═══════════════════════════════════════ */}
+        {/* ════════ STEP 1 — Profile ════════ */}
         {step === 1 && (
-          <div>
+          <div style={{ animation: 'fadeSlideIn 0.5s ease-out' }}>
             <h2 style={headingStyle}>Quel est votre profil ?</h2>
+            <ArtDecoDivider width={80} />
             <p style={subStyle}>
-              Votre profil détermine votre catalogue, vos prix et vos quantités minimales.
+              Votre profil d\u00e9termine votre catalogue, vos prix et vos quantit\u00e9s minimales.
             </p>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: sp[3],
-            }}>
-              {TIERS.map(tier => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: sp[3] }}>
+              {TIERS.map((tier, i) => {
                 const isSelected = selectedTier === tier.key
                 return (
-                  <div
-                    key={tier.key}
-                    onClick={() => {
-                      setSelectedTier(tier.key)
-                      setSelectedCategories([]) // reset categories on tier change
-                    }}
+                  <div key={tier.key}
+                    onClick={() => { setSelectedTier(tier.key); setSelectedCategories([]) }}
                     style={{
-                      padding: sp[3],
-                      background: isSelected ? c.bgElevated : c.bgSurface,
+                      padding: sp[3], background: isSelected ? c.bgElevated : c.bgSurface,
                       border: `2px solid ${isSelected ? tier.color : c.border}`,
-                      cursor: 'pointer',
-                      transition: `all 0.2s ${ease.smooth}`,
-                      position: 'relative',
-                      overflow: 'hidden',
+                      cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
+                      position: 'relative', overflow: 'hidden',
+                      animation: `stepReveal 0.5s ${ease.out} ${i * 100}ms both`,
+                      boxShadow: isSelected ? `0 4px 20px ${tier.color}15` : shadow.card,
                     }}
-                  >
-                    {/* Top accent line */}
+                    onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.borderColor = tier.color + '66'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = shadow.cardHover } }}
+                    onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = shadow.card } }}>
+                    {/* Top accent */}
                     <div style={{
                       position: 'absolute', top: 0, left: 0, right: 0,
-                      height: isSelected ? 4 : 0, background: tier.color,
+                      height: isSelected ? 3 : 0, background: tier.color,
                       transition: `height 0.2s ${ease.smooth}`,
                     }} />
 
                     <div style={{ textAlign: 'center', marginBottom: sp[2] }}>
-                      <div style={{ fontSize: '36px', marginBottom: sp[1] }}>{tier.icon}</div>
-                      <div style={{
-                        fontFamily: f.display, fontSize: size.md, fontWeight: 700,
-                        color: isSelected ? tier.color : c.text,
-                      }}>
-                        {tier.label}
-                      </div>
-                      <div style={{
-                        fontSize: size.xs, color: c.textTertiary, marginTop: '4px',
-                      }}>
-                        {tier.tagline}
-                      </div>
+                      <div style={{ fontSize: '32px', marginBottom: sp[1] }}>{tier.icon}</div>
+                      <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: isSelected ? tier.color : c.text }}>{tier.label}</div>
+                      <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '4px' }}>{tier.tagline}</div>
                     </div>
 
-                    {/* Description */}
-                    <p style={{
-                      fontSize: size.xs, color: c.textSecondary,
-                      lineHeight: 1.6, marginBottom: sp[2], textAlign: 'center',
-                    }}>
+                    <p style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.6, marginBottom: sp[2], textAlign: 'center' }}>
                       {tier.description}
                     </p>
 
-                    {/* Key stats */}
-                    <div style={{
-                      padding: sp[2], background: c.bg,
-                      border: `1px solid ${c.borderSubtle}`,
-                      marginBottom: sp[2],
-                      display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[1],
-                    }}>
+                    {/* Stats */}
+                    <div style={{ padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}`, marginBottom: sp[2], display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[1] }}>
                       <div style={{ textAlign: 'center' }}>
                         <div style={statLabelStyle}>Commande min.</div>
-                        <div style={{ ...statValueStyle, color: tier.color }}>
-                          {tier.minOrderValue.toLocaleString('fr-FR')}€
-                        </div>
+                        <div style={{ fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.minOrderValue.toLocaleString('fr-FR')}\u20ac</div>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={statLabelStyle}>Priorité</div>
-                        <div style={{ ...statValueStyle, color: tier.color }}>
-                          {tier.priorityLabel}
-                        </div>
+                        <div style={statLabelStyle}>Priorit\u00e9</div>
+                        <div style={{ fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.priorityLabel}</div>
                       </div>
                     </div>
 
                     {/* Benefits */}
                     <div style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.8 }}>
-                      {tier.benefits.map((b, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-                          <span style={{ color: tier.color, fontWeight: 700, flexShrink: 0 }}>✓</span>
+                      {tier.benefits.map((b, j) => (
+                        <div key={j} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                          <span style={{ color: tier.color, fontWeight: 700, flexShrink: 0 }}>\u2713</span>
                           <span>{b}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Selected badge */}
                     {isSelected && (
                       <div style={{
-                        marginTop: sp[2], padding: `4px ${sp[2]}`,
-                        background: tier.colorSoft, border: `1px solid ${tier.color}33`,
-                        textAlign: 'center', fontSize: size.xs, fontWeight: 600,
-                        color: tier.color, fontFamily: f.mono,
+                        marginTop: sp[2], padding: '5px 0', background: tier.colorSoft,
+                        textAlign: 'center', fontSize: '10px', fontWeight: 700,
+                        color: tier.color, fontFamily: f.mono, letterSpacing: '0.06em', textTransform: 'uppercase',
                       }}>
-                        Sélectionné
+                        S\u00e9lectionn\u00e9
                       </div>
                     )}
                   </div>
@@ -270,117 +258,79 @@ export default function Onboarding({ user, profile, onComplete }) {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════ */}
-        {/* STEP 2 — Catalog Preview                */}
-        {/* ═══════════════════════════════════════ */}
+        {/* ════════ STEP 2 — Catalog ════════ */}
         {step === 2 && (
-          <div>
+          <div style={{ animation: 'fadeSlideIn 0.5s ease-out' }}>
             <h2 style={headingStyle}>
-              Catalogue{' '}
-              <span style={{ color: currentTier.color }}>{currentTier.label}</span>
+              Catalogue <span style={{ color: currentTier.color }}>{currentTier.label}</span>
             </h2>
+            <ArtDecoDivider width={80} />
             <p style={subStyle}>
-              Sélectionnez les catégories qui vous intéressent. On adaptera vos recommandations en conséquence.
+              S\u00e9lectionnez les cat\u00e9gories qui vous int\u00e9ressent.
             </p>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-              gap: sp[2],
-            }}>
-              {catalog.map(cat => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: sp[2] }}>
+              {catalog.map((cat, i) => {
                 const isSelected = selectedCategories.includes(cat.id)
                 return (
-                  <div
-                    key={cat.id}
-                    onClick={() => toggleCategory(cat.id)}
+                  <div key={cat.id} onClick={() => toggleCategory(cat.id)}
                     style={{
-                      padding: sp[3],
-                      background: isSelected ? c.bgElevated : c.bgSurface,
+                      padding: sp[3], background: isSelected ? c.bgElevated : c.bgSurface,
                       border: `1.5px solid ${isSelected ? currentTier.color : c.border}`,
-                      cursor: 'pointer',
-                      transition: `all 0.15s ${ease.smooth}`,
-                      position: 'relative',
+                      cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                      position: 'relative', overflow: 'hidden',
+                      animation: `fadeSlideIn 0.3s ease-out ${i * 40}ms both`,
                     }}
-                  >
-                    {/* Selection check */}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.borderColor = currentTier.color + '44' }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.borderColor = c.border }}>
+                    {/* Check */}
                     <div style={{
-                      position: 'absolute', top: sp[1], right: sp[1],
-                      width: 22, height: 22,
+                      position: 'absolute', top: '8px', right: '8px',
+                      width: 20, height: 20,
                       border: `2px solid ${isSelected ? currentTier.color : c.border}`,
                       background: isSelected ? currentTier.color : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       transition: `all 0.15s ${ease.smooth}`,
                     }}>
                       {isSelected && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.black} strokeWidth="3">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c.bg} strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                       )}
                     </div>
 
                     {/* Header */}
-                    <div style={{ display: 'flex', gap: sp[1], alignItems: 'center', marginBottom: sp[1] }}>
-                      <span style={{ fontSize: '24px' }}>{cat.icon}</span>
-                      <span style={{
-                        fontFamily: f.display, fontWeight: 700, fontSize: size.sm,
-                        color: isSelected ? currentTier.color : c.text,
-                      }}>
-                        {cat.name}
-                      </span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: sp[1] }}>
+                      <span style={{ fontSize: '22px' }}>{cat.icon}</span>
+                      <span style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, color: isSelected ? currentTier.color : c.text }}>{cat.name}</span>
                     </div>
 
-                    {/* Description */}
-                    <p style={{
-                      fontSize: size.xs, color: c.textSecondary, lineHeight: 1.5,
-                      margin: 0, marginBottom: sp[2],
-                    }}>
-                      {cat.description}
-                    </p>
+                    <p style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.5, margin: 0, marginBottom: sp[2] }}>{cat.description}</p>
 
-                    {/* Stats row */}
-                    <div style={{
-                      display: 'flex', gap: sp[2],
-                      padding: `${sp[1]} 0`,
-                      borderTop: `1px solid ${c.borderSubtle}`,
-                    }}>
+                    {/* Stats */}
+                    <div style={{ display: 'flex', gap: sp[2], padding: `${sp[1]} 0`, borderTop: `1px solid ${c.borderSubtle}` }}>
                       <div>
                         <div style={miniLabelStyle}>Prix Chine</div>
-                        <div style={{ fontSize: size.xs, fontWeight: 600, color: c.green }}>
-                          {cat.priceRange}
-                        </div>
+                        <div style={{ fontSize: size.xs, fontWeight: 600, color: c.green }}>{cat.priceRange}</div>
                       </div>
                       <div>
                         <div style={miniLabelStyle}>Marge</div>
-                        <div style={{ fontSize: size.xs, fontWeight: 600, color: c.gold }}>
-                          {cat.margin}
-                        </div>
+                        <div style={{ fontSize: size.xs, fontWeight: 600, color: c.gold }}>{cat.margin}</div>
                       </div>
                       <div>
                         <div style={miniLabelStyle}>MOQ</div>
-                        <div style={{ fontSize: size.xs, fontWeight: 600, color: c.textSecondary }}>
-                          {cat.moq} pcs
-                        </div>
+                        <div style={{ fontSize: size.xs, fontWeight: 600, color: c.textSecondary }}>{cat.moq} pcs</div>
                       </div>
                     </div>
 
                     {/* Top products */}
-                    <div style={{
-                      marginTop: sp[1], paddingTop: sp[1],
-                      borderTop: `1px solid ${c.borderSubtle}`,
-                    }}>
+                    <div style={{ marginTop: sp[1], paddingTop: sp[1], borderTop: `1px solid ${c.borderSubtle}` }}>
                       <div style={miniLabelStyle}>Produits phares</div>
-                      <div style={{
-                        display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px',
-                      }}>
-                        {cat.topProducts.slice(0, 3).map((p, i) => (
-                          <span key={i} style={{
-                            fontSize: '10px', padding: '2px 6px',
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                        {cat.topProducts.slice(0, 3).map((p, j) => (
+                          <span key={j} style={{
+                            fontSize: '9px', padding: '2px 6px',
                             background: c.bg, border: `1px solid ${c.borderSubtle}`,
                             color: c.textTertiary, fontFamily: f.mono,
-                          }}>
-                            {p}
-                          </span>
+                          }}>{p}</span>
                         ))}
                       </div>
                     </div>
@@ -392,11 +342,11 @@ export default function Onboarding({ user, profile, onComplete }) {
             {/* Selection count */}
             <div style={{
               textAlign: 'center', marginTop: sp[3],
-              fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono,
+              fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, letterSpacing: '0.02em',
             }}>
               {selectedCategories.length === 0
-                ? 'Aucune catégorie sélectionnée (vous pourrez en ajouter plus tard)'
-                : `${selectedCategories.length} catégorie${selectedCategories.length > 1 ? 's' : ''} sélectionnée${selectedCategories.length > 1 ? 's' : ''}`
+                ? 'Aucune cat\u00e9gorie s\u00e9lectionn\u00e9e (vous pourrez en ajouter plus tard)'
+                : `${selectedCategories.length} cat\u00e9gorie${selectedCategories.length > 1 ? 's' : ''} s\u00e9lectionn\u00e9e${selectedCategories.length > 1 ? 's' : ''}`
               }
             </div>
 
@@ -404,95 +354,61 @@ export default function Onboarding({ user, profile, onComplete }) {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════ */}
-        {/* STEP 3 — Contact Info                   */}
-        {/* ═══════════════════════════════════════ */}
+        {/* ════════ STEP 3 — Contact ════════ */}
         {step === 3 && (
-          <div>
-            <h2 style={headingStyle}>Vos coordonnées</h2>
+          <div style={{ animation: 'fadeSlideIn 0.5s ease-out' }}>
+            <h2 style={headingStyle}>Vos coordonn\u00e9es</h2>
+            <ArtDecoDivider width={80} />
             <p style={subStyle}>
-              On adapte tout à votre profil{' '}
-              <span style={{ color: currentTier.color, fontWeight: 600 }}>{currentTier.label}</span>.
-              Plus qu'une étape.
+              Profil <span style={{ color: currentTier.color, fontWeight: 600 }}>{currentTier.label}</span> \u2014 plus qu\u2019une \u00e9tape.
             </p>
 
             <div style={{
               display: 'flex', flexDirection: 'column', gap: sp[3],
-              background: c.bgSurface, border: `1px solid ${c.border}`,
-              padding: sp[4],
+              background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
             }}>
               <FieldGroup label="Nom complet *">
-                <input
-                  type="text"
-                  placeholder="Votre nom"
-                  value={formData.full_name}
-                  onChange={(e) => handleChange('full_name', e.target.value)}
-                  style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = c.gold}
-                  onBlur={(e) => e.target.style.borderColor = c.border}
-                />
+                <input type="text" placeholder="Votre nom" value={formData.full_name}
+                  onChange={(e) => handleChange('full_name', e.target.value)} style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
               </FieldGroup>
 
               <FieldGroup label="Entreprise / Commerce">
-                <input
-                  type="text"
-                  placeholder="Nom de votre entreprise"
-                  value={formData.company}
-                  onChange={(e) => handleChange('company', e.target.value)}
-                  style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = c.gold}
-                  onBlur={(e) => e.target.style.borderColor = c.border}
-                />
+                <input type="text" placeholder="Nom de votre entreprise" value={formData.company}
+                  onChange={(e) => handleChange('company', e.target.value)} style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
               </FieldGroup>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[3] }}>
-                <FieldGroup label="Téléphone">
-                  <input
-                    type="tel"
-                    placeholder="+33 6 00 00 00 00"
-                    value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
-                    style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = c.gold}
-                    onBlur={(e) => e.target.style.borderColor = c.border}
-                  />
+                <FieldGroup label="T\u00e9l\u00e9phone">
+                  <input type="tel" placeholder="+33 6 00 00 00 00" value={formData.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)} style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
                 </FieldGroup>
                 <FieldGroup label="Ville">
-                  <input
-                    type="text"
-                    placeholder="Paris, Lyon, Marseille..."
-                    value={formData.city}
-                    onChange={(e) => handleChange('city', e.target.value)}
-                    style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = c.gold}
-                    onBlur={(e) => e.target.style.borderColor = c.border}
-                  />
+                  <input type="text" placeholder="Paris, Lyon, Marseille..." value={formData.city}
+                    onChange={(e) => handleChange('city', e.target.value)} style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
                 </FieldGroup>
               </div>
 
               {selectedTier === 'ecommerce' ? (
                 <FieldGroup label="URL boutique en ligne">
-                  <input
-                    type="url"
-                    placeholder="https://votre-shop.com"
-                    value={formData.website}
-                    onChange={(e) => handleChange('website', e.target.value)}
-                    style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = c.gold}
-                    onBlur={(e) => e.target.style.borderColor = c.border}
-                  />
+                  <input type="url" placeholder="https://votre-shop.com" value={formData.website}
+                    onChange={(e) => handleChange('website', e.target.value)} style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
                 </FieldGroup>
               ) : (
                 <FieldGroup label="Adresse de livraison">
-                  <input
-                    type="text"
-                    placeholder="Adresse de livraison (optionnel)"
-                    value={formData.address}
-                    onChange={(e) => handleChange('address', e.target.value)}
-                    style={inputStyle}
-                    onFocus={(e) => e.target.style.borderColor = c.gold}
-                    onBlur={(e) => e.target.style.borderColor = c.border}
-                  />
+                  <input type="text" placeholder="Adresse de livraison (optionnel)" value={formData.address}
+                    onChange={(e) => handleChange('address', e.target.value)} style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
                 </FieldGroup>
               )}
             </div>
@@ -501,37 +417,38 @@ export default function Onboarding({ user, profile, onComplete }) {
             <div style={{
               marginTop: sp[3], padding: sp[3],
               background: c.bgSurface, border: `1px solid ${c.border}`,
+              position: 'relative', overflow: 'hidden',
             }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: currentTier.color, opacity: 0.5 }} />
               <div style={{
-                fontSize: size.xs, fontFamily: f.mono, color: c.textTertiary,
-                textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: sp[1],
+                fontSize: '10px', fontFamily: f.mono, color: c.textTertiary,
+                textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2],
               }}>
-                Récapitulatif
+                R\u00e9capitulatif
               </div>
               <div style={{ display: 'flex', gap: sp[3], flexWrap: 'wrap' }}>
                 <RecapItem label="Profil" value={currentTier.label} color={currentTier.color} icon={currentTier.icon} />
-                <RecapItem label="Commande min." value={`${currentTier.minOrderValue.toLocaleString('fr-FR')}€`} color={currentTier.color} />
-                <RecapItem label="Catégories" value={selectedCategories.length > 0 ? `${selectedCategories.length} sélectionnées` : 'Toutes'} color={c.textSecondary} />
+                <RecapItem label="Commande min." value={`${currentTier.minOrderValue.toLocaleString('fr-FR')}\u20ac`} color={currentTier.color} />
+                <RecapItem label="Cat\u00e9gories" value={selectedCategories.length > 0 ? `${selectedCategories.length} s\u00e9lectionn\u00e9es` : 'Toutes'} color={c.textSecondary} />
               </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[4] }}>
-              <button onClick={() => setStep(2)} style={btnSecondary}>
+              <button onClick={() => setStep(2)} style={btnSecondary}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textSecondary; e.currentTarget.style.color = c.text }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
                 Retour
               </button>
-              <button
-                onClick={handleFinish}
+              <button onClick={handleFinish}
                 disabled={!formData.full_name.trim() || saving}
                 style={{
-                  ...btnPrimary,
-                  background: c.gold,
-                  borderColor: c.gold,
-                  color: c.black,
+                  ...btnPrimary, background: c.gold, borderColor: c.gold, color: c.black,
                   opacity: !formData.full_name.trim() ? 0.5 : 1,
                   cursor: saving ? 'wait' : 'pointer',
                 }}
-              >
-                {saving ? 'Enregistrement...' : 'Terminer la configuration'}
+                onMouseEnter={(e) => { if (formData.full_name.trim()) { e.currentTarget.style.background = c.goldDim } }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = c.gold }}>
+                {saving ? 'Enregistrement\u2026' : 'Terminer la configuration'}
               </button>
             </div>
           </div>
@@ -541,15 +458,19 @@ export default function Onboarding({ user, profile, onComplete }) {
   )
 }
 
-/* ─── SHARED COMPONENTS ─── */
+/* ── SHARED COMPONENTS ── */
 
 function NavButtons({ onBack, onNext, nextLabel = 'Continuer' }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[4] }}>
-      <button onClick={onBack} style={btnSecondary}>
+      <button onClick={onBack} style={btnSecondary}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textSecondary; e.currentTarget.style.color = c.text }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
         Retour
       </button>
-      <button onClick={onNext} style={btnPrimary}>
+      <button onClick={onNext} style={btnPrimary}
+        onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = shadow.glow }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.boxShadow = 'none' }}>
         {nextLabel}
       </button>
     </div>
@@ -560,9 +481,9 @@ function FieldGroup({ label, children }) {
   return (
     <div>
       <label style={{
-        display: 'block', fontSize: size.xs, fontWeight: 600,
-        color: c.textTertiary, marginBottom: sp[1], fontFamily: f.mono,
-        letterSpacing: '0.04em', textTransform: 'uppercase',
+        display: 'block', fontSize: '10px', fontWeight: 600,
+        color: c.textTertiary, marginBottom: '6px', fontFamily: f.mono,
+        letterSpacing: '0.08em', textTransform: 'uppercase',
       }}>
         {label}
       </label>
@@ -574,10 +495,7 @@ function FieldGroup({ label, children }) {
 function RecapItem({ label, value, color, icon }) {
   return (
     <div style={{ flex: '1 1 120px' }}>
-      <div style={{
-        fontSize: '9px', fontFamily: f.mono, color: c.textTertiary,
-        textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px',
-      }}>
+      <div style={{ fontSize: '9px', fontFamily: f.mono, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
         {label}
       </div>
       <div style={{ fontSize: size.sm, fontWeight: 600, color }}>
@@ -588,11 +506,11 @@ function RecapItem({ label, value, color, icon }) {
   )
 }
 
-/* ─── SHARED STYLES ─── */
+/* ── SHARED STYLES ── */
 
 const headingStyle = {
   fontFamily: f.display, fontSize: size.xl, fontWeight: 700,
-  margin: 0, marginBottom: sp[1], textAlign: 'center',
+  margin: 0, marginBottom: sp[1], textAlign: 'center', letterSpacing: '-0.01em',
 }
 
 const subStyle = {
@@ -602,11 +520,7 @@ const subStyle = {
 
 const statLabelStyle = {
   fontFamily: f.mono, fontSize: '9px', color: c.textTertiary,
-  textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px',
-}
-
-const statValueStyle = {
-  fontSize: size.md, fontWeight: 700,
+  textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px',
 }
 
 const miniLabelStyle = {
@@ -615,24 +529,16 @@ const miniLabelStyle = {
 }
 
 const btnPrimary = {
-  padding: `${sp[2]} ${sp[4]}`,
-  background: c.red,
-  border: `1px solid ${c.red}`,
-  color: c.white,
-  fontSize: size.sm,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontFamily: f.body,
-  letterSpacing: '0.02em',
-  transition: `all 0.15s ${ease.smooth}`,
+  padding: `${sp[2]} ${sp[4]}`, background: c.red,
+  border: `1px solid ${c.red}`, color: c.white,
+  fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+  fontFamily: f.body, letterSpacing: '0.02em',
+  transition: `all 0.3s ${ease.out}`,
 }
 
 const btnSecondary = {
-  padding: `${sp[2]} ${sp[3]}`,
-  background: c.bgSurface,
-  border: `1px solid ${c.border}`,
-  color: c.textSecondary,
-  fontSize: size.sm,
-  cursor: 'pointer',
-  fontFamily: f.body,
+  padding: `${sp[2]} ${sp[3]}`, background: 'transparent',
+  border: `1px solid ${c.border}`, color: c.textSecondary,
+  fontSize: size.sm, cursor: 'pointer', fontFamily: f.body,
+  fontWeight: 600, transition: `all 0.2s ${ease.smooth}`,
 }
