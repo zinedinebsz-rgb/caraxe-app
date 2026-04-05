@@ -1,11 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { c, f, size, sp, shadow, ease, STATUSES } from '../lib/theme'
 import {
   getOrders, createOrder, getMessages, sendMessage,
   markMessagesRead, getDocuments, getDocumentUrl,
   subscribeToMessages, subscribeToOrders, supabase,
 } from '../lib/supabase'
+import { CATEGORIES } from '../lib/categories'
+import { getTierByKey, getTierPrice, getCategoryMOQ, DEFAULT_TIER } from '../lib/clientTiers'
 import StatusPill, { ProgressBar } from '../components/StatusPill'
+import { useToast } from '../components/Toast'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 Mo
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
 
 /* ── SVG ICONS ── */
 const Icon = ({ d, size: s = 18, color = 'currentColor', sw = 1.5 }) => (
@@ -13,6 +20,7 @@ const Icon = ({ d, size: s = 18, color = 'currentColor', sw = 1.5 }) => (
     <path d={d} />
   </svg>
 )
+
 const icons = {
   search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
   send: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
@@ -23,15 +31,38 @@ const icons = {
   bell: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0',
   download: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3',
   plus: 'M12 5v14M5 12h14',
+  settings: 'M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z',
   logout: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9',
   msg: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
   doc: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  folder: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z',
+  upload: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12',
 }
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 const fmtQty = (n) => (n || 0).toLocaleString('fr-FR')
 
-/* ── ORDER CARD ── */
+/* ── DRAGON ART DECO EMPTY STATE SVG ── */
+function DragonEmptyState() {
+  return (
+    <svg viewBox="0 0 200 200" width={120} height={120} style={{ opacity: 0.15, marginBottom: sp[3] }}>
+      <g>
+        <path d="M100 20 L130 60 L100 50 L70 60 Z" fill={c.gold} stroke={c.gold} strokeWidth="1" />
+        <circle cx="100" cy="100" r="40" fill="none" stroke={c.gold} strokeWidth="1" />
+        <path d="M70 100 Q60 90 60 80 Q60 70 75 70" fill="none" stroke={c.gold} strokeWidth="1" />
+        <path d="M130 100 Q140 90 140 80 Q140 70 125 70" fill="none" stroke={c.gold} strokeWidth="1" />
+        <circle cx="85" cy="95" r="3" fill={c.gold} />
+        <circle cx="115" cy="95" r="3" fill={c.gold} />
+        <path d="M100 110 Q90 120 85 130" fill="none" stroke={c.gold} strokeWidth="1" />
+        <path d="M100 110 Q110 120 115 130" fill="none" stroke={c.gold} strokeWidth="1" />
+        <path d="M80 140 L90 160 L100 155 L110 160 L120 140" fill="none" stroke={c.gold} strokeWidth="1" />
+        <path d="M100 20 L100 180" stroke={c.goldSoft} strokeWidth="0.5" strokeDasharray="2,2" opacity="0.3" />
+      </g>
+    </svg>
+  )
+}
+
+/* ── ORDER CARD (SIDEBAR) ── */
 function OrderCard({ order, selected, onClick, unreadCount }) {
   const [hovered, setHovered] = useState(false)
   const statusObj = STATUSES.find(s => s.key === order.status) || STATUSES[0]
@@ -41,39 +72,39 @@ function OrderCard({ order, selected, onClick, unreadCount }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        padding: `${sp[2]} ${sp[2]}`, cursor: 'pointer',
+        padding: `${sp[2]} ${sp[2]}`,
+        cursor: 'pointer',
         background: selected ? c.bgElevated : hovered ? c.bgWarm : 'transparent',
-        borderLeft: `2px solid ${selected ? c.red : 'transparent'}`,
+        borderLeft: `3px solid ${selected ? c.red : 'transparent'}`,
         borderBottom: `1px solid ${c.borderSubtle}`,
         transition: `all 0.15s ${ease.smooth}`,
       }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
         <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary, letterSpacing: '0.03em' }}>
           {order.ref}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
-          {unreadCount > 0 && (
-            <span style={{
-              minWidth: 18, height: 18, borderRadius: '9999px',
-              background: c.red, color: c.white, fontSize: '10px', fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px',
-            }}>{unreadCount}</span>
-          )}
-          <StatusPill status={order.status} />
-        </div>
+        {unreadCount > 0 && (
+          <span style={{
+            minWidth: 18, height: 18, borderRadius: '9999px',
+            background: c.red, color: c.white, fontSize: '9px', fontWeight: 600,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px',
+          }}>{unreadCount}</span>
+        )}
       </div>
       <div style={{
-        fontWeight: 600, fontSize: size.sm, marginBottom: '6px',
+        fontWeight: 600, fontSize: size.sm, marginBottom: '8px',
         lineHeight: 1.4, color: c.text,
       }}>{order.product}</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <span style={{ fontSize: size.xs, color: c.textSecondary }}>
-          {fmtQty(order.quantity)} unit{'\u00e9'}s {'\u00b7'} {order.budget}
+          {fmtQty(order.quantity)} unités · {order.budget}
         </span>
-        <span style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono }}>{order.city}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: sp[1], marginBottom: '6px' }}>
+        <StatusPill status={order.status} size="sm" />
       </div>
       <div style={{ marginTop: sp[1] }}>
-        <ProgressBar value={order.progress} color={statusObj.color} />
+        <ProgressBar value={order.progress} color={statusObj.color} height={2} />
       </div>
     </div>
   )
@@ -84,615 +115,1483 @@ function ChatBubble({ msg }) {
   const isAgent = msg.sender_role === 'admin'
   return (
     <div style={{
-      display: 'flex', justifyContent: isAgent ? 'flex-start' : 'flex-end',
-      marginBottom: sp[1],
+      display: 'flex',
+      justifyContent: isAgent ? 'flex-start' : 'flex-end',
+      marginBottom: sp[2],
     }}>
       <div style={{
-        maxWidth: '80%', padding: `${sp[1]} ${sp[2]}`,
+        maxWidth: '75%',
+        padding: `${sp[2]} ${sp[2]}`,
         background: isAgent ? c.bgElevated : c.redSoft,
         border: `1px solid ${isAgent ? c.border : c.redGlow}`,
-        fontSize: size.sm, lineHeight: 1.65, color: c.text,
+        borderRadius: 0,
+        fontSize: size.sm,
+        lineHeight: 1.65,
+        color: c.text,
       }}>
         <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          fontSize: size.xs, color: c.textTertiary, marginBottom: '6px',
+          fontSize: size.xs,
+          color: c.textTertiary,
+          marginBottom: '6px',
+          fontFamily: f.mono,
+          letterSpacing: '0.02em',
         }}>
-          <span style={{ color: isAgent ? c.red : c.textSecondary, fontWeight: 600, fontFamily: f.mono, fontSize: size.xs, letterSpacing: '0.04em' }}>
-            {isAgent ? 'CARAXES' : 'Vous'}
-          </span>
-          <span style={{ fontFamily: f.mono, fontSize: '10px' }}>{fmtDate(msg.created_at)}</span>
+          {isAgent ? 'Agent · ' : 'Vous · '}{fmtDate(msg.created_at)}
         </div>
-        <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-        {msg.attachment_name && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: sp[1],
-            padding: '6px 10px', background: c.bgSurface, border: `1px solid ${c.border}`,
-            fontSize: size.xs, color: c.textSecondary, cursor: 'pointer',
-          }}>
-            <Icon d={icons.clip} size={12} /> {msg.attachment_name}
-          </div>
-        )}
+        <p style={{ margin: 0, wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+          {msg.content}
+        </p>
       </div>
     </div>
   )
 }
 
-/* ── NEW REQUEST MODAL ── */
-function NewRequestForm({ onClose, onSubmit }) {
-  const [form, setForm] = useState({ product: '', quantity: '', budget: '', deadline: '', notes: '' })
-  const [step, setStep] = useState(0)
-  const [submitting, setSubmitting] = useState(false)
+/* ── DOCUMENT CARD ── */
+function DocumentCard({ doc, onDownload }) {
+  const [hovered, setHovered] = useState(false)
+  const fileName = doc.name || doc.file_name || 'Document'
+  const fileExt = fileName.split('.').pop().toUpperCase()
 
-  const inputStyle = {
-    width: '100%', padding: '14px 16px', background: c.bg,
-    border: `1px solid ${c.border}`, color: c.text,
-    fontSize: size.sm, outline: 'none', fontFamily: f.body,
-    transition: `border-color 0.2s ${ease.smooth}`,
-  }
-  const labelStyle = {
-    display: 'block', fontSize: size.xs, fontWeight: 500,
-    color: c.textSecondary, marginBottom: sp[1], fontFamily: f.mono,
-    letterSpacing: '0.06em', textTransform: 'uppercase',
-  }
-
-  const steps = [
-    <div key="0">
-      <label style={labelStyle}>Quel produit recherchez-vous{'\u00a0'}?</label>
-      <input style={inputStyle} placeholder="Ex\u00a0: Coque silicone iPhone 16 Pro"
-        value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} autoFocus
-        onFocus={(e) => e.target.style.borderColor = c.red}
-        onBlur={(e) => e.target.style.borderColor = c.border} />
-      <p style={{ fontSize: size.xs, color: c.textTertiary, marginTop: sp[1], lineHeight: 1.6 }}>
-        Soyez pr{'\u00e9'}cis{'\u00a0'}: mat{'\u00e9'}riau, mod{'\u00e8'}le, finitions souhait{'\u00e9'}es.
-      </p>
-    </div>,
-    <div key="1" style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
-        <div>
-          <label style={labelStyle}>Quantit{'\u00e9'}</label>
-          <input style={inputStyle} placeholder="1000" type="number" value={form.quantity}
-            onChange={(e) => setForm({ ...form, quantity: e.target.value })} autoFocus
-            onFocus={(e) => e.target.style.borderColor = c.red}
-            onBlur={(e) => e.target.style.borderColor = c.border} />
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: `${sp[2]} ${sp[2]}`,
+        background: hovered ? c.bgHover : c.bgElevated,
+        border: `1px solid ${c.border}`,
+        gap: sp[2],
+        transition: `all 0.15s ${ease.smooth}`,
+        cursor: 'pointer',
+      }}
+      onClick={onDownload}>
+      <div style={{
+        width: 40,
+        height: 40,
+        background: c.redSoft,
+        border: `1px solid ${c.border}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <Icon d={icons.file} size={20} color={c.red} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: size.sm, color: c.text, fontWeight: 500, marginBottom: '2px' }}>
+          {fileName}
         </div>
-        <div>
-          <label style={labelStyle}>Budget max</label>
-          <input style={inputStyle} placeholder="2 000 EUR" value={form.budget}
-            onChange={(e) => setForm({ ...form, budget: e.target.value })}
-            onFocus={(e) => e.target.style.borderColor = c.red}
-            onBlur={(e) => e.target.style.borderColor = c.border} />
+        <div style={{ fontSize: size.xs, color: c.textTertiary }}>
+          {fileExt} · {fmtDate(doc.created_at)}
         </div>
       </div>
-      <div>
-        <label style={labelStyle}>D{'\u00e9'}lai souhait{'\u00e9'}</label>
-        <input style={inputStyle} type="date" value={form.deadline}
-          onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-          onFocus={(e) => e.target.style.borderColor = c.red}
-          onBlur={(e) => e.target.style.borderColor = c.border} />
+      <Icon d={icons.download} size={16} color={c.textSecondary} />
+    </div>
+  )
+}
+
+/* ── PIPELINE TRACKER ── */
+function PipelineTracker({ status }) {
+  const stages = STATUSES
+  const currentIndex = stages.findIndex(s => s.key === status)
+
+  return (
+    <div style={{
+      background: c.bgElevated,
+      border: `1px solid ${c.border}`,
+      padding: `${sp[3]} ${sp[3]}`,
+      marginBottom: sp[3],
+    }}>
+      <div style={{
+        fontSize: size.xs,
+        color: c.textTertiary,
+        marginBottom: sp[2],
+        fontFamily: f.mono,
+        letterSpacing: '0.03em',
+        textTransform: 'uppercase',
+      }}>
+        Progression
       </div>
-    </div>,
-    <div key="2">
-      <label style={labelStyle}>Notes compl{'\u00e9'}mentaires</label>
-      <textarea style={{ ...inputStyle, minHeight: '120px', resize: 'vertical', lineHeight: 1.65 }}
-        placeholder="Couleur, logo, sp\u00e9cifications\u2026" value={form.notes}
-        onChange={(e) => setForm({ ...form, notes: e.target.value })} autoFocus
-        onFocus={(e) => e.target.style.borderColor = c.red}
-        onBlur={(e) => e.target.style.borderColor = c.border} />
-    </div>,
-  ]
 
-  const canNext = step === 0 ? form.product.trim() : step === 1 ? form.quantity.trim() : true
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+        {stages.map((stage, idx) => {
+          const isCompleted = idx < currentIndex
+          const isCurrent = idx === currentIndex
+          const isFuture = idx > currentIndex
 
-  const handleFinalSubmit = async () => {
-    setSubmitting(true)
-    await onSubmit(form)
-    setSubmitting(false)
+          return (
+            <div key={stage.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              {/* Step circle */}
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: 0,
+                background: isCurrent ? c.red : isCompleted ? c.green : c.bgSurface,
+                border: `2px solid ${isCurrent ? c.red : isCompleted ? c.green : c.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: f.mono,
+                fontSize: size.xs,
+                fontWeight: 600,
+                color: isCurrent || isCompleted ? c.white : c.textTertiary,
+                flexShrink: 0,
+                position: 'relative',
+                zIndex: 2,
+                transition: `all 0.3s ${ease.smooth}`,
+              }}>
+                {isCompleted ? '✓' : idx + 1}
+              </div>
+
+              {/* Connector line */}
+              {idx < stages.length - 1 && (
+                <div style={{
+                  flex: 1,
+                  height: '2px',
+                  background: isCompleted || isCurrent ? c.green : c.border,
+                  margin: '0 -2px',
+                  transition: `background 0.3s ${ease.smooth}`,
+                }} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Labels underneath */}
+      <div style={{
+        display: 'flex',
+        marginTop: sp[2],
+        gap: '4px',
+      }}>
+        {stages.map((stage, idx) => (
+          <div key={stage.key} style={{
+            flex: 1,
+            fontSize: size.xs,
+            color: idx <= currentIndex ? c.text : c.textTertiary,
+            textAlign: 'center',
+            lineHeight: 1.3,
+          }}>
+            {stage.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ── MODAL: NOUVELLE DEMANDE (MULTI-STEP) ── */
+function NewOrderModal({ isOpen, onClose, onSubmit }) {
+  const [step, setStep] = useState(1)
+  const [formData, setFormData] = useState({
+    product: '',
+    quantity: '',
+    budget: '',
+    deadline: '',
+    notes: '',
+  })
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1)
+  }
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1)
+  }
+
+  const handleSubmit = () => {
+    onSubmit(formData)
+    setFormData({ product: '', quantity: '', budget: '', deadline: '', notes: '' })
+    setStep(1)
     onClose()
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: c.bgOverlay,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000,
+    }}>
+      <div style={{
+        background: c.bgElevated,
+        border: `1px solid ${c.border}`,
+        width: '100%', maxWidth: 500,
+        padding: sp[4],
+        boxShadow: shadow.lg,
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: sp[3],
+        }}>
+          <h2 style={{
+            margin: 0,
+            fontSize: size.lg,
+            fontFamily: f.display,
+            color: c.text,
+          }}>
+            Nouvelle demande
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: sp[1],
+              color: c.textSecondary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: `color 0.15s ${ease.smooth}`,
+            }}
+            onMouseOver={(e) => e.target.style.color = c.red}
+            onMouseOut={(e) => e.target.style.color = c.textSecondary}>
+            <Icon d={icons.close} size={20} color="currentColor" />
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{
+          width: '100%',
+          height: 3,
+          background: c.bgSurface,
+          marginBottom: sp[3],
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${(step / 3) * 100}%`,
+            height: '100%',
+            background: c.red,
+            transition: `width 0.3s ${ease.smooth}`,
+          }} />
+        </div>
+
+        {/* Form content */}
+        <div style={{ minHeight: 200 }}>
+          {step === 1 && (
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: sp[2],
+                fontSize: size.sm,
+                color: c.text,
+              }}>
+                Que recherchez-vous?
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: vêtements en coton, chaussures de sport..."
+                value={formData.product}
+                onChange={(e) => handleChange('product', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: `${sp[2]} ${sp[2]}`,
+                  fontSize: size.sm,
+                  fontFamily: f.body,
+                  background: c.bgSurface,
+                  border: `1px solid ${c.border}`,
+                  color: c.text,
+                  boxSizing: 'border-box',
+                  transition: `border 0.15s ${ease.smooth}`,
+                }}
+                onFocus={(e) => e.target.style.borderColor = c.red}
+                onBlur={(e) => e.target.style.borderColor = c.border}
+              />
+            </div>
+          )}
+
+          {step === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: sp[1],
+                  fontSize: size.sm,
+                  color: c.text,
+                }}>Quantité</label>
+                <input
+                  type="number"
+                  placeholder="Ex: 1000"
+                  value={formData.quantity}
+                  onChange={(e) => handleChange('quantity', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: `${sp[2]} ${sp[2]}`,
+                    fontSize: size.sm,
+                    fontFamily: f.body,
+                    background: c.bgSurface,
+                    border: `1px solid ${c.border}`,
+                    color: c.text,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: sp[1],
+                  fontSize: size.sm,
+                  color: c.text,
+                }}>Budget</label>
+                <input
+                  type="text"
+                  placeholder="Ex: $5000"
+                  value={formData.budget}
+                  onChange={(e) => handleChange('budget', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: `${sp[2]} ${sp[2]}`,
+                    fontSize: size.sm,
+                    fontFamily: f.body,
+                    background: c.bgSurface,
+                    border: `1px solid ${c.border}`,
+                    color: c.text,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: sp[1],
+                  fontSize: size.sm,
+                  color: c.text,
+                }}>Deadline</label>
+                <input
+                  type="date"
+                  value={formData.deadline}
+                  onChange={(e) => handleChange('deadline', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: `${sp[2]} ${sp[2]}`,
+                    fontSize: size.sm,
+                    fontFamily: f.body,
+                    background: c.bgSurface,
+                    border: `1px solid ${c.border}`,
+                    color: c.text,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: sp[2],
+                fontSize: size.sm,
+                color: c.text,
+              }}>Notes supplémentaires (optionnel)</label>
+              <textarea
+                placeholder="Détails, spécifications, références visuelles..."
+                value={formData.notes}
+                onChange={(e) => handleChange('notes', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: `${sp[2]} ${sp[2]}`,
+                  fontSize: size.sm,
+                  fontFamily: f.body,
+                  background: c.bgSurface,
+                  border: `1px solid ${c.border}`,
+                  color: c.text,
+                  boxSizing: 'border-box',
+                  minHeight: 120,
+                  resize: 'none',
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: sp[2],
+          marginTop: sp[3],
+          justifyContent: 'flex-end',
+        }}>
+          {step > 1 && (
+            <button
+              onClick={handleBack}
+              style={{
+                padding: `${sp[1]} ${sp[3]}`,
+                background: c.bgSurface,
+                border: `1px solid ${c.border}`,
+                color: c.text,
+                fontSize: size.sm,
+                cursor: 'pointer',
+                fontFamily: f.body,
+                transition: `all 0.15s ${ease.smooth}`,
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = c.bgHover
+                e.target.style.borderColor = c.gold
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = c.bgSurface
+                e.target.style.borderColor = c.border
+              }}>
+              Retour
+            </button>
+          )}
+
+          {step < 3 ? (
+            <button
+              onClick={handleNext}
+              disabled={step === 1 && !formData.product || step === 2 && !formData.quantity}
+              style={{
+                padding: `${sp[1]} ${sp[3]}`,
+                background: c.red,
+                border: `1px solid ${c.red}`,
+                color: c.white,
+                fontSize: size.sm,
+                cursor: 'pointer',
+                fontFamily: f.body,
+                transition: `all 0.15s ${ease.smooth}`,
+                opacity: (step === 1 && !formData.product || step === 2 && !formData.quantity) ? 0.5 : 1,
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = c.redDeep
+                e.target.style.borderColor = c.redDeep
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = c.red
+                e.target.style.borderColor = c.red
+              }}>
+              Suivant
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              style={{
+                padding: `${sp[1]} ${sp[3]}`,
+                background: c.gold,
+                border: `1px solid ${c.gold}`,
+                color: c.black,
+                fontSize: size.sm,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: f.body,
+                transition: `all 0.15s ${ease.smooth}`,
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = c.goldDim
+                e.target.style.borderColor = c.goldDim
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = c.gold
+                e.target.style.borderColor = c.gold
+              }}>
+              Soumettre
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── MAIN DASHBOARD COMPONENT ── */
+export default function Dashboard({ user, profile, onSignOut }) {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const [orders, setOrders] = useState([])
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [documents, setDocuments] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [newMessage, setNewMessage] = useState('')
+  const [sendingMsg, setSendingMsg] = useState(false)
+  const [creatingOrder, setCreatingOrder] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
+  const [unreadCounts, setUnreadCounts] = useState({})
+  const [activeTab, setActiveTab] = useState('messages')
+  const [viewMode, setViewMode] = useState('orders') // 'orders' | 'catalogue'
+  const messagesEndRef = useRef(null)
+  const uploadInputRef = useRef(null)
+
+  // Load orders
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const data = await getOrders(user.id)
+        setOrders(data || [])
+        if (data?.length > 0) {
+          setSelectedOrder(data[0])
+        }
+      } catch (err) {
+        console.error('Failed to load orders:', err)
+      }
+    }
+    loadOrders()
+
+    // Subscribe to changes
+    const sub = subscribeToOrders((payload) => {
+      // Reload orders on any change
+      getOrders(user.id).then(data => setOrders(data || []))
+    })
+    return () => sub?.unsubscribe?.()
+  }, [user.id])
+
+  // Load messages for selected order
+  useEffect(() => {
+    if (!selectedOrder) return
+
+    const loadMessages = async () => {
+      try {
+        const data = await getMessages(selectedOrder.id)
+        setMessages(data || [])
+        await markMessagesRead(selectedOrder.id, user.id)
+      } catch (err) {
+        console.error('Failed to load messages:', err)
+      }
+    }
+    loadMessages()
+
+    const sub = subscribeToMessages(selectedOrder.id, (newMsg) => {
+      setMessages(prev => [...prev, newMsg])
+    })
+    return () => sub?.unsubscribe?.()
+  }, [selectedOrder, user.id])
+
+  // Load documents for selected order
+  useEffect(() => {
+    if (!selectedOrder) return
+
+    const loadDocs = async () => {
+      try {
+        const data = await getDocuments(selectedOrder.id)
+        setDocuments(data || [])
+      } catch (err) {
+        console.error('Failed to load documents:', err)
+      }
+    }
+    loadDocs()
+  }, [selectedOrder])
+
+  // Scroll to bottom of chat
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // Filter orders
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.product.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  // Handle send message
+  const handleSendMessage = async (e) => {
+    e.preventDefault()
+    if (!newMessage.trim() || !selectedOrder || sendingMsg) return
+    setSendingMsg(true)
+    try {
+      await sendMessage({
+        orderId: selectedOrder.id,
+        senderId: user.id,
+        senderRole: 'client',
+        content: newMessage,
+      })
+      setNewMessage('')
+    } catch (err) {
+      toast.error('Impossible d\u2019envoyer le message. R\u00e9essayez.')
+    } finally {
+      setSendingMsg(false)
+    }
+  }
+
+  // Handle create order
+  const handleCreateOrder = async (formData) => {
+    if (creatingOrder) return
+    setCreatingOrder(true)
+    try {
+      await createOrder({
+        clientId: user.id,
+        product: formData.product,
+        quantity: parseInt(formData.quantity, 10),
+        budget: formData.budget,
+        deadline: formData.deadline,
+        notes: formData.notes,
+      })
+      const updated = await getOrders(user.id)
+      setOrders(updated)
+      toast.success('Demande envoy\u00e9e avec succ\u00e8s !')
+    } catch (err) {
+      toast.error('Erreur lors de la cr\u00e9ation de la demande.')
+    } finally {
+      setCreatingOrder(false)
+    }
+  }
+
+  // Handle document upload
+  const handleUploadClick = () => {
+    uploadInputRef.current?.click()
+  }
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !selectedOrder || uploadingFile) return
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('Fichier trop volumineux (max 10 Mo)')
+      e.target.value = ''
+      return
+    }
+    // Validate file type
+    if (ALLOWED_FILE_TYPES.length && !ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast.error('Type de fichier non support\u00e9. Formats accept\u00e9s : images, PDF, Word, Excel')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingFile(true)
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(`${selectedOrder.id}/${Date.now()}_${file.name}`, file)
+
+      if (error) throw error
+
+      const updated = await getDocuments(selectedOrder.id)
+      setDocuments(updated)
+      toast.success('Document ajout\u00e9')
+    } catch (err) {
+      toast.error('Erreur lors de l\u2019envoi du document.')
+    } finally {
+      setUploadingFile(false)
+      e.target.value = ''
+    }
+  }
+
+  // Handle document download
+  const handleDownloadDocument = async (doc) => {
+    try {
+      const url = await getDocumentUrl(doc.storage_path || doc.file_path)
+      if (url) {
+        window.open(url, '_blank')
+      }
+    } catch (err) {
+      toast.error('Impossible de t\u00e9l\u00e9charger le document.')
+    }
   }
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: c.bgOverlay,
-      backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', zIndex: 1000, padding: sp[2],
-    }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background: c.bgSurface, border: `1px solid ${c.border}`,
-        width: '100%', maxWidth: '520px',
-        overflow: 'hidden', boxShadow: shadow.lg,
-        animation: `fadeIn 0.3s ${ease.out}`,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      background: c.bg,
+      color: c.text,
+      fontFamily: f.body,
+    }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar { display: none !important; }
+          .main-panel { width: 100% !important; }
+          .order-detail { padding: ${sp[2]} !important; }
+          .pipeline-tracker { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${sp[1]}; }
+          .pipeline-tracker > * { writing-mode: horizontal-tb; }
+        }
+      `}</style>
+
+      {/* HEADER */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: `${sp[2]} ${sp[3]}`,
+        background: c.bgSurface,
+        borderBottom: `1px solid ${c.border}`,
       }}>
-        {/* Header */}
-        <div style={{
-          padding: `${sp[3]} ${sp[3]} ${sp[2]}`, borderBottom: `1px solid ${c.borderSubtle}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-        }}>
-          <div>
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 600, color: c.text }}>
-              Nouvelle demande
-            </h2>
-            <span style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '4px', display: 'block', fontFamily: f.mono }}>
-              {'\u00c9'}tape {step + 1} sur 3
-            </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+          {/* Logo placeholder */}
+          <div style={{
+            fontSize: size.lg,
+            fontFamily: f.display,
+            color: c.gold,
+            letterSpacing: '0.05em',
+            fontWeight: 700,
+          }}>
+            ◆ CARAXES
           </div>
-          <button onClick={onClose} style={{
-            background: c.bgElevated, border: `1px solid ${c.border}`,
-            width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: c.textTertiary, cursor: 'pointer',
-          }}><Icon d={icons.close} size={14} /></button>
+          <span style={{
+            fontSize: size.xs,
+            color: c.red,
+            fontFamily: f.mono,
+            letterSpacing: '0.04em',
+            fontWeight: 600,
+          }}>CLIENT</span>
+          {(() => {
+            const tier = getTierByKey(profile?.client_tier || DEFAULT_TIER)
+            return (
+              <span style={{
+                padding: `2px ${sp[1]}`,
+                background: tier.colorSoft,
+                border: `1px solid ${tier.color}33`,
+                color: tier.color,
+                fontSize: '10px',
+                fontFamily: f.mono,
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}>
+                {tier.icon} {tier.label}
+              </span>
+            )
+          })()}
         </div>
 
-        {/* Progress */}
-        <div style={{ padding: `0 ${sp[3]}` }}>
-          <div style={{ display: 'flex', gap: '4px', paddingTop: sp[2] }}>
-            {[0,1,2].map(i => (
-              <div key={i} style={{
-                flex: 1, height: 2,
-                background: i <= step ? c.red : c.border,
-                transition: `background 0.3s ${ease.smooth}`,
-              }}/>
-            ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+          {/* View mode toggle */}
+          <div style={{ display: 'flex', gap: '2px', background: c.bgSurface, border: `1px solid ${c.border}`, padding: '2px' }}>
+            <button
+              onClick={() => setViewMode('orders')}
+              style={{
+                padding: `${sp[1]} ${sp[2]}`, background: viewMode === 'orders' ? c.red : 'transparent',
+                border: 'none', color: viewMode === 'orders' ? c.white : c.textSecondary,
+                fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer', letterSpacing: '0.03em',
+                fontWeight: viewMode === 'orders' ? 600 : 400, transition: `all 0.15s ${ease.smooth}`,
+              }}>Commandes</button>
+            <button
+              onClick={() => setViewMode('catalogue')}
+              style={{
+                padding: `${sp[1]} ${sp[2]}`, background: viewMode === 'catalogue' ? c.gold : 'transparent',
+                border: 'none', color: viewMode === 'catalogue' ? c.black : c.textSecondary,
+                fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer', letterSpacing: '0.03em',
+                fontWeight: viewMode === 'catalogue' ? 600 : 400, transition: `all 0.15s ${ease.smooth}`,
+              }}>Catalogue</button>
           </div>
-        </div>
 
-        {/* Content */}
-        <div style={{ padding: `${sp[3]} ${sp[3]}` }}>{steps[step]}</div>
-
-        {/* Actions */}
-        <div style={{ padding: `${sp[2]} ${sp[3]} ${sp[3]}`, display: 'flex', gap: sp[1], justifyContent: 'flex-end' }}>
-          {step > 0 && (
-            <button onClick={() => setStep(step - 1)} style={{
-              padding: `${sp[1]} ${sp[3]}`, background: 'transparent', border: `1px solid ${c.border}`,
-              color: c.textSecondary, fontSize: size.xs, fontWeight: 500, cursor: 'pointer',
-              fontFamily: f.body,
-            }}>Retour</button>
-          )}
-          {step < 2 ? (
-            <button onClick={() => canNext && setStep(step + 1)} style={{
-              padding: `${sp[1]} ${sp[3]}`,
-              background: canNext ? c.red : c.bgElevated,
-              border: 'none', color: canNext ? c.white : c.textTertiary,
-              fontSize: size.xs, fontWeight: 600, cursor: canNext ? 'pointer' : 'default',
-              fontFamily: f.body, transition: `all 0.2s ${ease.smooth}`,
-            }}>Suivant</button>
-          ) : (
-            <button onClick={handleFinalSubmit} disabled={submitting} style={{
-              padding: `${sp[1]} ${sp[3]}`, background: c.red, border: 'none',
-              color: c.white, fontSize: size.xs, fontWeight: 600, cursor: 'pointer',
-              fontFamily: f.body, opacity: submitting ? 0.6 : 1,
-              transition: `opacity 0.2s ${ease.smooth}`,
-            }}>{submitting ? 'Envoi\u2026' : 'Envoyer la demande'}</button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ── STATUS TRACKER (inline) ── */
-function StatusTracker({ current }) {
-  const currentStatus = STATUSES[current] || STATUSES[0]
-  return (
-    <div style={{ margin: `${sp[2]} 0 ${sp[1]}` }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        {STATUSES.map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < STATUSES.length - 1 ? 1 : 'none' }}>
-            <div title={s.label} style={{
-              width: 26, height: 26,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '10px', fontFamily: f.mono, fontWeight: 600,
-              background: i <= current ? `${currentStatus.color}15` : c.bgElevated,
-              color: i <= current ? currentStatus.color : c.textTertiary,
-              border: `1.5px solid ${i <= current ? currentStatus.color : c.border}`,
-              boxShadow: i === current ? `0 0 12px ${currentStatus.color}20` : 'none',
-              flexShrink: 0, transition: `all 0.3s ${ease.smooth}`,
-            }}>{i + 1}</div>
-            {i < STATUSES.length - 1 && (
+          {/* Notification bell */}
+          <div style={{ position: 'relative', cursor: 'pointer' }}>
+            <Icon d={icons.bell} size={18} color={c.textSecondary} />
+            {Object.values(unreadCounts).some(c => c > 0) && (
               <div style={{
-                flex: 1, height: 1.5, margin: '0 2px',
-                background: i < current ? currentStatus.color : c.border,
-                transition: `background 0.3s ${ease.smooth}`,
+                position: 'absolute',
+                top: -4, right: -4,
+                width: 8, height: 8,
+                borderRadius: '50%',
+                background: c.red,
               }} />
             )}
           </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[1], fontSize: size.xs }}>
-        <span style={{ color: currentStatus.color, fontFamily: f.mono, fontWeight: 500 }}>{currentStatus.label}</span>
-        <span style={{ color: c.textTertiary, fontFamily: f.mono }}>{current + 1}/{STATUSES.length}</span>
-      </div>
-    </div>
-  )
-}
 
-/* ════════════════════════════════════
-   MAIN DASHBOARD
-   ════════════════════════════════════ */
-export default function Dashboard({ user, profile, onSignOut }) {
-  const [orders, setOrders] = useState([])
-  const [selectedId, setSelectedId] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [documents, setDocuments] = useState([])
-  const [newMsg, setNewMsg] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [mobileView, setMobileView] = useState('list')
-  const [filter, setFilter] = useState('all')
-  const [search, setSearch] = useState('')
-  const [tab, setTab] = useState('messages')
-  const [loading, setLoading] = useState(true)
-  const [unreadMap, setUnreadMap] = useState({})
-  const chatEndRef = useRef(null)
-  const inputRef = useRef(null)
-
-  const loadOrders = useCallback(async () => {
-    try {
-      const data = await getOrders(profile.role === 'admin' ? null : user.id)
-      setOrders(data)
-      const { data: unreadData } = await supabase
-        .from('messages').select('order_id').neq('sender_id', user.id).eq('read', false)
-      const map = {}
-      ;(unreadData || []).forEach(m => { map[m.order_id] = (map[m.order_id] || 0) + 1 })
-      setUnreadMap(map)
-    } catch (e) { console.error(e) }
-    setLoading(false)
-  }, [user.id, profile.role])
-
-  useEffect(() => { loadOrders() }, [loadOrders])
-
-  useEffect(() => {
-    if (!selectedId) return
-    const load = async () => {
-      const [msgs, docs] = await Promise.all([getMessages(selectedId), getDocuments(selectedId)])
-      setMessages(msgs); setDocuments(docs)
-      await markMessagesRead(selectedId, user.id)
-      setUnreadMap(prev => ({ ...prev, [selectedId]: 0 }))
-    }
-    load()
-  }, [selectedId, user.id])
-
-  useEffect(() => {
-    if (!selectedId) return
-    const channel = subscribeToMessages(selectedId, (nm) => {
-      setMessages(prev => [...prev, nm])
-      if (nm.sender_id !== user.id) markMessagesRead(selectedId, user.id)
-    })
-    return () => { supabase.removeChannel(channel) }
-  }, [selectedId, user.id])
-
-  useEffect(() => {
-    const channel = subscribeToOrders(() => { loadOrders() })
-    return () => { supabase.removeChannel(channel) }
-  }, [loadOrders])
-
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
-
-  const selected = orders.find(o => o.id === selectedId)
-
-  const filtered = orders.filter(o => {
-    if (filter === 'active' && o.status >= 6) return false
-    if (filter === 'done' && o.status < 6) return false
-    if (search) {
-      const q = search.toLowerCase()
-      return o.product.toLowerCase().includes(q) || o.ref?.toLowerCase().includes(q) || o.supplier?.toLowerCase().includes(q)
-    }
-    return true
-  })
-
-  const handleNewOrder = async (form) => {
-    await createOrder({ clientId: user.id, ...form })
-    await loadOrders()
-  }
-
-  const handleSendMsg = async (e) => {
-    e.preventDefault()
-    if (!newMsg.trim() || !selectedId) return
-    const text = newMsg; setNewMsg('')
-    await sendMessage({ orderId: selectedId, senderId: user.id, senderRole: profile.role, content: text })
-    inputRef.current?.focus()
-  }
-
-  const handleDownloadDoc = async (doc) => {
-    const url = await getDocumentUrl(doc.storage_path)
-    if (url) window.open(url, '_blank')
-  }
-
-  const totalUnread = Object.values(unreadMap).reduce((a, b) => a + b, 0)
-
-  if (loading) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg, flexDirection: 'column', gap: sp[2] }}>
-        <div style={{ width: 32, height: 32, border: `1.5px solid ${c.border}`, borderTopColor: c.red, transform: 'rotate(45deg)', animation: 'spin 1s linear infinite' }} />
-        <span style={{ color: c.textTertiary, fontFamily: f.mono, fontSize: size.xs, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Chargement{'\u2026'}</span>
-      </div>
-    )
-  }
-
-  const filters = [
-    { key: 'all', label: 'Toutes' },
-    { key: 'active', label: 'En cours' },
-    { key: 'done', label: 'Termin\u00e9es' },
-  ]
-
-  return (
-    <div style={{ fontFamily: f.body, background: c.bg, color: c.text, height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <style>{`
-        @media(max-width:768px){.sidebar-d{display:none!important}.mobile-list{display:flex!important}.main-c{display:${mobileView==='detail'?'flex':'none'}!important}}
-        @media(min-width:769px){.mobile-list{display:none!important}.mobile-back{display:none!important}}
-      `}</style>
-
-      {/* ── HEADER ── */}
-      <header style={{
-        padding: `0 ${sp[3]}`, height: '56px', borderBottom: `1px solid ${c.borderSubtle}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: c.bgWarm, flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
-          <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
-            <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.9"/>
-            <path d="M12 11L7 5M28 11L33 5" stroke="#D4A843" strokeWidth="1.5" opacity="0.8"/>
-            <path d="M16 7L14 3M24 7L26 3" stroke="#D4A843" strokeWidth="1" opacity="0.5"/>
-            <circle cx="16" cy="19" r="2" fill="#FFD700" opacity="0.9"/>
-            <circle cx="24" cy="19" r="2" fill="#FFD700" opacity="0.9"/>
-            <ellipse cx="16" cy="19" rx="0.8" ry="1.8" fill="#0D0D0D"/>
-            <ellipse cx="24" cy="19" rx="0.8" ry="1.8" fill="#0D0D0D"/>
-            <path d="M14 15L12 13M26 15L28 13" stroke="#4A0A10" strokeWidth="1.5" opacity="0.6"/>
-          </svg>
-          <span style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.base, letterSpacing: '0.06em' }}>CARAXES</span>
-          <span style={{
-            fontSize: '10px', color: c.textTertiary, padding: '3px 10px',
-            border: `1px solid ${c.border}`, fontFamily: f.mono, letterSpacing: '0.06em',
-          }}>Client</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
-          {/* Notifications */}
-          <button style={{
-            position: 'relative', background: 'transparent', border: `1px solid ${c.border}`,
-            width: 36, height: 36, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', color: c.textSecondary, cursor: 'pointer',
-          }}>
-            <Icon d={icons.bell} size={16} />
-            {totalUnread > 0 && <span style={{
-              position: 'absolute', top: -4, right: -4, width: 16, height: 16,
-              borderRadius: '9999px', background: c.red, fontSize: '9px', color: c.white,
-              fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{totalUnread}</span>}
+          {/* New order button */}
+          <button
+            onClick={() => setIsNewOrderOpen(true)}
+            style={{
+              padding: `${sp[1]} ${sp[2]}`,
+              background: c.red,
+              border: `1px solid ${c.red}`,
+              color: c.white,
+              fontSize: size.sm,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: f.body,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: `all 0.15s ${ease.smooth}`,
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = c.redDeep
+              e.currentTarget.style.borderColor = c.redDeep
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = c.red
+              e.currentTarget.style.borderColor = c.red
+            }}>
+            <Icon d={icons.plus} size={14} color="currentColor" />
+            Nouvelle demande
           </button>
-          {/* New request */}
-          <button onClick={() => setShowForm(true)} style={{
-            background: c.red, color: c.white, border: 'none',
-            padding: `${sp[1]} ${sp[2]}`,
-            fontSize: size.xs, fontWeight: 600, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '6px',
-            boxShadow: shadow.glow, fontFamily: f.body,
-            transition: `transform 0.15s ${ease.smooth}`,
-          }}
-            onMouseDown={(e) => e.target.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
-          >
-            <Icon d={icons.plus} size={14} color={c.white} sw={2} /> Nouvelle demande
+
+          {/* Settings */}
+          <button
+            onClick={() => navigate('/settings')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: sp[1],
+              cursor: 'pointer',
+              color: c.textSecondary,
+              transition: `color 0.15s ${ease.smooth}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.color = c.gold}
+            onMouseOut={(e) => e.currentTarget.style.color = c.textSecondary}
+            title="Paramètres">
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d={icons.settings} />
+            </svg>
           </button>
+
           {/* Sign out */}
-          <button onClick={onSignOut} style={{
-            background: 'transparent', border: `1px solid ${c.border}`,
-            width: 36, height: 36, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', color: c.textTertiary, cursor: 'pointer',
-          }}>
-            <Icon d={icons.logout} size={15} />
+          <button
+            onClick={onSignOut}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: sp[1],
+              cursor: 'pointer',
+              color: c.textSecondary,
+              transition: `color 0.15s ${ease.smooth}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.color = c.red}
+            onMouseOut={(e) => e.currentTarget.style.color = c.textSecondary}>
+            <Icon d={icons.logout} size={18} color="currentColor" />
           </button>
         </div>
-      </header>
+      </div>
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      {/* MAIN CONTENT */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* ── SIDEBAR ── */}
-        <aside className="sidebar-d" style={{
-          width: '340px', borderRight: `1px solid ${c.borderSubtle}`, display: 'flex',
-          flexDirection: 'column', background: c.bg, flexShrink: 0,
-        }}>
-          <div style={{ padding: `${sp[2]} ${sp[2]}`, borderBottom: `1px solid ${c.borderSubtle}` }}>
-            {/* Search */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: sp[1], padding: `${sp[1]} ${sp[2]}`,
-              background: c.bgWarm, border: `1px solid ${c.border}`, marginBottom: sp[1],
-            }}>
-              <Icon d={icons.search} size={14} color={c.textTertiary} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher\u2026"
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: c.text, fontSize: size.xs, fontFamily: f.body }} />
-            </div>
-            {/* Filters */}
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {filters.map(({ key, label }) => (
-                <button key={key} onClick={() => setFilter(key)} style={{
-                  flex: 1, padding: '7px', border: `1px solid ${filter === key ? c.redGlow : c.border}`,
-                  background: filter === key ? c.redSoft : 'transparent',
-                  color: filter === key ? c.red : c.textTertiary,
-                  fontSize: size.xs, fontWeight: 500, cursor: 'pointer', fontFamily: f.body,
-                  transition: `all 0.15s ${ease.smooth}`,
-                }}>{label}</button>
-              ))}
-            </div>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {filtered.length === 0 ? (
-              <div style={{ padding: `${sp[4]} ${sp[3]}`, textAlign: 'center', color: c.textTertiary, fontSize: size.xs }}>
-                {orders.length === 0 ? 'Aucune commande.' : 'Aucun r\u00e9sultat'}
+        {viewMode === 'catalogue' ? (
+          /* ── CATALOGUE VIEW ── */
+          <div style={{ flex: 1, overflowY: 'auto', padding: sp[4], background: c.bg }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+              {(() => {
+                const tier = getTierByKey(profile?.client_tier || DEFAULT_TIER)
+                return (
+                  <div style={{ marginBottom: sp[4] }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[1] }}>
+                      <h2 style={{ margin: 0, fontFamily: f.display, fontSize: size.xl, color: c.gold, letterSpacing: '0.04em' }}>
+                        Catalogue Produits
+                      </h2>
+                      <span style={{
+                        padding: `4px ${sp[2]}`,
+                        background: tier.colorSoft,
+                        border: `1px solid ${tier.color}33`,
+                        color: tier.color,
+                        fontSize: size.xs,
+                        fontFamily: f.mono,
+                        fontWeight: 600,
+                        letterSpacing: '0.03em',
+                      }}>
+                        Tarif {tier.label}
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6 }}>
+                      {CATEGORIES.length} catégories sourcées directement depuis nos usines partenaires en Chine — prix adaptés à votre profil {tier.label.toLowerCase()}
+                    </p>
+                  </div>
+                )
+              })()}
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: sp[3],
+              }}>
+                {CATEGORIES.map(cat => (
+                  <div key={cat.id} style={{
+                    background: c.bgElevated,
+                    border: `1px solid ${c.border}`,
+                    padding: sp[3],
+                    transition: `all 0.2s ${ease.smooth}`,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = cat.color
+                    e.currentTarget.style.boxShadow = `0 0 0 1px ${cat.color}22`
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = c.border
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}>
+                    {/* Top accent */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: cat.color }} />
+
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[2] }}>
+                      <span style={{ fontSize: '28px' }}>{cat.icon}</span>
+                      <div>
+                        <div style={{ fontFamily: f.display, fontSize: size.base, color: c.text, fontWeight: 600 }}>{cat.name}</div>
+                        <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>{cat.description}</div>
+                      </div>
+                    </div>
+
+                    {/* Price grid — tier-adapted */}
+                    {(() => {
+                      const tierKey = profile?.client_tier || DEFAULT_TIER
+                      const tierPrice = getTierPrice(cat, tierKey)
+                      const moq = getCategoryMOQ(cat.id, tierKey)
+                      return (
+                        <div style={{
+                          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: sp[1],
+                          background: c.bgSurface, padding: sp[2], marginBottom: sp[2],
+                          border: `1px solid ${c.borderSubtle}`,
+                        }}>
+                          <div>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>Votre prix</div>
+                            <div style={{ fontSize: size.sm, fontWeight: 600, color: c.green }}>{tierPrice}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>Revente</div>
+                            <div style={{ fontSize: size.sm, fontWeight: 600, color: c.text }}>{cat.priceFrance}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>Marge</div>
+                            <div style={{ fontSize: size.sm, fontWeight: 700, color: c.gold }}>{cat.margin}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '4px' }}>MOQ</div>
+                            <div style={{ fontSize: size.sm, fontWeight: 600, color: c.amber }}>{moq.toLocaleString('fr-FR')}</div>
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Notes */}
+                    <div style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.5, marginBottom: sp[2] }}>
+                      {cat.notes}
+                    </div>
+
+                    {/* Locations */}
+                    <div style={{ display: 'flex', gap: sp[1], flexWrap: 'wrap' }}>
+                      {cat.locations.map(loc => (
+                        <span key={loc} style={{
+                          padding: `2px ${sp[1]}`, background: c.bgSurface,
+                          border: `1px solid ${c.borderSubtle}`, fontSize: '10px',
+                          fontFamily: f.mono, color: c.textTertiary, letterSpacing: '0.03em',
+                        }}>{loc}</span>
+                      ))}
+                    </div>
+
+                    {/* CTA */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setViewMode('orders')
+                        setIsNewOrderOpen(true)
+                      }}
+                      style={{
+                        marginTop: sp[2], width: '100%', padding: sp[1],
+                        background: 'transparent', border: `1px solid ${cat.color}44`,
+                        color: cat.color, fontSize: size.xs, fontFamily: f.mono,
+                        cursor: 'pointer', letterSpacing: '0.04em', fontWeight: 600,
+                        transition: `all 0.15s ${ease.smooth}`,
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = cat.color
+                        e.currentTarget.style.color = c.white
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = cat.color
+                      }}>
+                      Commander dans cette catégorie
+                    </button>
+                  </div>
+                ))}
               </div>
-            ) : filtered.map(order => (
-              <OrderCard key={order.id} order={order} selected={order.id === selectedId}
-                unreadCount={unreadMap[order.id] || 0}
-                onClick={() => { setSelectedId(order.id); setMobileView('detail'); setTab('messages') }} />
-            ))}
-          </div>
-        </aside>
-
-        {/* ── MOBILE LIST ── */}
-        <div className="mobile-list" style={{ display: 'none', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-          <div style={{ padding: `${sp[2]} ${sp[2]}`, borderBottom: `1px solid ${c.borderSubtle}` }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: sp[1], padding: `${sp[1]} ${sp[2]}`,
-              background: c.bgWarm, border: `1px solid ${c.border}`,
-            }}>
-              <Icon d={icons.search} size={14} color={c.textTertiary} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher\u2026"
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: c.text, fontSize: size.xs, fontFamily: f.body }} />
             </div>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {filtered.map(order => (
-              <OrderCard key={order.id} order={order} selected={false}
-                unreadCount={unreadMap[order.id] || 0}
-                onClick={() => { setSelectedId(order.id); setMobileView('detail'); setTab('messages') }} />
+        ) : (
+        <>
+        {/* SIDEBAR */}
+        <div className="sidebar" style={{
+          width: 360,
+          background: c.bgWarm,
+          borderRight: `1px solid ${c.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          {/* Search */}
+          <div style={{
+            padding: sp[2],
+            borderBottom: `1px solid ${c.border}`,
+          }}>
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+            }}>
+              <Icon d={icons.search} size={16} color={c.textTertiary} style={{
+                position: 'absolute',
+                left: sp[2],
+                pointerEvents: 'none',
+              }} />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: `${sp[1]} ${sp[2]} ${sp[1]} ${sp[3]}`,
+                  paddingLeft: 32,
+                  background: c.bgSurface,
+                  border: `1px solid ${c.border}`,
+                  fontSize: size.sm,
+                  color: c.text,
+                  fontFamily: f.body,
+                  transition: `border 0.15s ${ease.smooth}`,
+                }}
+                onFocus={(e) => e.target.style.borderColor = c.gold}
+                onBlur={(e) => e.target.style.borderColor = c.border}
+              />
+            </div>
+          </div>
+
+          {/* Filter buttons */}
+          <div style={{
+            display: 'flex',
+            gap: sp[1],
+            padding: sp[2],
+            borderBottom: `1px solid ${c.border}`,
+            flexWrap: 'wrap',
+          }}>
+            {[
+              { label: 'Toutes', value: 'all' },
+              { label: 'En cours', value: 'in-progress' },
+              { label: 'Terminées', value: 'delivered' },
+            ].map(f => (
+              <button
+                key={f.value}
+                onClick={() => setFilterStatus(f.value)}
+                style={{
+                  padding: `${sp[1]} ${sp[2]}`,
+                  background: filterStatus === f.value ? c.red : c.bgSurface,
+                  border: `1px solid ${filterStatus === f.value ? c.red : c.border}`,
+                  color: filterStatus === f.value ? c.white : c.text,
+                  fontSize: size.xs,
+                  cursor: 'pointer',
+                  fontFamily: f.mono,
+                  fontWeight: 500,
+                  transition: `all 0.15s ${ease.smooth}`,
+                  letterSpacing: '0.02em',
+                }}
+                onMouseOver={(e) => {
+                  if (filterStatus !== f.value) {
+                    e.target.style.borderColor = c.gold
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (filterStatus !== f.value) {
+                    e.target.style.borderColor = c.border
+                  }
+                }}>
+                {f.label}
+              </button>
             ))}
+          </div>
+
+          {/* Order list */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {filteredOrders.length === 0 ? (
+              <div style={{
+                padding: sp[4],
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <div style={{
+                  fontSize: size.xs,
+                  color: c.textTertiary,
+                  marginBottom: sp[2],
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}>
+                  Aucune commande
+                </div>
+              </div>
+            ) : (
+              filteredOrders.map(order => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  selected={selectedOrder?.id === order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  unreadCount={unreadCounts[order.id] || 0}
+                />
+              ))
+            )}
           </div>
         </div>
 
-        {/* ── MAIN CONTENT ── */}
-        <main className="main-c" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-          {selected ? (
+        {/* MAIN PANEL */}
+        <div className="main-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: c.bg }}>
+          {selectedOrder ? (
             <>
               {/* Order header */}
-              <div style={{ padding: `${sp[3]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm }}>
-                <button className="mobile-back" onClick={() => setMobileView('list')} style={{
-                  background: 'none', border: 'none', color: c.textSecondary, cursor: 'pointer', padding: 0,
-                  marginBottom: sp[2], display: 'flex', alignItems: 'center', gap: '4px', fontSize: size.xs, fontFamily: f.body,
-                }}><Icon d={icons.back} size={16} /> Retour</button>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: sp[2] }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary, marginBottom: '4px', letterSpacing: '0.03em' }}>
-                      {selected.ref} {'\u00b7'} {fmtDate(selected.created_at)}
-                    </div>
-                    <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.02em' }}>
-                      {selected.product}
-                    </h2>
-                  </div>
-                  <StatusPill status={selected.status} size="md" />
-                </div>
-
+              <div style={{
+                padding: sp[3],
+                borderBottom: `1px solid ${c.border}`,
+                background: c.bgSurface,
+              }}>
                 <div style={{
-                  display: 'flex', gap: sp[3], fontSize: size.xs, color: c.textSecondary,
-                  marginTop: sp[2], flexWrap: 'wrap',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: sp[2],
                 }}>
-                  <span><strong style={{ color: c.text }}>{fmtQty(selected.quantity)}</strong> unit{'\u00e9'}s</span>
-                  <span>Budget{'\u00a0'}: <strong style={{ color: c.gold }}>{selected.budget}</strong></span>
-                  <span>D{'\u00e9'}lai{'\u00a0'}: <strong style={{ color: c.text }}>{selected.deadline}</strong></span>
-                  <span>Fournisseur{'\u00a0'}: <strong style={{ color: c.text }}>{selected.supplier}</strong></span>
+                  <div>
+                    <div style={{
+                      fontSize: size.xs,
+                      color: c.textTertiary,
+                      marginBottom: sp[1],
+                      fontFamily: f.mono,
+                      letterSpacing: '0.03em',
+                    }}>
+                      {selectedOrder.ref}
+                    </div>
+                    <h1 style={{
+                      margin: 0,
+                      fontSize: size.xl,
+                      fontFamily: f.display,
+                      color: c.text,
+                      marginBottom: sp[1],
+                    }}>
+                      {selectedOrder.product}
+                    </h1>
+                  </div>
+                  <StatusPill status={selectedOrder.status} size="md" />
                 </div>
 
-                <StatusTracker current={selected.status} />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginTop: '4px' }}>
-                  <div style={{ flex: 1 }}><ProgressBar value={selected.progress} color={(STATUSES[selected.status] || STATUSES[0]).color} height={3} /></div>
-                  <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textTertiary, fontWeight: 500 }}>{selected.progress}%</span>
+                {/* Metadata row */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                  gap: sp[2],
+                  fontSize: size.sm,
+                }}>
+                  <div>
+                    <div style={{ color: c.textTertiary, marginBottom: '4px', fontFamily: f.mono, fontSize: size.xs }}>
+                      Quantité
+                    </div>
+                    <div style={{ color: c.text, fontWeight: 500 }}>
+                      {fmtQty(selectedOrder.quantity)} unités
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: c.textTertiary, marginBottom: '4px', fontFamily: f.mono, fontSize: size.xs }}>
+                      Budget
+                    </div>
+                    <div style={{ color: c.text, fontWeight: 500 }}>
+                      {selectedOrder.budget}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: c.textTertiary, marginBottom: '4px', fontFamily: f.mono, fontSize: size.xs }}>
+                      Deadline
+                    </div>
+                    <div style={{ color: c.text, fontWeight: 500 }}>
+                      {selectedOrder.deadline || '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: c.textTertiary, marginBottom: '4px', fontFamily: f.mono, fontSize: size.xs }}>
+                      Fournisseur
+                    </div>
+                    <div style={{ color: c.text, fontWeight: 500 }}>
+                      {selectedOrder.city || '—'}
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Pipeline tracker */}
+              <div className="pipeline-tracker" style={{ padding: `${sp[3]} ${sp[3]} 0` }}>
+                <PipelineTracker status={selectedOrder.status} />
               </div>
 
               {/* Tabs */}
-              <div style={{ display: 'flex', borderBottom: `1px solid ${c.borderSubtle}` }}>
-                {[
-                  { key: 'messages', label: 'Messages', icon: icons.msg, count: messages.length },
-                  { key: 'documents', label: 'Documents', icon: icons.doc, count: documents.length },
-                ].map(t => (
-                  <button key={t.key} onClick={() => setTab(t.key)} style={{
-                    flex: 1, padding: sp[2], background: 'transparent',
-                    border: 'none', borderBottom: `2px solid ${tab === t.key ? c.red : 'transparent'}`,
-                    color: tab === t.key ? c.text : c.textTertiary,
-                    fontSize: size.xs, fontWeight: 500, cursor: 'pointer', fontFamily: f.body,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    transition: `all 0.15s ${ease.smooth}`,
-                  }}>
-                    <Icon d={t.icon} size={14} color={tab === t.key ? c.red : c.textTertiary} />
-                    {t.label} ({t.count})
-                  </button>
-                ))}
+              <div style={{
+                display: 'flex',
+                padding: `0 ${sp[3]}`,
+                borderBottom: `1px solid ${c.border}`,
+                gap: sp[3],
+              }}>
+                {['messages', 'documents'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      padding: `${sp[2]} 0`,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: size.sm,
+                      fontWeight: activeTab === tab ? 600 : 400,
+                      color: activeTab === tab ? c.red : c.textSecondary,
+                      borderBottom: `2px solid ${activeTab === tab ? c.red : 'transparent'}`,
+                      transition: `all 0.15s ${ease.smooth}`,
+                      fontFamily: f.body,
+                      textTransform: 'capitalize',
+                      letterSpacing: '0.02em',
+                    }}
+                    onMouseOver={(e) => {
+                      if (activeTab !== tab) e.target.style.color = c.text
+                    }}
+                    onMouseOut={(e) => {
+                      if (activeTab !== tab) e.target.style.color = c.textSecondary
+                    }}>
+                      {tab === 'messages' ? 'Messages' : 'Documents'}
+                    </button>
+                  ))}
               </div>
 
               {/* Tab content */}
-              {tab === 'messages' ? (
-                <>
-                  <div style={{ flex: 1, overflowY: 'auto', padding: `${sp[3]} ${sp[3]}` }}>
-                    {messages.length === 0 && (
-                      <div style={{ textAlign: 'center', padding: sp[6], color: c.textTertiary, fontSize: size.xs }}>
-                        Aucun message. {'\u00c9'}crivez le premier{'\u00a0'}!
-                      </div>
-                    )}
-                    {messages.map((msg, i) => <ChatBubble key={msg.id || i} msg={msg} />)}
-                    <div ref={chatEndRef} />
-                  </div>
-                  <form onSubmit={handleSendMsg} style={{
-                    padding: `${sp[2]} ${sp[3]}`, borderTop: `1px solid ${c.borderSubtle}`,
-                    display: 'flex', gap: sp[1], background: c.bgWarm,
-                  }}>
-                    <input ref={inputRef} value={newMsg} onChange={e => setNewMsg(e.target.value)}
-                      placeholder={'\u00c9crivez un message\u2026'}
-                      style={{
-                        flex: 1, padding: `${sp[1]} ${sp[2]}`, background: c.bg,
-                        border: `1px solid ${c.border}`, color: c.text,
-                        fontSize: size.sm, outline: 'none', fontFamily: f.body,
-                        transition: `border-color 0.2s ${ease.smooth}`,
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = c.red}
-                      onBlur={(e) => e.target.style.borderColor = c.border}
-                    />
-                    <button type="submit" style={{
-                      background: newMsg.trim() ? c.red : c.bgElevated,
-                      color: newMsg.trim() ? c.white : c.textTertiary,
-                      border: 'none', width: 40, height: 40,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: newMsg.trim() ? 'pointer' : 'default', flexShrink: 0,
-                      transition: `all 0.15s ${ease.smooth}`,
+              <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {activeTab === 'messages' ? (
+                  <>
+                    {/* Chat area */}
+                    <div style={{
+                      flex: 1,
+                      overflowY: 'auto',
+                      padding: sp[3],
+                      display: 'flex',
+                      flexDirection: 'column',
                     }}>
-                      <Icon d={icons.send} size={16} color={newMsg.trim() ? c.white : c.textTertiary} />
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <div style={{ flex: 1, overflowY: 'auto', padding: `${sp[3]} ${sp[3]}` }}>
-                  {documents.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: sp[6], color: c.textTertiary, fontSize: size.xs }}>
-                      Aucun document pour cette commande.
+                      {messages.length === 0 ? (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          flexDirection: 'column',
+                          textAlign: 'center',
+                        }}>
+                          <Icon d={icons.msg} size={40} color={c.textTertiary} style={{ marginBottom: sp[2], opacity: 0.3 }} />
+                          <p style={{ color: c.textTertiary, margin: 0, fontSize: size.sm }}>
+                            Aucun message pour le moment
+                          </p>
+                        </div>
+                      ) : (
+                        messages.map(msg => (
+                          <ChatBubble key={msg.id} msg={msg} />
+                        ))
+                      )}
+                      <div ref={messagesEndRef} />
                     </div>
-                  ) : documents.map(doc => (
-                    <div key={doc.id} onClick={() => handleDownloadDoc(doc)} style={{
-                      display: 'flex', alignItems: 'center', gap: sp[2], padding: `${sp[2]} ${sp[2]}`,
-                      background: c.bgSurface, border: `1px solid ${c.border}`,
-                      fontSize: size.xs, cursor: 'pointer', marginBottom: sp[1],
-                      transition: `border-color 0.15s ${ease.smooth}`,
-                    }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = c.textTertiary}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = c.border}
-                    >
-                      <div style={{
-                        width: 32, height: 32,
-                        background: c.redSoft, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Icon d={icons.file} size={14} color={c.red} />
-                      </div>
-                      <span style={{ flex: 1, color: c.text, fontWeight: 500 }}>{doc.name}</span>
-                      <span style={{ color: c.textTertiary, fontFamily: f.mono }}>{doc.size}</span>
-                      <Icon d={icons.download} size={14} color={c.textSecondary} />
+
+                    {/* Message input */}
+                    <div style={{
+                      padding: sp[3],
+                      borderTop: `1px solid ${c.border}`,
+                      background: c.bgSurface,
+                    }}>
+                      <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: sp[2] }}>
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Votre message..."
+                          style={{
+                            flex: 1,
+                            padding: `${sp[1]} ${sp[2]}`,
+                            background: c.bgElevated,
+                            border: `1px solid ${c.border}`,
+                            color: c.text,
+                            fontSize: size.sm,
+                            fontFamily: f.body,
+                            transition: `border 0.15s ${ease.smooth}`,
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = c.gold}
+                          onBlur={(e) => e.target.style.borderColor = c.border}
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newMessage.trim()}
+                          style={{
+                            padding: `${sp[1]} ${sp[2]}`,
+                            background: newMessage.trim() ? c.red : c.bgHover,
+                            border: `1px solid ${newMessage.trim() ? c.red : c.border}`,
+                            color: c.white,
+                            cursor: newMessage.trim() ? 'pointer' : 'not-allowed',
+                            fontFamily: f.body,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: `all 0.15s ${ease.smooth}`,
+                          }}
+                          onMouseOver={(e) => {
+                            if (newMessage.trim()) {
+                              e.target.style.background = c.redDeep
+                              e.target.style.borderColor = c.redDeep
+                            }
+                          }}
+                          onMouseOut={(e) => {
+                            if (newMessage.trim()) {
+                              e.target.style.background = c.red
+                              e.target.style.borderColor = c.red
+                            }
+                          }}>
+                          <Icon d={icons.send} size={16} color="currentColor" />
+                        </button>
+                      </form>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </>
+                ) : (
+                  <>
+                    {/* Documents area */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: sp[3] }}>
+                      {documents.length === 0 ? (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          flexDirection: 'column',
+                          textAlign: 'center',
+                        }}>
+                          <div style={{
+                            width: 100,
+                            height: 100,
+                            border: `2px dashed ${c.border}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: sp[2],
+                            cursor: 'pointer',
+                            transition: `all 0.15s ${ease.smooth}`,
+                          }}
+                          onClick={handleUploadClick}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.borderColor = c.gold
+                            e.currentTarget.style.background = c.goldSoft
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.borderColor = c.border
+                            e.currentTarget.style.background = 'transparent'
+                          }}>
+                            <Icon d={icons.upload} size={40} color={c.textTertiary} />
+                          </div>
+                          <p style={{ color: c.text, fontSize: size.sm, fontWeight: 600, marginBottom: sp[1] }}>
+                            Ajouter des documents
+                          </p>
+                          <p style={{ color: c.textTertiary, fontSize: size.xs, margin: 0 }}>
+                            Cliquez pour télécharger vos fichiers
+                          </p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
+                          {documents.map(doc => (
+                            <DocumentCard
+                              key={doc.id}
+                              doc={doc}
+                              onDownload={() => handleDownloadDocument(doc)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload zone */}
+                    <div style={{
+                      padding: sp[3],
+                      borderTop: `1px solid ${c.border}`,
+                      background: c.bgSurface,
+                    }}>
+                      <button
+                        onClick={handleUploadClick}
+                        style={{
+                          width: '100%',
+                          padding: sp[2],
+                          background: c.bgElevated,
+                          border: `2px dashed ${c.border}`,
+                          color: c.text,
+                          cursor: 'pointer',
+                          fontFamily: f.body,
+                          fontSize: size.sm,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: sp[1],
+                          transition: `all 0.15s ${ease.smooth}`,
+                        }}
+                        onMouseOver={(e) => {
+                          e.target.style.borderColor = c.gold
+                          e.target.style.background = c.goldSoft
+                        }}
+                        onMouseOut={(e) => {
+                          e.target.style.borderColor = c.border
+                          e.target.style.background = c.bgElevated
+                        }}>
+                        <Icon d={icons.clip} size={16} color="currentColor" />
+                        Ajouter un fichier
+                      </button>
+                      <input
+                        ref={uploadInputRef}
+                        type="file"
+                        onChange={handleFileUpload}
+                        style={{ display: 'none' }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           ) : (
             /* Empty state */
             <div style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexDirection: 'column', gap: sp[2], color: c.textTertiary,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              flexDirection: 'column',
+              textAlign: 'center',
             }}>
-              <svg width="48" height="48" viewBox="0 0 36 36" fill="none" style={{ opacity: 0.25 }}>
-                <rect x="2" y="2" width="32" height="32" fill={c.red} />
-                <path d="M10 18L18 10L26 18L18 26Z" fill="oklch(98% 0.005 70)" opacity="0.9"/>
-              </svg>
-              <span style={{ fontSize: size.sm }}>S{'\u00e9'}lectionnez une commande</span>
+              <DragonEmptyState />
+              <p style={{
+                fontSize: size.lg,
+                fontFamily: f.display,
+                color: c.textSecondary,
+                margin: 0,
+                marginBottom: sp[2],
+                letterSpacing: '0.03em',
+              }}>
+                Sélectionnez une commande
+              </p>
+              <p style={{
+                fontSize: size.sm,
+                color: c.textTertiary,
+                margin: 0,
+              }}>
+                ou créez une nouvelle demande pour commencer
+              </p>
             </div>
           )}
-        </main>
+        </div>
+        </>
+        )}
       </div>
 
-      {showForm && <NewRequestForm onClose={() => setShowForm(false)} onSubmit={handleNewOrder} />}
+      {/* New order modal */}
+      <NewOrderModal
+        isOpen={isNewOrderOpen}
+        onClose={() => setIsNewOrderOpen(false)}
+        onSubmit={handleCreateOrder}
+      />
     </div>
   )
 }

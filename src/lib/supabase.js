@@ -44,11 +44,47 @@ export async function getSession() {
 }
 
 export async function getProfile(userId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    console.error('getProfile error:', error)
+    return null
+  }
+
+  // If no profile exists, auto-create one
+  if (!data) {
+    const { data: session } = await supabase.auth.getSession()
+    const email = session?.session?.user?.email || ''
+    const { data: newProfile, error: insertError } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        email,
+        full_name: email.split('@')[0],
+        role: 'client',
+        client_tier: 'detaillant',
+        onboarding_done: false,
+      })
+      .select()
+      .maybeSingle()
+
+    if (insertError) {
+      console.error('Auto-create profile error:', insertError)
+      // Profile might already exist (race condition) — retry fetch
+      const { data: retryData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle()
+      return retryData
+    }
+    return newProfile
+  }
+
   return data
 }
 
@@ -101,7 +137,7 @@ export async function deleteOrder(orderId) {
 export async function getMessages(orderId) {
   const { data, error } = await supabase
     .from('messages')
-    .select('*, profiles:sender_id(full_name, role)')
+    .select('*')
     .eq('order_id', orderId)
     .order('created_at', { ascending: true })
   if (error) throw error
@@ -206,12 +242,33 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' Mo'
 }
 
+// ─── UPDATE PROFILE ───
+export async function updateProfile(userId, updates) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 // ─── ALL PROFILES (admin) ───
 export async function getAllClients() {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('role', 'client')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export async function getAllProfiles() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []

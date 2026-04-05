@@ -1,7 +1,7 @@
 import { c, f, size as sz, ease, STATUSES } from '../lib/theme'
 
 export default function StatusPill({ status, size = 'sm' }) {
-  const s = STATUSES[status] || STATUSES[0]
+  const s = (typeof status === 'number' ? STATUSES[status] : STATUSES.find(x => x.key === status)) || STATUSES[0]
   const isSm = size === 'sm'
   return (
     <span style={{
