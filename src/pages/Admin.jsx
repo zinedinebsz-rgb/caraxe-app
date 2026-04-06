@@ -3,10 +3,10 @@ import { c, f, size, sp, shadow, ease, transition, STATUSES } from '../lib/theme
 import {
   getOrders, updateOrder, deleteOrder, getMessages, sendMessage,
   getDocuments, uploadDocument, getDocumentUrl, getAllClients, getAllProfiles, createOrder,
-  subscribeToMessages, subscribeToOrders, supabase, updateProfile,
+  subscribeToMessages, subscribeToOrders, supabase, updateProfile, resetPassword,
 } from '../lib/supabase'
-import { CATEGORIES } from '../lib/categories'
-import { TIERS, getTierByKey, DEFAULT_TIER, getTierPrice, getCategoryMOQ } from '../lib/clientTiers'
+import { CATALOGS, getCatalog } from '../lib/catalogsByProfile'
+import { TIERS, getTierByKey, DEFAULT_TIER, getTierPrice, getTierMOQ } from '../lib/clientTiers'
 import StatusPill, { ProgressBar } from '../components/StatusPill'
 import { useToast, ConfirmDialog } from '../components/Toast'
 import { exportFullBackupJSON, exportBackupCSVs } from '../lib/backup'
@@ -56,6 +56,12 @@ const icons = {
   trending: 'M23 6l-9.5 9.5-5-5L1 18',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
   chevDown: 'M6 9l6 6 6-6',
+  lock: 'M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4',
+  eye: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z',
+  refresh: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
+  save: 'M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8',
+  link: 'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71',
+  trash: 'M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2',
 }
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -132,8 +138,16 @@ export default function Admin({ user, profile, onSignOut }) {
   const [savingEdit, setSavingEdit] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState({ open: false })
+  const [mobileShowDetail, setMobileShowDetail] = useState(false)
+  const [catalogProduct, setCatalogProduct] = useState(null) // selected product for detail/edit
+  const [catalogEditData, setCatalogEditData] = useState(null) // editing state
+  const [clientPasswordModal, setClientPasswordModal] = useState(null) // client for password management
+  const [newTempPassword, setNewTempPassword] = useState('')
+  const [passwordAction, setPasswordAction] = useState(null) // 'reset' | 'set' | null
+  const [passwordLoading, setPasswordLoading] = useState(false)
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   const loadAll = useCallback(async () => {
     const [ordersData, clientsData, profilesData] = await Promise.all([getOrders(), getAllClients(), getAllProfiles()])
@@ -163,6 +177,18 @@ export default function Admin({ user, profile, onSignOut }) {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length])
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setMainTab('commandes')
+        setTimeout(() => searchInputRef.current?.focus(), 100)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   const clientName = (clientId) => {
     const cl = allProfiles.find(x => x.id === clientId) || clients.find(x => x.id === clientId)
     return cl ? (cl.full_name || cl.email) : 'Inconnu'
@@ -171,7 +197,7 @@ export default function Admin({ user, profile, onSignOut }) {
   const clientInitial = (clientId) => clientName(clientId).charAt(0).toUpperCase()
 
   const filtered = orders.filter(o => {
-    const isDone = o.status === 'delivered' || o.status === 'completed'
+    const isDone = o.status === 6 || o.status === 'delivered' || o.status === 'completed'
     if (filter === 'active' && isDone) return false
     if (filter === 'done' && !isDone) return false
     if (search) {
@@ -190,7 +216,7 @@ export default function Admin({ user, profile, onSignOut }) {
       await sendMessage({ orderId: selectedId, senderId: user.id, senderRole: 'admin', content: text })
     } catch (err) {
       setNewMsg(text)
-      toast.error('Impossible d\u2019envoyer le message.')
+      toast.error('Impossible d’envoyer le message.')
     } finally { setSendingMsg(false) }
   }
 
@@ -200,15 +226,15 @@ export default function Admin({ user, profile, onSignOut }) {
     setConfirmDialog({
       open: true,
       title: 'Changer le statut',
-      message: `Passer la commande au statut \u00ab ${statusLabel} \u00bb ?`,
+      message: `Passer la commande au statut « ${statusLabel} » ?`,
       onConfirm: async () => {
         setConfirmDialog({ open: false })
         try {
           const statusIndex = STATUSES.findIndex(s => s.key === newStatusKey)
           const progress = Math.round((statusIndex / (STATUSES.length - 1)) * 100)
-          await updateOrder(selectedId, { status: newStatusKey, progress })
+          await updateOrder(selectedId, { status: statusIndex, progress })
           await loadAll()
-          toast.success(`Statut mis \u00e0 jour : ${statusLabel}`)
+          toast.success(`Statut mis à jour : ${statusLabel}`)
         } catch (err) { toast.error('Erreur lors du changement de statut.') }
       },
     })
@@ -229,7 +255,7 @@ export default function Admin({ user, profile, onSignOut }) {
       await updateOrder(selectedId, payload)
       setEditMode(false)
       await loadAll()
-      toast.success('Commande mise \u00e0 jour')
+      toast.success('Commande mise à jour')
     } catch (err) { toast.error('Erreur lors de la sauvegarde.') }
     finally { setSavingEdit(false) }
   }
@@ -247,8 +273,8 @@ export default function Admin({ user, profile, onSignOut }) {
       await uploadDocument(selectedId, file, user.id)
       const docs = await getDocuments(selectedId)
       setDocuments(docs)
-      toast.success('Document ajout\u00e9')
-    } catch (err) { toast.error('Erreur lors de l\u2019envoi du fichier.') }
+      toast.success('Document ajouté')
+    } catch (err) { toast.error('Erreur lors de l’envoi du fichier.') }
     finally { setUploadingFile(false); fileInputRef.current.value = '' }
   }
 
@@ -256,7 +282,7 @@ export default function Admin({ user, profile, onSignOut }) {
     try {
       const url = await getDocumentUrl(doc.storage_path)
       if (url) window.open(url, '_blank')
-    } catch (err) { toast.error('Impossible de t\u00e9l\u00e9charger le document.') }
+    } catch (err) { toast.error('Impossible de télécharger le document.') }
   }
 
   const handleCreateOrder = async (e) => {
@@ -275,8 +301,8 @@ export default function Admin({ user, profile, onSignOut }) {
       setCreateOrderData({ clientId: '', product: '', quantity: '', budget: '', deadline: '', notes: '' })
       setShowCreateOrder(false)
       await loadAll()
-      toast.success('Commande cr\u00e9\u00e9e')
-    } catch (err) { toast.error('Erreur lors de la cr\u00e9ation de la commande.') }
+      toast.success('Commande créée')
+    } catch (err) { toast.error('Erreur lors de la création de la commande.') }
   }
 
   const getClientOrderCount = (clientId) => orders.filter(o => o.client_id === clientId).length
@@ -303,31 +329,39 @@ export default function Admin({ user, profile, onSignOut }) {
   const filters = [
     { key: 'all', label: 'Toutes' },
     { key: 'active', label: 'En cours' },
-    { key: 'done', label: 'Termin\u00e9es' },
+    { key: 'done', label: 'Terminées' },
   ]
 
   const mainTabs = [
-    { key: 'overview', label: 'Vue d\u2019ensemble', icon: icons.trending },
+    { key: 'overview', label: 'Vue d’ensemble', icon: icons.trending },
     { key: 'commandes', label: 'Commandes', icon: icons.file },
     { key: 'catalogue', label: 'Catalogue', icon: icons.doc },
     { key: 'clients', label: 'Clients', icon: icons.users },
   ]
 
-  const activeOrders = orders.filter(o => o.status !== 'delivered').length
-  const deliveredOrders = orders.filter(o => o.status === 'delivered').length
+  const activeOrders = orders.filter(o => o.status !== 6 && o.status !== 'delivered').length
+  const deliveredOrders = orders.filter(o => o.status === 6 || o.status === 'delivered').length
 
   /* ── LOADING ── */
   if (loading) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg, flexDirection: 'column', gap: sp[3] }}>
       <style>{keyframes}</style>
       <div style={{ width: 36, height: 36, border: `2px solid ${c.border}`, borderTopColor: c.gold, animation: 'spin 1s linear infinite' }} />
-      <span style={{ color: c.textTertiary, fontFamily: f.mono, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Chargement\u2026</span>
+      <span style={{ color: c.textTertiary, fontFamily: f.mono, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Chargement…</span>
     </div>
   )
 
   return (
     <div style={{ fontFamily: f.body, background: c.bg, color: c.text, height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <style>{keyframes}{scrollbarCSS}</style>
+      <style>{keyframes}{scrollbarCSS}{`
+        @media (max-width: 768px) {
+          .admin-nav-center { display: none !important; }
+          .admin-stats { display: none !important; }
+          .admin-sidebar { width: 100% !important; }
+          .admin-detail { width: 100% !important; }
+          .admin-mobile-nav { display: flex !important; }
+        }
+      `}</style>
 
       {/* ════════════ HEADER ════════════ */}
       <header style={{
@@ -355,7 +389,7 @@ export default function Admin({ user, profile, onSignOut }) {
         </div>
 
         {/* Center: nav tabs */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '2px', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+        <nav className="admin-nav-center" style={{ display: 'flex', alignItems: 'center', gap: '2px', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
           {mainTabs.map(t => (
             <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{
               padding: `8px ${sp[3]}`, background: mainTab === t.key ? c.bgElevated : 'transparent',
@@ -376,12 +410,12 @@ export default function Admin({ user, profile, onSignOut }) {
 
         {/* Right: stats + logout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: sp[3] }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], fontFamily: f.mono, fontSize: '10px', letterSpacing: '0.04em' }}>
+          <div className="admin-stats" style={{ display: 'flex', alignItems: 'center', gap: sp[2], fontFamily: f.mono, fontSize: '10px', letterSpacing: '0.04em' }}>
             <span style={{ color: c.red, fontWeight: 700 }}>{activeOrders}</span>
             <span style={{ color: c.textTertiary }}>en cours</span>
             <span style={{ color: c.border }}>|</span>
             <span style={{ color: c.green, fontWeight: 700 }}>{deliveredOrders}</span>
-            <span style={{ color: c.textTertiary }}>livr\u00e9es</span>
+            <span style={{ color: c.textTertiary }}>livrées</span>
           </div>
           <button onClick={onSignOut} style={{
             background: 'transparent', border: `1px solid ${c.border}`,
@@ -396,12 +430,29 @@ export default function Admin({ user, profile, onSignOut }) {
         </div>
       </header>
 
+      {/* Mobile nav tabs */}
+      <div className="admin-mobile-nav" style={{
+        display: 'none', gap: '1px', background: c.bgSurface,
+        borderBottom: `1px solid ${c.border}`, flexShrink: 0, overflow: 'auto',
+      }}>
+        {mainTabs.map(t => (
+          <button key={t.key} onClick={() => { setMainTab(t.key); setSelectedId(null) }} style={{
+            flex: 1, padding: '10px 4px', background: mainTab === t.key ? c.bgElevated : 'transparent',
+            border: 'none', borderBottom: `2px solid ${mainTab === t.key ? c.gold : 'transparent'}`,
+            color: mainTab === t.key ? c.text : c.textTertiary,
+            fontSize: '10px', fontWeight: 600, cursor: 'pointer', fontFamily: f.mono,
+            letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
         {/* ════════════ SIDEBAR (Commandes) ════════════ */}
         {mainTab === 'commandes' && (
-        <aside style={{
-          width: '360px', borderRight: `1px solid ${c.borderSubtle}`, display: 'flex',
+        <aside className="admin-sidebar" style={{
+          width: '360px', borderRight: `1px solid ${c.borderSubtle}`,
+          display: mobileShowDetail && window.innerWidth <= 768 ? 'none' : 'flex',
           flexDirection: 'column', background: c.bg, flexShrink: 0,
         }}>
           {/* Search & filters */}
@@ -412,8 +463,8 @@ export default function Admin({ user, profile, onSignOut }) {
               transition: `all 0.2s ${ease.smooth}`,
             }}>
               <Icon d={icons.search} size={15} color={c.textTertiary} />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher\u2026"
+              <input ref={searchInputRef} value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Rechercher…"
                 style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: c.text, fontSize: size.sm, fontFamily: f.body }}
                 onFocus={(e) => { e.target.parentElement.style.borderColor = c.gold; e.target.parentElement.style.boxShadow = focusGlow }}
                 onBlur={(e) => { e.target.parentElement.style.borderColor = c.border; e.target.parentElement.style.boxShadow = 'none' }}
@@ -437,14 +488,14 @@ export default function Admin({ user, profile, onSignOut }) {
           {/* Order list */}
           <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto' }}>
             {filtered.length === 0 ? (
-              <DragonEmptyState title="Aucune commande" subtitle="Aucun r\u00e9sultat pour ce filtre" />
+              <DragonEmptyState title="Aucune commande" subtitle="Aucun résultat pour ce filtre" />
             ) : (
               filtered.map((order, i) => {
                 const isSelected = order.id === selectedId
-                const statusObj = STATUSES.find(s => s.key === order.status) || STATUSES[0]
+                const statusObj = (typeof order.status === 'number' ? STATUSES[order.status] : STATUSES.find(s => s.key === order.status)) || STATUSES[0]
                 return (
                   <div key={order.id}
-                    onClick={() => { setSelectedId(order.id); setTab('messages'); setEditMode(false) }}
+                    onClick={() => { setSelectedId(order.id); setTab('messages'); setEditMode(false); setMobileShowDetail(true) }}
                     style={{
                       padding: `${sp[2]} ${sp[3]}`, cursor: 'pointer',
                       borderBottom: `1px solid ${c.borderSubtle}`,
@@ -491,7 +542,7 @@ export default function Admin({ user, profile, onSignOut }) {
         )}
 
         {/* ════════════ MAIN CONTENT ════════════ */}
-        <main className="admin-scroll" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+        <main className="admin-scroll admin-detail" style={{ flex: 1, display: !mobileShowDetail && window.innerWidth <= 768 && mainTab === 'commandes' ? 'none' : 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
 
           {/* ── OVERVIEW TAB ── */}
           {mainTab === 'overview' && (
@@ -509,7 +560,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
                 <div style={{ display: 'flex', gap: sp[1] }}>
                   <button onClick={async () => {
-                    toast.success('Export JSON en cours\u2026')
+                    toast.success('Export JSON en cours…')
                     try { const s = await exportFullBackupJSON(); toast.success(`Backup JSON : ${s.total_clients} clients, ${s.total_orders} commandes`) }
                     catch (e) { toast.error('Erreur export JSON') }
                   }} style={{
@@ -524,7 +575,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     <Icon d={icons.download} size={12} /> Backup JSON
                   </button>
                   <button onClick={async () => {
-                    toast.success('Export CSV en cours\u2026')
+                    toast.success('Export CSV en cours…')
                     try { const s = await exportBackupCSVs(); toast.success(`Backup CSV : ${s.total_clients} clients, ${s.total_orders} commandes`) }
                     catch (e) { toast.error('Erreur export CSV') }
                   }} style={{
@@ -544,10 +595,10 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* Stats cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: sp[3], marginBottom: sp[5] }}>
                 {[
-                  { label: 'Clients', value: allProfiles.length, color: c.gold, sub: 'profils actifs' },
-                  { label: 'En cours', value: activeOrders, color: c.red, sub: 'commandes actives' },
-                  { label: 'Livr\u00e9es', value: deliveredOrders, color: c.green, sub: 'termin\u00e9es' },
-                  { label: 'Total', value: orders.length, color: c.blue, sub: 'toutes commandes' },
+                  { label: 'Clients', value: allProfiles.length, color: c.gold, sub: `${allProfiles.filter(p => p.client_tier === 'grossiste' || p.client_tier === 'pro').length} grossistes/pro` },
+                  { label: 'En cours', value: activeOrders, color: c.red, sub: orders.length > 0 ? `${Math.round((activeOrders / orders.length) * 100)}% du total` : '0%' },
+                  { label: 'Livrées', value: deliveredOrders, color: c.green, sub: orders.length > 0 ? `taux: ${Math.round((deliveredOrders / orders.length) * 100)}%` : '0%' },
+                  { label: 'Ce mois', value: orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth() && new Date(o.created_at).getFullYear() === new Date().getFullYear()).length, color: c.blue, sub: new Date().toLocaleDateString('fr-FR', { month: 'long' }) },
                 ].map((stat, i) => (
                   <div key={i} style={{
                     padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`,
@@ -581,7 +632,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       Pipeline
                     </h3>
                     <div style={{ fontSize: '10px', color: c.textTertiary, fontFamily: f.mono, marginTop: '2px', letterSpacing: '0.04em' }}>
-                      R\u00e9partition des commandes par statut
+                      Répartition des commandes par statut
                     </div>
                   </div>
                   <div style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: c.gold }}>{orders.length}</div>
@@ -590,7 +641,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 {/* Bar */}
                 <div style={{ display: 'flex', gap: '1px', height: '28px', overflow: 'hidden', marginBottom: sp[3] }}>
                   {STATUSES.map((st, i) => {
-                    const count = orders.filter(o => o.status === st.key).length
+                    const count = orders.filter(o => o.status === i).length
                     const percent = orders.length > 0 ? (count / orders.length) * 100 : 0
                     return (
                       <div key={i} style={{
@@ -609,7 +660,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 {/* Legend */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${sp[2]} ${sp[3]}` }}>
                   {STATUSES.map((st, i) => {
-                    const count = orders.filter(o => o.status === st.key).length
+                    const count = orders.filter(o => o.status === i).length
                     return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <div style={{ width: 8, height: 8, background: st.color, flexShrink: 0 }} />
@@ -624,12 +675,12 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* Recent Activity */}
               <div style={{ animation: 'fadeSlideIn 0.5s ease-out 0.3s both' }}>
                 <h3 style={{ fontFamily: f.display, fontSize: size.lg, marginBottom: sp[1], fontWeight: 600, letterSpacing: '-0.01em' }}>
-                  Activit\u00e9 r\u00e9cente
+                  Activité récente
                 </h3>
                 <ArtDecoDivider width={80} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: sp[2] }}>
                   {orders.length === 0 ? (
-                    <DragonEmptyState title="Pas de commandes" subtitle="Cr\u00e9ez votre premi\u00e8re commande pour voir l\u2019activit\u00e9 ici" />
+                    <DragonEmptyState title="Pas de commandes" subtitle="Créez votre première commande pour voir l’activité ici" />
                   ) : (
                     orders.slice(0, 8).map((order, i) => (
                       <div key={order.id} style={{
@@ -664,6 +715,11 @@ export default function Admin({ user, profile, onSignOut }) {
               <div style={{ padding: `${sp[3]} ${sp[4]}`, borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm, flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
+                    <button className="admin-mobile-nav" onClick={() => setMobileShowDetail(false)} style={{
+                      display: 'none', background: 'none', border: 'none', color: c.red,
+                      fontSize: size.sm, fontFamily: f.mono, cursor: 'pointer', padding: 0,
+                      marginBottom: '6px', letterSpacing: '0.04em',
+                    }}>← Retour</button>
                     <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, fontWeight: 600, letterSpacing: '0.06em', marginBottom: '4px' }}>
                       {selected?.ref}
                     </div>
@@ -671,7 +727,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       {selected?.product}
                     </h2>
                     <p style={{ fontSize: size.xs, color: c.textSecondary }}>
-                      {clientName(selected?.client_id)} \u00b7 {selected?.quantity?.toLocaleString('fr-FR')} unit\u00e9s \u00b7 {selected?.budget}
+                      {clientName(selected?.client_id)} · {selected?.quantity?.toLocaleString('fr-FR')} unités · {selected?.budget}
                     </p>
                   </div>
                   <StatusPill status={selected?.status} size="lg" />
@@ -682,7 +738,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div style={{ display: 'flex', borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm, flexShrink: 0, paddingLeft: sp[4], gap: '2px' }}>
                 {[
                   { key: 'messages', label: 'Messages', icon: icons.msg },
-                  { key: 'details', label: 'D\u00e9tails', icon: icons.edit },
+                  { key: 'details', label: 'Détails', icon: icons.edit },
                   { key: 'documents', label: 'Documents', icon: icons.doc },
                 ].map(t => (
                   <button key={t.key} onClick={() => setTab(t.key)} style={{
@@ -724,7 +780,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       <form onSubmit={handleSendMsg} style={{ display: 'flex', gap: sp[2] }}>
                         <input
                           value={newMsg} onChange={e => setNewMsg(e.target.value)}
-                          placeholder="Votre message\u2026"
+                          placeholder="Votre message…"
                           style={{ flex: 1, padding: `10px ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', transition: `all 0.2s ${ease.smooth}` }}
                           onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
                           onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
@@ -753,8 +809,8 @@ export default function Admin({ user, profile, onSignOut }) {
                       <div style={labelStyle}>Statut de la commande</div>
                       <div style={{ display: 'flex', gap: '1px', padding: '2px', background: c.bg, border: `1px solid ${c.border}` }}>
                         {STATUSES.map((st, i) => {
-                          const currentIdx = STATUSES.findIndex(s => s.key === selected?.status)
-                          const isActive = st.key === selected?.status
+                          const currentIdx = typeof selected?.status === 'number' ? selected.status : STATUSES.findIndex(s => s.key === selected?.status)
+                          const isActive = i === currentIdx
                           const isPast = i < currentIdx
                           return (
                             <button key={st.key} onClick={() => handleStatusChange(st.key)} style={{
@@ -768,7 +824,7 @@ export default function Admin({ user, profile, onSignOut }) {
                               position: 'relative',
                             }}>
                               {isActive && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: c.bg, opacity: 0.3 }} />}
-                              {isPast ? '\u2713 ' : ''}{st.label}
+                              {isPast ? '✓ ' : ''}{st.label}
                             </button>
                           )
                         })}
@@ -803,9 +859,9 @@ export default function Admin({ user, profile, onSignOut }) {
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: sp[1], fontSize: size.xs, color: c.textSecondary }}>
                             <div>{clientProfile.email}</div>
-                            <div>{clientProfile.phone || '\u2014'}</div>
-                            <div>{clientProfile.company || '\u2014'}</div>
-                            <div>{clientProfile.city || '\u2014'}</div>
+                            <div>{clientProfile.phone || '—'}</div>
+                            <div>{clientProfile.company || '—'}</div>
+                            <div>{clientProfile.city || '—'}</div>
                           </div>
                         </div>
                       ) : null
@@ -815,10 +871,10 @@ export default function Admin({ user, profile, onSignOut }) {
                     {!editMode ? (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: sp[3] }}>
                         {[
-                          { label: 'Quantit\u00e9', value: (selected?.quantity || 0).toLocaleString('fr-FR') },
-                          { label: 'Budget', value: selected?.budget || '\u2013' },
-                          { label: 'Deadline', value: selected?.deadline || '\u2013' },
-                          { label: 'Notes', value: selected?.notes || '\u2013', col: 2 },
+                          { label: 'Quantité', value: (selected?.quantity || 0).toLocaleString('fr-FR') },
+                          { label: 'Budget', value: selected?.budget || '–' },
+                          { label: 'Deadline', value: selected?.deadline || '–' },
+                          { label: 'Notes', value: selected?.notes || '–', col: 2 },
                         ].map((field, i) => (
                           <div key={i} style={{ gridColumn: field.col ? `span ${field.col}` : 'auto' }}>
                             <div style={labelStyle}>{field.label}</div>
@@ -831,7 +887,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     ) : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: sp[3], maxWidth: '600px' }}>
                         {[
-                          { key: 'quantity', label: 'Quantit\u00e9' },
+                          { key: 'quantity', label: 'Quantité' },
                           { key: 'budget', label: 'Budget' },
                           { key: 'deadline', label: 'Deadline' },
                           { key: 'notes', label: 'Notes', col: 2 },
@@ -896,7 +952,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   <div className="admin-scroll" style={{ padding: sp[4], overflowY: 'auto' }}>
                     {/* Upload zone */}
                     <div style={{ marginBottom: sp[4] }}>
-                      <div style={labelStyle}>T\u00e9l\u00e9charger un document</div>
+                      <div style={labelStyle}>Télécharger un document</div>
                       <label style={{
                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                         padding: sp[4], background: c.bgSurface, border: `2px dashed ${c.border}`,
@@ -907,7 +963,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgSurface }}>
                         <Icon d={uploadingFile ? icons.trending : icons.upload} size={24} color={c.textTertiary} />
                         <div style={{ fontSize: size.sm, color: c.text, fontWeight: 600 }}>
-                          {uploadingFile ? 'Envoi en cours\u2026' : 'Cliquez ou glissez un fichier'}
+                          {uploadingFile ? 'Envoi en cours…' : 'Cliquez ou glissez un fichier'}
                         </div>
                         <div style={{ fontSize: '10px', color: c.textTertiary, fontFamily: f.mono }}>Max 10 Mo</div>
                         <input ref={fileInputRef} type="file" onChange={handleFileUpload} style={{ display: 'none' }} />
@@ -915,7 +971,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     </div>
 
                     {documents.length === 0 ? (
-                      <DragonEmptyState title="Aucun document" subtitle="Ajoutez des documents \u00e0 cette commande" />
+                      <DragonEmptyState title="Aucun document" subtitle="Ajoutez des documents à cette commande" />
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                         {documents.map((doc, i) => (
@@ -941,7 +997,7 @@ export default function Admin({ user, profile, onSignOut }) {
                             }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = c.gold; e.currentTarget.style.color = c.bg }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.gold }}>
-                              <Icon d={icons.download} size={12} color="currentColor" /> T\u00e9l\u00e9charger
+                              <Icon d={icons.download} size={12} color="currentColor" /> Télécharger
                             </button>
                           </div>
                         ))}
@@ -953,7 +1009,7 @@ export default function Admin({ user, profile, onSignOut }) {
             </div>
           ) : mainTab === 'commandes' ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <DragonEmptyState title="S\u00e9lectionnez une commande" subtitle="Choisissez une commande dans la liste pour voir les d\u00e9tails" />
+              <DragonEmptyState title="Sélectionnez une commande" subtitle="Choisissez une commande dans la liste pour voir les détails" />
             </div>
           ) : null}
 
@@ -964,68 +1020,290 @@ export default function Admin({ user, profile, onSignOut }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <div>
                     <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, letterSpacing: '-0.01em' }}>
-                      Catalogue Produits
+                      Catalogue par Profil
                     </h2>
                     <ArtDecoDivider width={100} />
                     <p style={{ fontSize: size.sm, color: c.textSecondary, marginTop: sp[1] }}>
-                      {CATEGORIES.length} cat\u00e9gories de sourcing \u00b7 Yiwu \u00b7 Guangzhou \u00b7 Shenzhen
+                      {TIERS.length} profils clients · {Object.values(CATALOGS).flat().length} catégories au total
                     </p>
-                  </div>
-                  <div style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, color: c.gold }}>
-                    \u00d75
-                    <div style={{ fontSize: '10px', fontFamily: f.mono, color: c.textTertiary, fontWeight: 400, textAlign: 'right', letterSpacing: '0.04em' }}>marge moy.</div>
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: sp[3] }}>
-                {CATEGORIES.map((cat, i) => (
-                  <div key={cat.id} style={{
-                    background: c.bgSurface, border: `1px solid ${c.border}`,
-                    transition: `all 0.3s ${ease.out}`, overflow: 'hidden',
-                    animation: `fadeSlideIn 0.4s ease-out ${i * 50}ms both`,
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = cat.color; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)' }}>
-                    {/* Header */}
-                    <div style={{ padding: `${sp[3]} ${sp[3]}`, display: 'flex', alignItems: 'center', gap: sp[2], borderBottom: `1px solid ${c.borderSubtle}` }}>
-                      <span style={{ fontSize: '26px' }}>{cat.icon}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.md, color: c.text, letterSpacing: '-0.01em' }}>{cat.name}</div>
-                        <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px' }}>{cat.description}</div>
-                      </div>
-                    </div>
+              {/* Tier sections */}
+              {TIERS.map(t => {
+                const tierCatalog = getCatalog(t.key)
+                return (
+                <div key={t.key} style={{ marginBottom: sp[5] }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[3] }}>
+                    <span style={{ fontSize: '20px' }}>{t.icon}</span>
+                    <span style={{
+                      fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: t.color,
+                    }}>{t.label}</span>
+                    <span style={{
+                      fontFamily: f.mono, fontSize: '10px', color: c.textTertiary,
+                      padding: '2px 8px', background: t.colorSoft, border: `1px solid ${t.color}33`,
+                      letterSpacing: '0.04em',
+                    }}>{tierCatalog.length} catégories</span>
+                  </div>
 
-                    {/* Price Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
-                      {[
-                        { label: 'Prix Chine', value: cat.priceChina, color: c.green },
-                        { label: 'Prix France', value: cat.priceFrance, color: c.blue },
-                        { label: 'Marge', value: cat.margin, color: c.gold },
-                      ].map((cell, j) => (
-                        <div key={j} style={{ padding: `${sp[2]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', borderBottom: `1px solid ${c.borderSubtle}` }}>
-                          <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
-                          <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: cell.color }}>{cell.value}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: sp[2] }}>
+                    {tierCatalog.map((cat, i) => (
+                      <div key={cat.id} style={{
+                        background: c.bgSurface, border: `1px solid ${c.border}`,
+                        transition: `all 0.3s ${ease.out}`, overflow: 'hidden', cursor: 'pointer',
+                      }}
+                      onClick={() => { setCatalogProduct({ ...cat, tierKey: t.key, tierLabel: t.label, tierColor: t.color }); setCatalogEditData(null) }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = t.color; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)' }}>
+                        <div style={{ height: 2, background: t.color }} />
+                        <div style={{ padding: `${sp[2]} ${sp[3]}`, display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                          <span style={{ fontSize: '22px' }}>{cat.icon}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, color: c.text }}>{cat.name}</div>
+                            <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px', lineHeight: 1.4 }}>{cat.description}</div>
+                          </div>
+                          <Icon d={icons.chevDown} size={14} color={c.textTertiary} />
                         </div>
-                      ))}
-                    </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: `1px solid ${c.borderSubtle}` }}>
+                          {[
+                            { label: 'Prix', value: cat.priceRange, color: c.green },
+                            { label: 'Marge', value: cat.margin, color: c.gold },
+                            { label: 'MOQ', value: cat.moq.toLocaleString('fr-FR'), color: c.amber },
+                          ].map((cell, j) => (
+                            <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
+                              <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
+                              <div style={{ fontFamily: f.mono, fontSize: size.xs, fontWeight: 700, color: cell.color }}>{cell.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ padding: `${sp[1]} ${sp[2]}`, display: 'flex', gap: '3px', flexWrap: 'wrap', borderTop: `1px solid ${c.borderSubtle}` }}>
+                          {cat.topProducts.slice(0, 3).map((p, pi) => (
+                            <span key={pi} style={{ fontSize: '9px', color: c.textTertiary, padding: '1px 6px', background: c.bg, border: `1px solid ${c.borderSubtle}` }}>{p}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                )
+              })}
 
-                    {/* Notes & Locations */}
-                    <div style={{ padding: `${sp[2]} ${sp[2]}` }}>
-                      <div style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.5, marginBottom: sp[1] }}>{cat.notes}</div>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {cat.locations.map(loc => (
-                          <span key={loc} style={{
-                            fontSize: '9px', fontFamily: f.mono, padding: '2px 6px',
-                            background: c.bg, border: `1px solid ${c.border}`,
-                            color: c.textTertiary, letterSpacing: '0.04em', textTransform: 'uppercase',
-                          }}>{loc}</span>
+              {/* ── CATALOG PRODUCT DETAIL MODAL ── */}
+              {catalogProduct && (
+                <div style={{
+                  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                  background: 'rgba(0,0,0,0.7)', zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  animation: 'fadeSlideIn 0.2s ease-out',
+                }} onClick={() => { setCatalogProduct(null); setCatalogEditData(null) }}>
+                  <div style={{
+                    width: '95%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto',
+                    background: c.bgSurface, border: `1px solid ${c.border}`,
+                  }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
+                    {/* Header bar */}
+                    <div style={{ height: 3, background: catalogProduct.tierColor }} />
+                    <div style={{ padding: `${sp[3]} ${sp[4]}` }}>
+                      {/* Title row */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: sp[3] }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                          <span style={{ fontSize: '32px' }}>{catalogProduct.icon}</span>
+                          <div>
+                            <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, margin: 0 }}>{catalogEditData ? catalogEditData.name : catalogProduct.name}</h3>
+                            <span style={{
+                              fontFamily: f.mono, fontSize: '10px', color: catalogProduct.tierColor,
+                              padding: '2px 8px', background: `${catalogProduct.tierColor}15`, border: `1px solid ${catalogProduct.tierColor}33`,
+                              marginTop: '4px', display: 'inline-block',
+                            }}>{catalogProduct.tierLabel}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: sp[1] }}>
+                          {!catalogEditData ? (
+                            <button onClick={() => setCatalogEditData({ ...catalogProduct })} style={{
+                              padding: `6px ${sp[2]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                              color: c.gold, fontSize: size.xs, fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', gap: '4px',
+                            }}>
+                              <Icon d={icons.edit} size={12} color={c.gold} /> Modifier
+                            </button>
+                          ) : (
+                            <>
+                              <button onClick={() => {
+                                // Save edits to catalogsByProfile (in-memory for now, persisted when connected to DB)
+                                const tierCat = CATALOGS[catalogEditData.tierKey]
+                                if (tierCat) {
+                                  const idx = tierCat.findIndex(x => x.id === catalogEditData.id)
+                                  if (idx !== -1) {
+                                    tierCat[idx] = { ...tierCat[idx], name: catalogEditData.name, description: catalogEditData.description, priceRange: catalogEditData.priceRange, moq: Number(catalogEditData.moq), margin: catalogEditData.margin, topProducts: catalogEditData.topProducts, locations: catalogEditData.locations }
+                                  }
+                                }
+                                setCatalogProduct({ ...catalogEditData })
+                                setCatalogEditData(null)
+                                toast.success('Produit mis à jour')
+                              }} style={{
+                                padding: `6px ${sp[2]}`, background: c.green, border: 'none',
+                                color: c.white, fontSize: size.xs, fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: '4px',
+                              }}>
+                                <Icon d={icons.save} size={12} color={c.white} /> Sauvegarder
+                              </button>
+                              <button onClick={() => setCatalogEditData(null)} style={{
+                                padding: `6px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
+                                color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer',
+                              }}>Annuler</button>
+                            </>
+                          )}
+                          <button onClick={() => { setCatalogProduct(null); setCatalogEditData(null) }} style={{
+                            padding: '6px', background: 'transparent', border: `1px solid ${c.border}`,
+                            color: c.textTertiary, cursor: 'pointer', display: 'flex',
+                          }}>
+                            <Icon d={icons.close} size={14} color={c.textTertiary} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div style={{ marginBottom: sp[3] }}>
+                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Description</div>
+                        {catalogEditData ? (
+                          <textarea value={catalogEditData.description} onChange={(e) => setCatalogEditData({ ...catalogEditData, description: e.target.value })} style={{
+                            width: '100%', padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`,
+                            color: c.text, fontFamily: f.body, fontSize: size.sm, resize: 'vertical', minHeight: '60px', outline: 'none',
+                          }} />
+                        ) : (
+                          <p style={{ fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6, margin: 0 }}>{catalogProduct.description}</p>
+                        )}
+                      </div>
+
+                      {/* Stats grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[2], marginBottom: sp[3] }}>
+                        {[
+                          { label: 'Fourchette prix', key: 'priceRange', color: c.green },
+                          { label: 'Marge indicative', key: 'margin', color: c.gold },
+                          { label: 'MOQ minimum', key: 'moq', color: c.amber, isMoq: true },
+                        ].map((field) => (
+                          <div key={field.key} style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}` }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>{field.label}</div>
+                            {catalogEditData ? (
+                              <input value={catalogEditData[field.key]} onChange={(e) => setCatalogEditData({ ...catalogEditData, [field.key]: field.isMoq ? e.target.value : e.target.value })} style={{
+                                width: '100%', padding: '4px 6px', background: c.bg, border: `1px solid ${c.border}`,
+                                color: field.color, fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, outline: 'none',
+                              }} />
+                            ) : (
+                              <div style={{ fontFamily: f.mono, fontSize: size.md, fontWeight: 700, color: field.color }}>
+                                {field.isMoq ? Number(catalogProduct[field.key]).toLocaleString('fr-FR') : catalogProduct[field.key]}
+                              </div>
+                            )}
+                          </div>
                         ))}
+                      </div>
+
+                      {/* Top Products */}
+                      <div style={{ marginBottom: sp[3] }}>
+                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Produits phares</div>
+                        {catalogEditData ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {catalogEditData.topProducts.map((p, i) => (
+                              <div key={i} style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                <input value={p} onChange={(e) => {
+                                  const updated = [...catalogEditData.topProducts]
+                                  updated[i] = e.target.value
+                                  setCatalogEditData({ ...catalogEditData, topProducts: updated })
+                                }} style={{
+                                  flex: 1, padding: '4px 8px', background: c.bgElevated, border: `1px solid ${c.border}`,
+                                  color: c.text, fontFamily: f.body, fontSize: size.xs, outline: 'none',
+                                }} />
+                                <button onClick={() => {
+                                  const updated = catalogEditData.topProducts.filter((_, j) => j !== i)
+                                  setCatalogEditData({ ...catalogEditData, topProducts: updated })
+                                }} style={{ background: 'transparent', border: 'none', color: c.textTertiary, cursor: 'pointer', padding: '2px' }}>
+                                  <Icon d={icons.close} size={10} color={c.textTertiary} />
+                                </button>
+                              </div>
+                            ))}
+                            <button onClick={() => setCatalogEditData({ ...catalogEditData, topProducts: [...catalogEditData.topProducts, ''] })} style={{
+                              padding: '4px 8px', background: 'transparent', border: `1px dashed ${c.border}`,
+                              color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer',
+                            }}>+ Ajouter un produit</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {catalogProduct.topProducts.map((p, i) => (
+                              <span key={i} style={{
+                                fontSize: size.xs, color: c.text, padding: '4px 10px',
+                                background: c.bgElevated, border: `1px solid ${c.border}`,
+                              }}>{p}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Locations */}
+                      <div style={{ marginBottom: sp[3] }}>
+                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Zones de sourcing</div>
+                        {catalogEditData ? (
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {catalogEditData.locations.map((loc, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <input value={loc} onChange={(e) => {
+                                  const updated = [...catalogEditData.locations]
+                                  updated[i] = e.target.value
+                                  setCatalogEditData({ ...catalogEditData, locations: updated })
+                                }} style={{
+                                  padding: '4px 8px', background: c.bgElevated, border: `1px solid ${c.border}`,
+                                  color: c.text, fontFamily: f.body, fontSize: size.xs, outline: 'none', width: '120px',
+                                }} />
+                                <button onClick={() => {
+                                  const updated = catalogEditData.locations.filter((_, j) => j !== i)
+                                  setCatalogEditData({ ...catalogEditData, locations: updated })
+                                }} style={{ background: 'transparent', border: 'none', color: c.textTertiary, cursor: 'pointer', padding: '2px' }}>
+                                  <Icon d={icons.close} size={10} color={c.textTertiary} />
+                                </button>
+                              </div>
+                            ))}
+                            <button onClick={() => setCatalogEditData({ ...catalogEditData, locations: [...catalogEditData.locations, ''] })} style={{
+                              padding: '4px 8px', background: 'transparent', border: `1px dashed ${c.border}`,
+                              color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer',
+                            }}>+</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {catalogProduct.locations.map((loc, i) => (
+                              <span key={i} style={{
+                                fontSize: size.xs, color: c.gold, padding: '3px 10px',
+                                background: c.goldSoft, border: `1px solid ${c.gold}33`,
+                                fontFamily: f.mono, fontWeight: 600,
+                              }}>{loc}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Supplier section (future) */}
+                      <div style={{
+                        padding: sp[3], background: c.bg, border: `1px dashed ${c.border}`,
+                        marginBottom: sp[2],
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[2] }}>
+                          <Icon d={icons.link} size={16} color={c.textTertiary} />
+                          <div>
+                            <div style={{ fontFamily: f.display, fontSize: size.sm, fontWeight: 700, color: c.textSecondary }}>Fournisseurs</div>
+                            <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px' }}>Connectez vos fournisseurs pour ce produit</div>
+                          </div>
+                        </div>
+                        <div style={{
+                          padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: sp[1],
+                          color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono,
+                        }}>
+                          <Icon d={icons.plus} size={12} color={c.textTertiary} />
+                          Ajouter un fournisseur (bientôt disponible)
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1039,7 +1317,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   </h2>
                   <ArtDecoDivider width={80} />
                   <p style={{ fontSize: size.sm, color: c.textSecondary, marginTop: sp[1] }}>
-                    {allProfiles.length} profil{allProfiles.length > 1 ? 's' : ''} enregistr\u00e9{allProfiles.length > 1 ? 's' : ''}
+                    {allProfiles.length} profil{allProfiles.length > 1 ? 's' : ''} enregistré{allProfiles.length > 1 ? 's' : ''}
                   </p>
                 </div>
                 <button onClick={() => setShowCreateOrder(true)} style={{
@@ -1131,8 +1409,8 @@ export default function Admin({ user, profile, onSignOut }) {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: `1px solid ${c.borderSubtle}` }}>
                           {[
                             { label: 'Commandes', value: orderCount, color: c.gold },
-                            { label: 'Derni\u00e8re', value: lastOrderDate ? lastOrderDate.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }) : '\u2013', color: c.textSecondary },
-                            { label: 'Priorit\u00e9', value: tier.priorityLabel, color: tier.color },
+                            { label: 'Dernière', value: lastOrderDate ? lastOrderDate.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }) : '–', color: c.textSecondary },
+                            { label: 'Priorité', value: tier.priorityLabel, color: tier.color },
                           ].map((cell, j) => (
                             <div key={j} style={{ padding: `${sp[2]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none' }}>
                               <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>{cell.label}</div>
@@ -1141,17 +1419,30 @@ export default function Admin({ user, profile, onSignOut }) {
                           ))}
                         </div>
 
-                        {/* Create order for this client */}
-                        <button onClick={(e) => { e.stopPropagation(); setShowCreateOrder(true); setCreateOrderData(prev => ({ ...prev, clientId: client.id })) }} style={{
-                          width: '100%', padding: `8px ${sp[2]}`, background: 'transparent', color: c.textTertiary, border: 'none',
-                          borderTop: `1px solid ${c.borderSubtle}`,
-                          fontFamily: f.mono, fontSize: '10px', fontWeight: 600, cursor: 'pointer',
-                          transition: `all 0.2s ${ease.smooth}`, letterSpacing: '0.04em', textTransform: 'uppercase',
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = c.goldSoft; e.currentTarget.style.color = c.gold }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary }}>
-                          + Commande
-                        </button>
+                        {/* Action buttons */}
+                        <div style={{ display: 'flex', borderTop: `1px solid ${c.borderSubtle}` }}>
+                          <button onClick={(e) => { e.stopPropagation(); setShowCreateOrder(true); setCreateOrderData(prev => ({ ...prev, clientId: client.id })) }} style={{
+                            flex: 1, padding: `8px ${sp[2]}`, background: 'transparent', color: c.textTertiary, border: 'none',
+                            borderRight: `1px solid ${c.borderSubtle}`,
+                            fontFamily: f.mono, fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                            transition: `all 0.2s ${ease.smooth}`, letterSpacing: '0.04em', textTransform: 'uppercase',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = c.goldSoft; e.currentTarget.style.color = c.gold }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary }}>
+                            <Icon d={icons.plus} size={10} color="currentColor" /> Commande
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); setClientPasswordModal(client); setPasswordAction(null); setNewTempPassword('') }} style={{
+                            flex: 1, padding: `8px ${sp[2]}`, background: 'transparent', color: c.textTertiary, border: 'none',
+                            fontFamily: f.mono, fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                            transition: `all 0.2s ${ease.smooth}`, letterSpacing: '0.04em', textTransform: 'uppercase',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}15`; e.currentTarget.style.color = c.red }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary }}>
+                            <Icon d={icons.lock} size={10} color="currentColor" /> Mot de passe
+                          </button>
+                        </div>
                       </div>
                     )
                   })}
@@ -1167,7 +1458,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   <ArtDecoDivider width={80} />
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: sp[3], marginTop: sp[2] }}>
                     {orders.filter(o => o.client_id === selectedClientTab).map((order, i) => {
-                      const statusObj = STATUSES.find(s => s.key === order.status) || STATUSES[0]
+                      const statusObj = (typeof order.status === 'number' ? STATUSES[order.status] : STATUSES.find(s => s.key === order.status)) || STATUSES[0]
                       return (
                         <div key={order.id} style={{
                           padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
@@ -1180,7 +1471,7 @@ export default function Admin({ user, profile, onSignOut }) {
                           <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, fontWeight: 600, letterSpacing: '0.04em', marginBottom: '4px' }}>{order.ref}</div>
                           <div style={{ fontWeight: 700, fontSize: size.sm, marginBottom: sp[1], color: c.text }}>{order.product}</div>
                           <div style={{ fontSize: size.xs, color: c.textSecondary, marginBottom: sp[2] }}>
-                            {(order.quantity || 0).toLocaleString('fr-FR')} u. \u00b7 {order.budget}
+                            {(order.quantity || 0).toLocaleString('fr-FR')} u. · {order.budget}
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: sp[1], borderTop: `1px solid ${c.borderSubtle}` }}>
                             <StatusPill status={order.status} />
@@ -1196,6 +1487,193 @@ export default function Admin({ user, profile, onSignOut }) {
           )}
         </main>
       </div>
+
+      {/* ════════════ MODAL: Client Password ════════════ */}
+      {clientPasswordModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          animation: 'fadeSlideIn 0.2s ease-out',
+        }} onClick={() => setClientPasswordModal(null)}>
+          <div style={{
+            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            maxWidth: '440px', width: '90%', position: 'relative',
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ height: 2, background: c.red, position: 'absolute', top: 0, left: 0, right: 0 }} />
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[3] }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                <div style={{
+                  width: 36, height: 36, background: c.bgElevated, border: `1px solid ${c.border}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon d={icons.lock} size={16} color={c.gold} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.md }}>Mot de passe</div>
+                  <div style={{ fontSize: size.xs, color: c.textTertiary }}>{clientPasswordModal.full_name || clientPasswordModal.email}</div>
+                </div>
+              </div>
+              <button onClick={() => setClientPasswordModal(null)} style={{
+                background: 'transparent', border: `1px solid ${c.border}`, cursor: 'pointer', padding: '6px', display: 'flex',
+              }}>
+                <Icon d={icons.close} size={14} color={c.textTertiary} />
+              </button>
+            </div>
+
+            {/* Client info */}
+            <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Email</div>
+                  <div style={{ fontSize: size.sm, color: c.text, fontWeight: 600 }}>{clientPasswordModal.email}</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Inscrit le</div>
+                  <div style={{ fontSize: size.sm, color: c.text }}>{clientPasswordModal.created_at ? new Date(clientPasswordModal.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '–'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            {!passwordAction && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
+                <button onClick={() => setPasswordAction('reset')} style={{
+                  width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = c.goldSoft }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgElevated }}>
+                  <Icon d={icons.refresh} size={16} color={c.gold} />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>Réinitialiser le mot de passe</div>
+                    <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>Envoie un email de réinitialisation au client</div>
+                  </div>
+                </button>
+
+                <button onClick={() => setPasswordAction('set')} style={{
+                  width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.red; e.currentTarget.style.background = `${c.red}10` }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgElevated }}>
+                  <Icon d={icons.edit} size={16} color={c.red} />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>Définir un mot de passe temporaire</div>
+                    <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>Crée un nouveau mot de passe que vous communiquez au client</div>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Reset password flow */}
+            {passwordAction === 'reset' && (
+              <div style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
+                <div style={{
+                  padding: sp[3], background: c.goldSoft, border: `1px solid ${c.gold}33`, marginBottom: sp[3],
+                }}>
+                  <p style={{ fontSize: size.sm, color: c.text, lineHeight: 1.6, margin: 0 }}>
+                    Un email de réinitialisation sera envoyé à <strong>{clientPasswordModal.email}</strong>. Le client pourra choisir un nouveau mot de passe via le lien reçu.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: sp[2] }}>
+                  <button onClick={() => setPasswordAction(null)} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
+                    color: c.textTertiary, fontSize: size.sm, fontFamily: f.body, fontWeight: 600, cursor: 'pointer',
+                  }}>Retour</button>
+                  <button onClick={async () => {
+                    setPasswordLoading(true)
+                    try {
+                      const { error } = await resetPassword(clientPasswordModal.email)
+                      if (error) throw error
+                      toast.success('Email de réinitialisation envoyé')
+                      setClientPasswordModal(null)
+                    } catch (err) {
+                      toast.error('Erreur: ' + err.message)
+                    } finally { setPasswordLoading(false) }
+                  }} disabled={passwordLoading} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: c.gold, border: 'none',
+                    color: c.bg, fontSize: size.sm, fontFamily: f.body, fontWeight: 700, cursor: passwordLoading ? 'wait' : 'pointer',
+                    opacity: passwordLoading ? 0.6 : 1,
+                  }}>
+                    {passwordLoading ? 'Envoi...' : 'Envoyer le lien'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Set temp password flow */}
+            {passwordAction === 'set' && (
+              <div style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
+                <div style={{
+                  padding: sp[3], background: `${c.red}10`, border: `1px solid ${c.red}33`, marginBottom: sp[3],
+                }}>
+                  <p style={{ fontSize: size.sm, color: c.text, lineHeight: 1.6, margin: 0 }}>
+                    Ce mot de passe temporaire remplacera l’ancien. Communiquez-le au client de manière sécurisée.
+                  </p>
+                </div>
+                <div style={{ marginBottom: sp[3] }}>
+                  <label style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: sp[1] }}>Nouveau mot de passe</label>
+                  <div style={{ display: 'flex', gap: sp[1] }}>
+                    <input type="text" value={newTempPassword} onChange={(e) => setNewTempPassword(e.target.value)} placeholder="Min. 8 caractères" style={{
+                      flex: 1, padding: `8px ${sp[2]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                      color: c.text, fontFamily: f.mono, fontSize: size.sm, outline: 'none',
+                    }} />
+                    <button onClick={() => {
+                      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#'
+                      let pwd = ''
+                      for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)]
+                      setNewTempPassword(pwd)
+                    }} style={{
+                      padding: `8px ${sp[2]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                      color: c.gold, fontSize: size.xs, fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}>Générer</button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: sp[2] }}>
+                  <button onClick={() => { setPasswordAction(null); setNewTempPassword('') }} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
+                    color: c.textTertiary, fontSize: size.sm, fontFamily: f.body, fontWeight: 600, cursor: 'pointer',
+                  }}>Retour</button>
+                  <button onClick={async () => {
+                    if (newTempPassword.length < 8) { toast.error('Minimum 8 caractères'); return }
+                    setPasswordLoading(true)
+                    try {
+                      // Use Supabase admin API via service role (Edge Function needed for production)
+                      // For now, use the client-side updateUser for the current session workaround
+                      const { error } = await supabase.auth.admin.updateUserById(clientPasswordModal.id, { password: newTempPassword })
+                      if (error) throw error
+                      toast.success('Mot de passe mis à jour')
+                      setClientPasswordModal(null)
+                      setNewTempPassword('')
+                    } catch (err) {
+                      // If admin API not available, fall back to reset email
+                      if (err.message?.includes('not authorized') || err.message?.includes('not allowed') || err.status === 403 || err.status === 401) {
+                        toast.error('Accès admin requis. Utilisez la réinitialisation par email.')
+                        setPasswordAction('reset')
+                      } else {
+                        toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                      }
+                    } finally { setPasswordLoading(false) }
+                  }} disabled={passwordLoading || newTempPassword.length < 8} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: newTempPassword.length >= 8 ? c.red : c.bgElevated,
+                    border: 'none', color: newTempPassword.length >= 8 ? c.white : c.textTertiary,
+                    fontSize: size.sm, fontFamily: f.body, fontWeight: 700,
+                    cursor: passwordLoading || newTempPassword.length < 8 ? 'not-allowed' : 'pointer',
+                    opacity: passwordLoading ? 0.6 : 1,
+                  }}>
+                    {passwordLoading ? 'Mise à jour...' : 'Appliquer'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ════════════ MODAL: Create Order ════════════ */}
       {showCreateOrder && (
@@ -1233,7 +1711,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
                   onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
-                  <option value="">S\u00e9lectionner un client\u2026</option>
+                  <option value="">Sélectionner un client…</option>
                   {allProfiles.map(cl => (<option key={cl.id} value={cl.id}>{cl.full_name || cl.email}</option>))}
                 </select>
               </div>
@@ -1248,7 +1726,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
                 <div>
-                  <label style={labelStyle}>Quantit\u00e9</label>
+                  <label style={labelStyle}>Quantité</label>
                   <input type="number" value={createOrderData.quantity} onChange={e => setCreateOrderData({...createOrderData, quantity: e.target.value})}
                     placeholder="0" style={inputStyle}
                     onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
@@ -1257,7 +1735,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <div>
                   <label style={labelStyle}>Budget</label>
                   <input type="text" value={createOrderData.budget} onChange={e => setCreateOrderData({...createOrderData, budget: e.target.value})}
-                    placeholder="ex: 500\u20ac" style={inputStyle}
+                    placeholder="ex: 500€" style={inputStyle}
                     onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
                     onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
                 </div>
@@ -1274,7 +1752,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div>
                 <label style={labelStyle}>Notes</label>
                 <textarea value={createOrderData.notes} onChange={e => setCreateOrderData({...createOrderData, notes: e.target.value})}
-                  placeholder="D\u00e9tails suppl\u00e9mentaires\u2026"
+                  placeholder="Détails supplémentaires…"
                   style={{...inputStyle, minHeight: '80px', fontFamily: f.body}}
                   onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
@@ -1297,7 +1775,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = shadow.glow }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.boxShadow = 'none' }}>
-                  Cr\u00e9er la commande
+                  Créer la commande
                 </button>
               </div>
             </form>

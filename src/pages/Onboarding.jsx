@@ -13,9 +13,20 @@ const keyframes = `
 @keyframes dragonFloat { 0%,100% { transform:translateY(0) rotate(0deg) } 50% { transform:translateY(-8px) rotate(1deg) } }
 @keyframes stepReveal { from { opacity:0; transform:translateY(20px) scale(0.97) } to { opacity:1; transform:translateY(0) scale(1) } }
 @keyframes goldShimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+
+@media (max-width: 768px) {
+  .onboarding-root { padding: 16px 12px !important; }
+  .onboarding-container { max-width: 100% !important; }
+  .onboarding-tier-grid { grid-template-columns: 1fr !important; }
+  .onboarding-catalog-grid { grid-template-columns: 1fr !important; }
+  .onboarding-contact-row { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 480px) {
+  .onboarding-root { padding: 12px 8px !important; }
+}
 `
 
-const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonn\u00e9es']
+const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnées']
 
 /* ── ART DECO DIVIDER ── */
 const ArtDecoDivider = ({ width = 80, center = true }) => (
@@ -78,7 +89,7 @@ export default function Onboarding({ user, profile, onComplete }) {
       toast.success('Bienvenue chez CARAXES !')
       onComplete()
     } catch (err) {
-      toast.error('Erreur lors de la finalisation. R\u00e9essayez.')
+      toast.error('Erreur lors de la finalisation. Réessayez.')
       setSaving(false)
     }
   }
@@ -92,17 +103,19 @@ export default function Onboarding({ user, profile, onComplete }) {
   }
 
   return (
-    <div style={{
+    <div className="onboarding-root" style={{
       minHeight: '100vh', background: c.bg,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: f.body, color: c.text, padding: sp[4],
+      overflowX: 'hidden', boxSizing: 'border-box', width: '100%',
     }}>
       <style>{keyframes}</style>
 
-      <div style={{
+      <div className="onboarding-container" style={{
         width: '100%',
         maxWidth: step === 2 ? 860 : step === 1 ? 800 : 500,
         transition: `max-width 0.4s ${ease.out}`,
+        boxSizing: 'border-box',
       }}>
 
         {/* ── LOGO ── */}
@@ -142,7 +155,7 @@ export default function Onboarding({ user, profile, onComplete }) {
             textAlign: 'center', fontSize: '10px', fontFamily: f.mono,
             color: c.textTertiary, letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
-            {step + 1}/{STEPS.length} \u2014 {STEPS[step]}
+            {step + 1}/{STEPS.length} — {STEPS[step]}
           </div>
         </div>
 
@@ -164,8 +177,8 @@ export default function Onboarding({ user, profile, onComplete }) {
               Votre agent de sourcing en Chine. En 2 minutes, on configure votre compte pour vous proposer les bons produits, aux bons prix.
             </p>
             <div style={{ display: 'flex', gap: sp[2], justifyContent: 'center', fontSize: '10px', fontFamily: f.mono, color: c.textTertiary, letterSpacing: '0.04em', marginBottom: sp[4] }}>
-              <span>Yiwu</span><span style={{ color: c.gold }}>\u00b7</span>
-              <span>Guangzhou</span><span style={{ color: c.gold }}>\u00b7</span>
+              <span>Yiwu</span><span style={{ color: c.gold }}>·</span>
+              <span>Guangzhou</span><span style={{ color: c.gold }}>·</span>
               <span>Shenzhen</span>
             </div>
             <button onClick={() => setStep(1)} style={btnPrimary}
@@ -182,10 +195,10 @@ export default function Onboarding({ user, profile, onComplete }) {
             <h2 style={headingStyle}>Quel est votre profil ?</h2>
             <ArtDecoDivider width={80} />
             <p style={subStyle}>
-              Votre profil d\u00e9termine votre catalogue, vos prix et vos quantit\u00e9s minimales.
+              Votre profil détermine votre catalogue, vos prix et vos quantités minimales.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: sp[3] }}>
+            <div className="onboarding-tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: sp[3] }}>
               {TIERS.map((tier, i) => {
                 const isSelected = selectedTier === tier.key
                 return (
@@ -222,10 +235,10 @@ export default function Onboarding({ user, profile, onComplete }) {
                     <div style={{ padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}`, marginBottom: sp[2], display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[1] }}>
                       <div style={{ textAlign: 'center' }}>
                         <div style={statLabelStyle}>Commande min.</div>
-                        <div style={{ fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.minOrderValue.toLocaleString('fr-FR')}\u20ac</div>
+                        <div style={{ fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.minOrderValue.toLocaleString('fr-FR')}€</div>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={statLabelStyle}>Priorit\u00e9</div>
+                        <div style={statLabelStyle}>Priorité</div>
                         <div style={{ fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.priorityLabel}</div>
                       </div>
                     </div>
@@ -234,7 +247,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                     <div style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.8 }}>
                       {tier.benefits.map((b, j) => (
                         <div key={j} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-                          <span style={{ color: tier.color, fontWeight: 700, flexShrink: 0 }}>\u2713</span>
+                          <span style={{ color: tier.color, fontWeight: 700, flexShrink: 0 }}>✓</span>
                           <span>{b}</span>
                         </div>
                       ))}
@@ -246,7 +259,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                         textAlign: 'center', fontSize: '10px', fontWeight: 700,
                         color: tier.color, fontFamily: f.mono, letterSpacing: '0.06em', textTransform: 'uppercase',
                       }}>
-                        S\u00e9lectionn\u00e9
+                        Sélectionné
                       </div>
                     )}
                   </div>
@@ -266,10 +279,10 @@ export default function Onboarding({ user, profile, onComplete }) {
             </h2>
             <ArtDecoDivider width={80} />
             <p style={subStyle}>
-              S\u00e9lectionnez les cat\u00e9gories qui vous int\u00e9ressent.
+              Sélectionnez les catégories qui vous intéressent.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: sp[2] }}>
+            <div className="onboarding-catalog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: sp[2] }}>
               {catalog.map((cat, i) => {
                 const isSelected = selectedCategories.includes(cat.id)
                 return (
@@ -345,8 +358,8 @@ export default function Onboarding({ user, profile, onComplete }) {
               fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, letterSpacing: '0.02em',
             }}>
               {selectedCategories.length === 0
-                ? 'Aucune cat\u00e9gorie s\u00e9lectionn\u00e9e (vous pourrez en ajouter plus tard)'
-                : `${selectedCategories.length} cat\u00e9gorie${selectedCategories.length > 1 ? 's' : ''} s\u00e9lectionn\u00e9e${selectedCategories.length > 1 ? 's' : ''}`
+                ? 'Aucune catégorie sélectionnée (vous pourrez en ajouter plus tard)'
+                : `${selectedCategories.length} catégorie${selectedCategories.length > 1 ? 's' : ''} sélectionnée${selectedCategories.length > 1 ? 's' : ''}`
               }
             </div>
 
@@ -357,15 +370,16 @@ export default function Onboarding({ user, profile, onComplete }) {
         {/* ════════ STEP 3 — Contact ════════ */}
         {step === 3 && (
           <div style={{ animation: 'fadeSlideIn 0.5s ease-out' }}>
-            <h2 style={headingStyle}>Vos coordonn\u00e9es</h2>
+            <h2 style={headingStyle}>Vos coordonnées</h2>
             <ArtDecoDivider width={80} />
             <p style={subStyle}>
-              Profil <span style={{ color: currentTier.color, fontWeight: 600 }}>{currentTier.label}</span> \u2014 plus qu\u2019une \u00e9tape.
+              Profil <span style={{ color: currentTier.color, fontWeight: 600 }}>{currentTier.label}</span> — plus qu’une étape.
             </p>
 
             <div style={{
               display: 'flex', flexDirection: 'column', gap: sp[3],
-              background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+              background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[3],
+              boxSizing: 'border-box',
             }}>
               <FieldGroup label="Nom complet *">
                 <input type="text" placeholder="Votre nom" value={formData.full_name}
@@ -381,8 +395,8 @@ export default function Onboarding({ user, profile, onComplete }) {
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
               </FieldGroup>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[3] }}>
-                <FieldGroup label="T\u00e9l\u00e9phone">
+              <div className="onboarding-contact-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[3] }}>
+                <FieldGroup label="Téléphone">
                   <input type="tel" placeholder="+33 6 00 00 00 00" value={formData.phone}
                     onChange={(e) => handleChange('phone', e.target.value)} style={inputStyle}
                     onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
@@ -424,12 +438,12 @@ export default function Onboarding({ user, profile, onComplete }) {
                 fontSize: '10px', fontFamily: f.mono, color: c.textTertiary,
                 textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2],
               }}>
-                R\u00e9capitulatif
+                Récapitulatif
               </div>
               <div style={{ display: 'flex', gap: sp[3], flexWrap: 'wrap' }}>
                 <RecapItem label="Profil" value={currentTier.label} color={currentTier.color} icon={currentTier.icon} />
-                <RecapItem label="Commande min." value={`${currentTier.minOrderValue.toLocaleString('fr-FR')}\u20ac`} color={currentTier.color} />
-                <RecapItem label="Cat\u00e9gories" value={selectedCategories.length > 0 ? `${selectedCategories.length} s\u00e9lectionn\u00e9es` : 'Toutes'} color={c.textSecondary} />
+                <RecapItem label="Commande min." value={`${currentTier.minOrderValue.toLocaleString('fr-FR')}€`} color={currentTier.color} />
+                <RecapItem label="Catégories" value={selectedCategories.length > 0 ? `${selectedCategories.length} sélectionnées` : 'Toutes'} color={c.textSecondary} />
               </div>
             </div>
 
@@ -448,7 +462,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                 }}
                 onMouseEnter={(e) => { if (formData.full_name.trim()) { e.currentTarget.style.background = c.goldDim } }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = c.gold }}>
-                {saving ? 'Enregistrement\u2026' : 'Terminer la configuration'}
+                {saving ? 'Enregistrement…' : 'Terminer la configuration'}
               </button>
             </div>
           </div>

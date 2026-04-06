@@ -6,8 +6,8 @@ import {
   markMessagesRead, getDocuments, getDocumentUrl,
   subscribeToMessages, subscribeToOrders, supabase,
 } from '../lib/supabase'
-import { CATEGORIES } from '../lib/categories'
-import { getTierByKey, getTierPrice, getCategoryMOQ, DEFAULT_TIER } from '../lib/clientTiers'
+import { getCatalog } from '../lib/catalogsByProfile'
+import { getTierByKey, getTierPrice, getTierMOQ, DEFAULT_TIER } from '../lib/clientTiers'
 import StatusPill, { ProgressBar } from '../components/StatusPill'
 import { useToast } from '../components/Toast'
 
@@ -43,7 +43,7 @@ const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric',
 const fmtQty = (n) => (n || 0).toLocaleString('fr-FR')
 
 /* ── DRAGON EMPTY STATE ── */
-function DragonEmptyState({ text = 'S\u00e9lectionnez une commande', sub = '' }) {
+function DragonEmptyState({ text = 'Sélectionnez une commande', sub = '' }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -73,7 +73,7 @@ function DragonEmptyState({ text = 'S\u00e9lectionnez une commande', sub = '' })
 /* ── ORDER CARD (SIDEBAR) ── */
 function OrderCard({ order, selected, onClick, unreadCount }) {
   const [hovered, setHovered] = useState(false)
-  const statusObj = STATUSES.find(s => s.key === order.status) || STATUSES[0]
+  const statusObj = (typeof order.status === 'number' ? STATUSES[order.status] : STATUSES.find(s => s.key === order.status)) || STATUSES[0]
 
   return (
     <div onClick={onClick}
@@ -129,6 +129,26 @@ function OrderCard({ order, selected, onClick, unreadCount }) {
 
       {/* Progress bar */}
       <ProgressBar value={order.progress} color={statusObj.color} height={2} />
+    </div>
+  )
+}
+
+/* ── DATE SEPARATOR ── */
+function DateSeparator({ date }) {
+  const d = new Date(date)
+  const today = new Date()
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1)
+  let label = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  if (d.toDateString() === today.toDateString()) label = "Aujourd'hui"
+  else if (d.toDateString() === yesterday.toDateString()) label = 'Hier'
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '12px',
+      margin: '16px 0 12px', opacity: 0.5,
+    }}>
+      <div style={{ flex: 1, height: '1px', background: 'oklch(30% 0.01 50)' }} />
+      <span style={{ fontSize: '9px', fontFamily: 'var(--f-mono, monospace)', color: 'oklch(55% 0.02 50)', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
+      <div style={{ flex: 1, height: '1px', background: 'oklch(30% 0.01 50)' }} />
     </div>
   )
 }
@@ -219,7 +239,7 @@ function DocumentCard({ doc, onDownload }) {
 /* ── PIPELINE TRACKER (REDESIGNED) ── */
 function PipelineTracker({ status }) {
   const stages = STATUSES
-  const currentIndex = stages.findIndex(s => s.key === status)
+  const currentIndex = typeof status === 'number' ? status : stages.findIndex(s => s.key === status)
 
   return (
     <div style={{
@@ -252,7 +272,7 @@ function PipelineTracker({ status }) {
                 transition: `all 0.35s ${ease.out}`,
                 boxShadow: isCurrent ? `0 0 16px ${stage.color}44` : 'none',
               }}>
-                {isCompleted ? '\u2713' : idx + 1}
+                {isCompleted ? '✓' : idx + 1}
               </div>
               {/* Connector */}
               {idx < stages.length - 1 && (
@@ -287,11 +307,13 @@ function PipelineTracker({ status }) {
 }
 
 /* ── MODAL: NOUVELLE DEMANDE ── */
-function NewOrderModal({ isOpen, onClose, onSubmit }) {
+function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     product: '', quantity: '', budget: '', deadline: '', notes: '',
   })
+
+  useEffect(() => { if (initialProduct) setFormData(prev => ({ ...prev, product: initialProduct })) }, [initialProduct])
 
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }))
   const handleNext = () => { if (step < 3) setStep(step + 1) }
@@ -319,7 +341,7 @@ function NewOrderModal({ isOpen, onClose, onSubmit }) {
     letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600,
   }
 
-  const stepLabels = ['Produit', 'D\u00e9tails', 'Notes']
+  const stepLabels = ['Produit', 'Détails', 'Notes']
 
   return (
     <div style={{
@@ -369,14 +391,14 @@ function NewOrderModal({ isOpen, onClose, onSubmit }) {
           {step === 1 && (
             <div>
               <label style={modalLabel}>Que recherchez-vous ?</label>
-              <input type="text" placeholder="Ex: v\u00eatements coton, chaussures sport..."
+              <input type="text" placeholder="Ex: vêtements coton, chaussures sport..."
                 value={formData.product} onChange={(e) => handleChange('product', e.target.value)}
                 style={modalInput} autoFocus
                 onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
                 onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
               />
               <p style={{ margin: `${sp[2]} 0 0`, fontSize: size.xs, color: c.textTertiary, lineHeight: 1.6 }}>
-                D\u00e9crivez le produit que vous souhaitez sourcer depuis la Chine.
+                Décrivez le produit que vous souhaitez sourcer depuis la Chine.
               </p>
             </div>
           )}
@@ -384,7 +406,7 @@ function NewOrderModal({ isOpen, onClose, onSubmit }) {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
               <div>
-                <label style={modalLabel}>Quantit\u00e9</label>
+                <label style={modalLabel}>Quantité</label>
                 <input type="number" placeholder="Ex: 1000" value={formData.quantity}
                   onChange={(e) => handleChange('quantity', e.target.value)} style={modalInput}
                   onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
@@ -393,14 +415,14 @@ function NewOrderModal({ isOpen, onClose, onSubmit }) {
               </div>
               <div>
                 <label style={modalLabel}>Budget</label>
-                <input type="text" placeholder="Ex: 5 000 \u20ac" value={formData.budget}
+                <input type="text" placeholder="Ex: 5 000 €" value={formData.budget}
                   onChange={(e) => handleChange('budget', e.target.value)} style={modalInput}
                   onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
                 />
               </div>
               <div>
-                <label style={modalLabel}>D\u00e9lai souhait\u00e9</label>
+                <label style={modalLabel}>Délai souhaité</label>
                 <input type="date" value={formData.deadline}
                   onChange={(e) => handleChange('deadline', e.target.value)} style={modalInput}
                   onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
@@ -413,7 +435,7 @@ function NewOrderModal({ isOpen, onClose, onSubmit }) {
           {step === 3 && (
             <div>
               <label style={modalLabel}>Notes (optionnel)</label>
-              <textarea placeholder="Sp\u00e9cifications, r\u00e9f\u00e9rences visuelles, exigences..."
+              <textarea placeholder="Spécifications, références visuelles, exigences..."
                 value={formData.notes} onChange={(e) => handleChange('notes', e.target.value)}
                 style={{ ...modalInput, minHeight: 140, resize: 'none' }}
                 onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
@@ -481,9 +503,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const [creatingOrder, setCreatingOrder] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
+  const [prefilledProduct, setPrefilledProduct] = useState('')
   const [unreadCounts, setUnreadCounts] = useState({})
   const [activeTab, setActiveTab] = useState('messages')
   const [viewMode, setViewMode] = useState('orders')
+  const [mobileShowSidebar, setMobileShowSidebar] = useState(true)
   const messagesEndRef = useRef(null)
   const uploadInputRef = useRef(null)
 
@@ -497,7 +521,15 @@ export default function Dashboard({ user, profile, onSignOut }) {
     }
     loadOrders()
     const sub = subscribeToOrders(() => {
-      getOrders(user.id).then(data => setOrders(data || []))
+      getOrders(user.id).then(data => {
+        setOrders(data || [])
+        // Update selectedOrder with fresh data to avoid stale state
+        setSelectedOrder(prev => {
+          if (!prev) return prev
+          const updated = data?.find(o => o.id === prev.id)
+          return updated || prev
+        })
+      })
     })
     return () => sub?.unsubscribe?.()
   }, [user.id])
@@ -535,7 +567,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.product.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
+    const matchesStatus = filterStatus === 'all' ||
+      (filterStatus === 'delivered' ? (order.status === 6 || order.status === 'delivered') :
+       filterStatus === 'in-progress' ? (order.status !== 6 && order.status !== 'delivered') :
+       order.status === filterStatus)
     return matchesSearch && matchesStatus
   })
 
@@ -550,7 +585,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
     try {
       await sendMessage({ orderId: selectedOrder.id, senderId: user.id, senderRole: 'client', content: newMessage })
       setNewMessage('')
-    } catch (err) { toast.error('Impossible d\u2019envoyer le message.') }
+    } catch (err) { toast.error('Impossible d’envoyer le message.') }
     finally { setSendingMsg(false) }
   }
 
@@ -565,8 +600,8 @@ export default function Dashboard({ user, profile, onSignOut }) {
       })
       const updated = await getOrders(user.id)
       setOrders(updated)
-      toast.success('Demande envoy\u00e9e !')
-    } catch (err) { toast.error('Erreur lors de la cr\u00e9ation.') }
+      toast.success('Demande envoyée !')
+    } catch (err) { toast.error('Erreur lors de la création.') }
     finally { setCreatingOrder(false) }
   }
 
@@ -576,15 +611,15 @@ export default function Dashboard({ user, profile, onSignOut }) {
     const file = e.target.files?.[0]
     if (!file || !selectedOrder || uploadingFile) return
     if (file.size > MAX_FILE_SIZE) { toast.error('Fichier trop volumineux (max 10 Mo)'); e.target.value = ''; return }
-    if (ALLOWED_FILE_TYPES.length && !ALLOWED_FILE_TYPES.includes(file.type)) { toast.error('Type de fichier non support\u00e9'); e.target.value = ''; return }
+    if (ALLOWED_FILE_TYPES.length && !ALLOWED_FILE_TYPES.includes(file.type)) { toast.error('Type de fichier non supporté'); e.target.value = ''; return }
     setUploadingFile(true)
     try {
       const { error } = await supabase.storage.from('documents').upload(`${selectedOrder.id}/${Date.now()}_${file.name}`, file)
       if (error) throw error
       const updated = await getDocuments(selectedOrder.id)
       setDocuments(updated)
-      toast.success('Document ajout\u00e9')
-    } catch (err) { toast.error('Erreur lors de l\u2019envoi.') }
+      toast.success('Document ajouté')
+    } catch (err) { toast.error('Erreur lors de l’envoi.') }
     finally { setUploadingFile(false); e.target.value = '' }
   }
 
@@ -592,7 +627,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
     try {
       const url = await getDocumentUrl(doc.storage_path || doc.file_path)
       if (url) window.open(url, '_blank')
-    } catch (err) { toast.error('T\u00e9l\u00e9chargement impossible.') }
+    } catch (err) { toast.error('Téléchargement impossible.') }
   }
 
   const tier = getTierByKey(profile?.client_tier || DEFAULT_TIER)
@@ -605,8 +640,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @media (max-width: 768px) {
-          .sidebar { display: none !important; }
+          .sidebar { width: 100% !important; border-right: none !important; }
           .main-panel { width: 100% !important; }
+          .desktop-only { display: none !important; }
+          .mobile-back-btn { display: block !important; }
         }
         input::placeholder, textarea::placeholder { color: ${c.textTertiary}; opacity: 0.5; }
         ::-webkit-scrollbar { width: 4px; }
@@ -737,7 +774,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {viewMode === 'catalogue' ? (
-          /* ── CATALOGUE ── */
+          /* ── CATALOGUE REFACTORED ── */
+          (() => {
+            const tierKey = profile?.client_tier || DEFAULT_TIER
+            const catalog = getCatalog(tierKey)
+            return (
           <div style={{ flex: 1, overflowY: 'auto', padding: sp[4], background: c.bg }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
               <div style={{ marginBottom: sp[5] }}>
@@ -746,120 +787,155 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   <span style={{
                     fontFamily: f.mono, fontSize: '10px', color: c.gold,
                     letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600,
-                  }}>Catalogue Produits</span>
+                  }}>Catalogue {tier.label}</span>
                 </div>
                 <h2 style={{
                   margin: 0, fontFamily: f.display, fontSize: size['2xl'],
                   color: c.text, letterSpacing: '-0.02em', fontWeight: 500,
                 }}>
-                  Nos cat\u00e9gories <em style={{ fontStyle: 'italic', color: c.gold }}>sourc\u00e9es</em>
+                  {catalog.length} catégories <em style={{ fontStyle: 'italic', color: c.gold }}>adaptées</em> à votre profil
                 </h2>
                 <p style={{
                   margin: `${sp[2]} 0 0`, fontSize: size.sm, color: c.textSecondary,
                   lineHeight: 1.7, maxWidth: 600,
                 }}>
-                  {CATEGORIES.length} cat\u00e9gories disponibles, prix adapt\u00e9s \u00e0 votre profil {tier.label.toLowerCase()}.
-                  Directement depuis nos usines partenaires en Chine.
+                  Produits sourcés directement depuis nos usines partenaires en Chine.
+                  Prix et quantités minimales calibrés pour votre profil {tier.icon} {tier.label}.
                 </p>
               </div>
 
               <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                 gap: sp[3],
               }}>
-                {CATEGORIES.map(cat => {
-                  const tierKey = profile?.client_tier || DEFAULT_TIER
+                {catalog.map(cat => {
                   const tierPrice = getTierPrice(cat, tierKey)
-                  const moq = getCategoryMOQ(cat.id, tierKey)
+                  const moq = getTierMOQ(cat.moq, tierKey)
                   return (
                     <div key={cat.id} style={{
                       background: c.bgElevated, border: `1px solid ${c.border}`,
-                      padding: sp[3], transition: `all 0.25s ${ease.smooth}`,
-                      cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                      padding: 0, transition: `all 0.25s ${ease.smooth}`,
+                      position: 'relative', overflow: 'hidden',
+                      display: 'flex', flexDirection: 'column',
                     }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.borderColor = cat.color
-                        e.currentTarget.style.transform = 'translateY(-2px)'
-                        e.currentTarget.style.boxShadow = `0 4px 24px ${cat.color}15`
+                        e.currentTarget.style.borderColor = tier.color
+                        e.currentTarget.style.transform = 'translateY(-3px)'
+                        e.currentTarget.style.boxShadow = `0 8px 32px ${tier.color}12`
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.borderColor = c.border
                         e.currentTarget.style.transform = 'translateY(0)'
                         e.currentTarget.style.boxShadow = 'none'
                       }}>
-                      {/* Top accent */}
-                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: cat.color }} />
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[3] }}>
-                        <span style={{ fontSize: '24px' }}>{cat.icon}</span>
-                        <div>
-                          <div style={{ fontFamily: f.display, fontSize: size.base, color: c.text, fontWeight: 600 }}>{cat.name}</div>
-                          <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>{cat.description}</div>
+                      {/* Accent bar */}
+                      <div style={{ height: 3, background: `linear-gradient(90deg, ${tier.color}, ${tier.color}44)` }} />
+
+                      {/* Header */}
+                      <div style={{ padding: `${sp[3]} ${sp[3]} ${sp[2]}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                          <span style={{
+                            fontSize: '26px', width: 46, height: 46,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: c.bgSurface, border: `1px solid ${c.borderSubtle}`,
+                            borderRadius: '8px', flexShrink: 0,
+                          }}>{cat.icon}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{
+                              fontFamily: f.display, fontSize: size.base, color: c.text,
+                              fontWeight: 600, lineHeight: 1.3,
+                            }}>{cat.name}</div>
+                            <div style={{
+                              fontSize: '11px', color: c.textTertiary, marginTop: '3px',
+                              lineHeight: 1.5,
+                            }}>{cat.description}</div>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Price grid */}
+                      {/* Stats */}
                       <div style={{
-                        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: sp[1],
-                        background: c.bgSurface, padding: `${sp[2]}`, marginBottom: sp[2],
-                        border: `1px solid ${c.borderSubtle}`,
+                        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px',
+                        background: c.borderSubtle, margin: `0 ${sp[3]}`,
+                        border: `1px solid ${c.borderSubtle}`, marginBottom: sp[2],
                       }}>
                         {[
-                          { label: 'Votre prix', value: tierPrice, color: c.green },
-                          { label: 'Revente', value: cat.priceFrance, color: c.text },
+                          { label: 'Prix unit.', value: tierPrice, color: c.green },
                           { label: 'Marge', value: cat.margin, color: c.gold },
                           { label: 'MOQ', value: moq.toLocaleString('fr-FR'), color: c.amber },
                         ].map((m, i) => (
-                          <div key={i}>
+                          <div key={i} style={{
+                            padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, textAlign: 'center',
+                          }}>
                             <div style={{
                               fontFamily: f.mono, fontSize: '8px', color: c.textTertiary,
-                              letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px',
+                              letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '3px',
                             }}>{m.label}</div>
                             <div style={{ fontSize: size.sm, fontWeight: 700, color: m.color }}>{m.value}</div>
                           </div>
                         ))}
                       </div>
 
-                      <div style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.6, marginBottom: sp[2] }}>
-                        {cat.notes}
+                      {/* Top products */}
+                      <div style={{ padding: `0 ${sp[3]} ${sp[2]}`, flex: 1 }}>
+                        <div style={{
+                          fontFamily: f.mono, fontSize: '8px', color: c.textTertiary,
+                          letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: sp[1],
+                        }}>Produits phares</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {cat.topProducts.slice(0, 4).map((p, i) => (
+                            <span key={i} style={{
+                              padding: '3px 8px', background: c.bgSurface,
+                              border: `1px solid ${c.borderSubtle}`, fontSize: '10px',
+                              color: c.textSecondary, lineHeight: 1.4,
+                            }}>{p}</span>
+                          ))}
+                        </div>
                       </div>
 
-                      {/* Locations */}
-                      <div style={{ display: 'flex', gap: sp[1], flexWrap: 'wrap', marginBottom: sp[2] }}>
-                        {cat.locations.map(loc => (
-                          <span key={loc} style={{
-                            padding: '2px 8px', background: c.bgSurface,
-                            border: `1px solid ${c.borderSubtle}`, fontSize: '9px',
-                            fontFamily: f.mono, color: c.textTertiary, letterSpacing: '0.04em',
-                          }}>{loc}</span>
-                        ))}
+                      {/* Footer */}
+                      <div style={{
+                        padding: `${sp[2]} ${sp[3]}`, borderTop: `1px solid ${c.borderSubtle}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        background: c.bgSurface,
+                      }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          {cat.locations.map(loc => (
+                            <span key={loc} style={{
+                              fontSize: '9px', fontFamily: f.mono, color: c.textTertiary,
+                              letterSpacing: '0.02em',
+                            }}>{loc}</span>
+                          ))}
+                        </div>
+                        <button onClick={(e) => {
+                          e.stopPropagation(); setPrefilledProduct(cat.name); setViewMode('orders'); setIsNewOrderOpen(true)
+                        }} style={{
+                          padding: '6px 14px',
+                          background: tier.color, border: 'none',
+                          color: c.bg, fontSize: '9px', fontFamily: f.mono,
+                          cursor: 'pointer', letterSpacing: '0.06em', fontWeight: 700,
+                          textTransform: 'uppercase', transition: `all 0.2s ${ease.smooth}`,
+                        }}
+                          onMouseOver={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                          onMouseOut={(e) => { e.currentTarget.style.opacity = '1' }}
+                        >Commander</button>
                       </div>
-
-                      <button onClick={(e) => {
-                        e.stopPropagation(); setViewMode('orders'); setIsNewOrderOpen(true)
-                      }} style={{
-                        width: '100%', padding: '10px',
-                        background: 'transparent', border: `1px solid ${cat.color}44`,
-                        color: cat.color, fontSize: '10px', fontFamily: f.mono,
-                        cursor: 'pointer', letterSpacing: '0.06em', fontWeight: 700,
-                        textTransform: 'uppercase', transition: `all 0.2s ${ease.smooth}`,
-                      }}
-                        onMouseOver={(e) => { e.currentTarget.style.background = cat.color; e.currentTarget.style.color = c.white }}
-                        onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = cat.color }}
-                      >Commander</button>
                     </div>
                   )
                 })}
               </div>
             </div>
           </div>
+            )
+          })()
         ) : (
           <>
             {/* ── SIDEBAR ── */}
             <div className="sidebar" style={{
               width: 340, background: c.bgWarm,
               borderRight: `1px solid ${c.border}`,
-              display: 'flex', flexDirection: 'column',
+              display: mobileShowSidebar || window.innerWidth > 768 ? 'flex' : 'none', flexDirection: 'column',
             }}>
               {/* Search */}
               <div style={{ padding: `${sp[2]} ${sp[2]}`, borderBottom: `1px solid ${c.border}` }}>
@@ -893,7 +969,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                 {[
                   { label: 'Toutes', value: 'all' },
                   { label: 'En cours', value: 'in-progress' },
-                  { label: 'Termin\u00e9es', value: 'delivered' },
+                  { label: 'Terminées', value: 'delivered' },
                 ].map(fl => (
                   <button key={fl.value} onClick={() => setFilterStatus(fl.value)} style={{
                     padding: `6px ${sp[2]}`,
@@ -934,7 +1010,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   filteredOrders.map(order => (
                     <OrderCard key={order.id} order={order}
                       selected={selectedOrder?.id === order.id}
-                      onClick={() => setSelectedOrder(order)}
+                      onClick={() => { setSelectedOrder(order); setMobileShowSidebar(false) }}
                       unreadCount={unreadCounts[order.id] || 0}
                     />
                   ))
@@ -944,7 +1020,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
             {/* ── MAIN PANEL ── */}
             <div className="main-panel" style={{
-              flex: 1, display: 'flex', flexDirection: 'column', background: c.bg,
+              flex: 1, display: !mobileShowSidebar || window.innerWidth > 768 ? 'flex' : 'none', flexDirection: 'column', background: c.bg,
             }}>
               {selectedOrder ? (
                 <>
@@ -959,6 +1035,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       alignItems: 'flex-start', marginBottom: sp[2],
                     }}>
                       <div>
+                        <button onClick={() => setMobileShowSidebar(true)} style={{
+                          display: 'none', background: 'none', border: 'none', color: c.red,
+                          fontSize: size.sm, fontFamily: f.mono, cursor: 'pointer', padding: 0,
+                          marginBottom: '6px', letterSpacing: '0.04em',
+                        }} className="mobile-back-btn">← Retour</button>
                         <div style={{
                           fontSize: '10px', color: c.textTertiary, marginBottom: '6px',
                           fontFamily: f.mono, letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -977,10 +1058,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       gap: sp[3], fontSize: size.sm,
                     }}>
                       {[
-                        { label: 'Quantit\u00e9', value: `${fmtQty(selectedOrder.quantity)} unit\u00e9s` },
+                        { label: 'Quantité', value: `${fmtQty(selectedOrder.quantity)} unités` },
                         { label: 'Budget', value: selectedOrder.budget },
-                        { label: 'D\u00e9lai', value: selectedOrder.deadline || '\u2014' },
-                        { label: 'Fournisseur', value: selectedOrder.city || '\u2014' },
+                        { label: 'Délai', value: selectedOrder.deadline || '—' },
+                        { label: 'Fournisseur', value: selectedOrder.city || '—' },
                       ].map((m, i) => (
                         <div key={i}>
                           <div style={{
@@ -1054,10 +1135,20 @@ export default function Dashboard({ user, profile, onSignOut }) {
                           {messages.length === 0 ? (
                             <DragonEmptyState
                               text="Aucun message"
-                              sub="D\u00e9marrez la conversation avec votre agent"
+                              sub="Démarrez la conversation avec votre agent"
                             />
                           ) : (
-                            messages.map(msg => <ChatBubble key={msg.id} msg={msg} />)
+                            messages.map((msg, idx) => {
+                              const msgDate = new Date(msg.created_at).toDateString()
+                              const prevDate = idx > 0 ? new Date(messages[idx - 1].created_at).toDateString() : null
+                              const showDate = idx === 0 || msgDate !== prevDate
+                              return (
+                                <div key={msg.id}>
+                                  {showDate && <DateSeparator date={msg.created_at} />}
+                                  <ChatBubble msg={msg} />
+                                </div>
+                              )
+                            })
                           )}
                           <div ref={messagesEndRef} />
                         </div>
@@ -1166,17 +1257,44 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   </div>
                 </>
               ) : (
-                <DragonEmptyState
-                  text="S\u00e9lectionnez une commande"
-                  sub="ou cr\u00e9ez une nouvelle demande pour commencer"
-                />
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  justifyContent: 'center', height: '100%', textAlign: 'center', padding: sp[4],
+                }}>
+                  <DragonEmptyState
+                    text={orders.length === 0 ? 'Bienvenue sur CARAXES' : 'Sélectionnez une commande'}
+                    sub={orders.length === 0 ? 'Commencez par explorer le catalogue ou créez votre première demande' : 'Choisissez une commande dans la liste pour voir les détails'}
+                  />
+                  {orders.length === 0 && (
+                    <div style={{ display: 'flex', gap: sp[2], marginTop: sp[3] }}>
+                      <button onClick={() => setViewMode('catalogue')} style={{
+                        padding: `10px ${sp[3]}`, background: c.gold, border: 'none',
+                        color: c.bg, fontSize: size.xs, fontFamily: f.mono, fontWeight: 700,
+                        cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase',
+                        transition: `all 0.2s ${ease.smooth}`,
+                      }}
+                        onMouseOver={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                        onMouseOut={(e) => { e.currentTarget.style.opacity = '1' }}
+                      >Explorer le catalogue</button>
+                      <button onClick={() => setIsNewOrderOpen(true)} style={{
+                        padding: `10px ${sp[3]}`, background: 'transparent', border: `1px solid ${c.red}`,
+                        color: c.red, fontSize: size.xs, fontFamily: f.mono, fontWeight: 700,
+                        cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase',
+                        transition: `all 0.2s ${ease.smooth}`,
+                      }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.color = c.white }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.red }}
+                      >Nouvelle demande</button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </>
         )}
       </div>
 
-      <NewOrderModal isOpen={isNewOrderOpen} onClose={() => setIsNewOrderOpen(false)} onSubmit={handleCreateOrder} />
+      <NewOrderModal isOpen={isNewOrderOpen} onClose={() => { setIsNewOrderOpen(false); setPrefilledProduct('') }} onSubmit={handleCreateOrder} initialProduct={prefilledProduct} />
     </div>
   )
 }

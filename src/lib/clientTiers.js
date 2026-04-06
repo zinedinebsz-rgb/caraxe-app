@@ -84,6 +84,33 @@ export const TIERS = [
       'mode-accessoires', 'enfants-jouets',
     ],
   },
+  {
+    key: 'pro',
+    label: 'Professionnel / BTP',
+    tagline: 'Chantier · Gros volumes · Matériaux & équipements',
+    description: 'Vous êtes un professionnel du bâtiment, un gros revendeur de matériaux, ou vous fournissez des chantiers en équipements et matières premières.',
+    icon: '🏗️',
+    color: c.purple,
+    colorSoft: c.purpleSoft,
+    minOrderValue: 10000,
+    moqMultiplier: 1.5,
+    priceMultiplier: 0.85,
+    priority: 1,
+    priorityLabel: 'Express',
+    benefits: [
+      'Prix conteneur complet',
+      'Sourcing matériaux spécialisé',
+      'Certifications CE/NF sur demande',
+      'Suivi qualité renforcé',
+      'Logistique chantier adaptée',
+      'Devis sur mesure',
+    ],
+    catalogCategories: [
+      'fenetres-menuiserie', 'materiaux-construction', 'outillage-pro',
+      'sanitaire-plomberie', 'electricite-eclairage', 'revetements-sols',
+      'quincaillerie-gros', 'securite-epi',
+    ],
+  },
 ]
 
 export const DEFAULT_TIER = 'detaillant'
