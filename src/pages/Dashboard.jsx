@@ -675,15 +675,16 @@ export default function Dashboard({ user, profile, onSignOut }) {
           50% { box-shadow: 0 0 0 6px oklch(55% 0.22 25 / 0); }
         }
         @media (max-width: 768px) {
-          .sidebar { width: 100% !important; border-right: none !important; }
+          .sidebar { width: 100% !important; border-right: none !important; display: ${mobileShowSidebar ? 'flex' : 'none'} !important; }
           .main-panel { width: 100% !important; }
           .desktop-only { display: none !important; }
-          .mobile-back-btn { display: block !important; }
+          .mobile-back-btn { display: inline-block !important; }
           .dash-tabs { flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
           .dash-tabs::-webkit-scrollbar { display: none; }
           .dash-content { padding: 12px !important; }
           .dash-catalog-grid { grid-template-columns: 1fr !important; }
           .header-center-tabs { display: none !important; }
+          .order-metadata { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 480px) {
           .dash-content { padding: 8px !important; }
@@ -1671,9 +1672,12 @@ export default function Dashboard({ user, profile, onSignOut }) {
             {/* ── MAIN PANEL ── */}
             <div className="main-panel" style={{
               flex: 1, display: !mobileShowSidebar || window.innerWidth > 768 ? 'flex' : 'none', flexDirection: 'column', background: c.bg,
+              overflow: 'hidden',
             }}>
               {selectedOrder ? (
                 <>
+                  {/* Scrollable order metadata zone */}
+                  <div style={{ overflowY: 'auto', flexShrink: 1, minHeight: 0 }}>
                   {/* Order header */}
                   <div style={{
                     padding: `${sp[3]} ${sp[4]}`,
@@ -1897,10 +1901,13 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     </a>
                   </div>
 
+                  </div>{/* END scrollable order metadata zone */}
+
                   {/* Tabs */}
                   <div style={{
                     display: 'flex', padding: `0 ${sp[4]}`,
                     borderBottom: `1px solid ${c.border}`, gap: sp[4],
+                    flexShrink: 0,
                   }}>
                     {['messages', 'documents'].map(tab => (
                       <button key={tab} onClick={() => setActiveTab(tab)} style={{
@@ -1921,7 +1928,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   </div>
 
                   {/* Tab content */}
-                  <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 220 }}>
                     {activeTab === 'messages' ? (
                       <>
                         <div style={{
