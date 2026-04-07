@@ -30,7 +30,19 @@ export async function signUpWithPassword(email, password, fullName) {
 
 export async function resetPassword(email) {
   return supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/login`,
+    redirectTo: `${window.location.origin}/reset-password`,
+  })
+}
+
+export async function updateUserPassword(newPassword) {
+  return supabase.auth.updateUser({ password: newPassword })
+}
+
+export async function resendConfirmationEmail(email) {
+  return supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: window.location.origin },
   })
 }
 
@@ -101,15 +113,19 @@ export async function getOrders(clientId = null) {
 }
 
 export async function createOrder({ clientId, product, quantity, budget, deadline, notes }) {
+  // Generate unique ref: CRX-XXXXXX (timestamp-based)
+  const ref = 'CRX-' + String(Date.now()).slice(-6) + String(Math.floor(Math.random() * 100)).padStart(2, '0')
   const { data, error } = await supabase
     .from('orders')
     .insert({
       client_id: clientId,
+      ref,
       product,
       quantity: parseInt(quantity) || 0,
       budget: budget || 'À définir',
       deadline: deadline || 'À définir',
       notes,
+      status: 0,
     })
     .select()
     .single()
@@ -272,4 +288,179 @@ export async function getAllProfiles() {
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []
+}
+
+// ─── SHIPMENTS (Expédition service) ───
+export async function getShipments(clientId = null) {
+  let query = supabase.from('shipments').select('*').order('created_at', { ascending: false })
+  if (clientId) query = query.eq('client_id', clientId)
+  const { data, error } = await query
+  if (error) { console.warn('shipments table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function createShipment(shipment) {
+  const { data, error } = await supabase.from('shipments').insert(shipment).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateShipment(id, updates) {
+  const { data, error } = await supabase.from('shipments').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteShipment(id) {
+  const { error } = await supabase.from('shipments').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── INVENTORY (Stock service) ───
+export async function getInventory(clientId = null) {
+  let query = supabase.from('inventory').select('*').order('updated_at', { ascending: false })
+  if (clientId) query = query.eq('client_id', clientId)
+  const { data, error } = await query
+  if (error) { console.warn('inventory table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function updateInventoryItem(id, updates) {
+  const { data, error } = await supabase.from('inventory').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function createInventoryItem(item) {
+  const { data, error } = await supabase.from('inventory').insert(item).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteInventoryItem(id) {
+  const { error } = await supabase.from('inventory').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── SUPPLIERS (Fournisseurs) ───
+export async function getSuppliers() {
+  const { data, error } = await supabase.from('suppliers').select('*').order('name', { ascending: true })
+  if (error) { console.warn('suppliers table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function createSupplier(supplier) {
+  const { data, error } = await supabase.from('suppliers').insert(supplier).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateSupplier(id, updates) {
+  const { data, error } = await supabase.from('suppliers').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+// ─── LINK ORDER → SUPPLIER ───
+export async function linkOrderToSupplier(orderId, supplierId, priceUnit, notes) {
+  const { data, error } = await supabase.from('order_suppliers').insert({
+    order_id: orderId,
+    supplier_id: supplierId,
+    price_unit: priceUnit,
+    notes,
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function getOrderSuppliers(orderId) {
+  const { data, error } = await supabase.from('order_suppliers').select('*, suppliers(*)').eq('order_id', orderId)
+  if (error) { console.warn('order_suppliers may not exist:', error.message); return [] }
+  return data || []
+}
+
+// ─── LINK SHIPMENT → ORDER ───
+export async function linkShipmentToOrder(shipmentId, orderId) {
+  return updateShipment(shipmentId, { order_id: orderId })
+}
+
+// ─── PRODUCTS (Catalogue dynamique) ───
+export async function getProducts() {
+  const { data, error } = await supabase.from('products').select('*').order('sort_order', { ascending: true })
+  if (error) { console.warn('products table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function getActiveProducts() {
+  const { data, error } = await supabase.from('products').select('*').eq('active', true).order('sort_order', { ascending: true })
+  if (error) { console.warn('products:', error.message); return [] }
+  return data || []
+}
+
+export async function createProduct(product) {
+  const { data, error } = await supabase.from('products').insert(product).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateProduct(id, updates) {
+  const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteProduct(id) {
+  const { error } = await supabase.from('products').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── PRODUCT IMAGE UPLOAD ───
+export async function uploadProductImage(file, productId) {
+  const ext = file.name.split('.').pop()
+  const path = `${productId}/${Date.now()}.${ext}`
+  const { data, error } = await supabase.storage.from('products').upload(path, file, { cacheControl: '3600', upsert: false })
+  if (error) throw error
+  const { data: urlData } = supabase.storage.from('products').getPublicUrl(data.path)
+  return urlData.publicUrl
+}
+
+export async function deleteProductImage(url) {
+  const path = url.split('/storage/v1/object/public/products/')[1]
+  if (!path) return
+  const { error } = await supabase.storage.from('products').remove([decodeURIComponent(path)])
+  if (error) console.warn('delete image error:', error.message)
+}
+
+// ─── CATEGORIES (Catalogue dynamique) ───
+export async function getCategories() {
+  const { data, error } = await supabase.from('categories').select('*').order('sort_order', { ascending: true })
+  if (error) { console.warn('categories table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function createCategory(category) {
+  const { data, error } = await supabase.from('categories').insert(category).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateCategory(id, updates) {
+  const { data, error } = await supabase.from('categories').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteCategory(id) {
+  const { error } = await supabase.from('categories').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── WELCOME MESSAGE ───
+// Note: messages are tied to order_id (per-order chat), so a welcome message
+// without an order cannot be inserted. This function is a no-op until a
+// notifications table or global messages system is implemented.
+export async function sendWelcomeMessage(userId) {
+  // Intentionally no-op — the messages table requires order_id.
+  // Welcome info is shown in the onboarding UI instead.
+  return
 }

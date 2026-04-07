@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { signInWithPassword, signUpWithPassword, resetPassword, signInWithEmail } from '../lib/supabase'
+import { signInWithPassword, signUpWithPassword, resetPassword, signInWithEmail, resendConfirmationEmail } from '../lib/supabase'
 import { c, f, size, sp, ease, shadow, transition, radius } from '../lib/theme'
 
 /* ── Dragon mark — refined CARAXES fierce dragon ── */
@@ -123,32 +123,60 @@ export default function Login() {
   const resetForm = () => { setError(null); setSuccess(null); setSent(false) }
   const switchMode = (m) => { resetForm(); setMode(m) }
 
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  const [resending, setResending] = useState(false)
+
+  const translateError = (msg) => {
+    if (!msg) return 'Une erreur est survenue.'
+    const m = msg.toLowerCase()
+    if (m.includes('invalid login') || m.includes('invalid_credentials')) return 'Email ou mot de passe incorrect.'
+    if (m.includes('email not confirmed') || m.includes('email_not_confirmed')) return 'Votre email n\u2019est pas encore confirm\u00e9. V\u00e9rifiez votre bo\u00eete de r\u00e9ception (et les spams).'
+    if (m.includes('rate limit') || m.includes('too many requests') || m.includes('over_email_send_rate_limit')) return 'Trop de tentatives. Attendez quelques minutes avant de r\u00e9essayer.'
+    if (m.includes('already registered') || m.includes('user_already_exists')) return 'Cet email est d\u00e9j\u00e0 utilis\u00e9. Connectez-vous ou r\u00e9initialisez votre mot de passe.'
+    if (m.includes('signup_disabled') || m.includes('signups not allowed')) return 'Les inscriptions sont temporairement d\u00e9sactiv\u00e9es.'
+    if (m.includes('invalid email') || m.includes('unable to validate')) return 'Adresse email invalide.'
+    if (m.includes('network') || m.includes('fetch') || m.includes('failed')) return 'Erreur de connexion. V\u00e9rifiez votre internet et r\u00e9essayez.'
+    if (m.includes('weak password') || m.includes('password')) return 'Le mot de passe doit contenir au moins 6 caract\u00e8res.'
+    return msg
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim()) return
+    setResending(true); setError(null)
+    const { error } = await resendConfirmationEmail(email)
+    setResending(false)
+    if (error) {
+      setError(translateError(error.message))
+    } else {
+      setSuccess('Email de confirmation renvoy\u00e9 ! V\u00e9rifiez votre bo\u00eete de r\u00e9ception.')
+      setSent(true)
+      setNeedsConfirmation(false)
+    }
+  }
+
   const handleLogin = async (e) => {
-    e.preventDefault(); setLoading(true); setError(null)
+    e.preventDefault(); setLoading(true); setError(null); setNeedsConfirmation(false)
     const { error } = await signInWithPassword(email, password)
     setLoading(false)
     if (error) {
-      setError(error.message.includes('Invalid login')
-        ? 'Email ou mot de passe incorrect.'
-        : error.message.includes('Email not confirmed')
-        ? 'Veuillez confirmer votre email avant de vous connecter.'
-        : error.message)
+      const msg = error.message || ''
+      const isConfirmation = msg.toLowerCase().includes('email not confirmed') || msg.toLowerCase().includes('email_not_confirmed')
+      if (isConfirmation) setNeedsConfirmation(true)
+      setError(translateError(msg))
     }
   }
 
   const handleSignup = async (e) => {
     e.preventDefault()
-    if (password.length < 6) { setError('Le mot de passe doit contenir au moins 6 caracteres.'); return }
+    if (password.length < 6) { setError('Le mot de passe doit contenir au moins 6 caract\u00e8res.'); return }
     setLoading(true); setError(null)
     const { error } = await signUpWithPassword(email, password, fullName)
     setLoading(false)
     if (error) {
-      setError(error.message.includes('already registered')
-        ? 'Cet email est deja utilise. Connectez-vous ou reinitialisez votre mot de passe.'
-        : error.message)
+      setError(translateError(error.message))
     } else {
       setSent(true)
-      setSuccess('Compte cree ! Verifiez votre email pour confirmer votre inscription.')
+      setSuccess('Compte cr\u00e9\u00e9 ! V\u00e9rifiez votre email pour confirmer votre inscription. Pensez \u00e0 regarder dans les spams.')
     }
   }
 
@@ -156,16 +184,16 @@ export default function Login() {
     e.preventDefault(); setLoading(true); setError(null)
     const { error } = await resetPassword(email)
     setLoading(false)
-    if (error) setError(error.message)
-    else { setSent(true); setSuccess('Un email de reinitialisation a ete envoye.') }
+    if (error) setError(translateError(error.message))
+    else { setSent(true); setSuccess('Un email de r\u00e9initialisation a \u00e9t\u00e9 envoy\u00e9. V\u00e9rifiez votre bo\u00eete de r\u00e9ception et les spams.') }
   }
 
   const handleMagicLink = async (e) => {
     e.preventDefault(); setLoading(true); setError(null)
     const { error } = await signInWithEmail(email)
     setLoading(false)
-    if (error) setError(error.message)
-    else { setSent(true); setSuccess('Un lien de connexion a ete envoye a votre email.') }
+    if (error) setError(translateError(error.message))
+    else { setSent(true); setSuccess('Un lien de connexion a \u00e9t\u00e9 envoy\u00e9 \u00e0 votre email. V\u00e9rifiez aussi les spams.') }
   }
 
   const active = email.trim().length > 0
@@ -442,13 +470,26 @@ export default function Login() {
                     fontSize: size.xs, color: c.red, marginBottom: sp[3],
                     padding: `${sp[1.5]} ${sp[2]}`, background: c.redSoft, lineHeight: 1.6,
                     border: `1px solid ${c.redGlow}`,
-                    display: 'flex', alignItems: 'flex-start', gap: sp[1],
                     animation: `shakeError 0.4s ${ease.out}`,
                   }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.red} strokeWidth="1.5" style={{ flexShrink: 0, marginTop: '2px' }}>
-                      <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
-                    </svg>
-                    <span>{error}</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: sp[1] }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c.red} strokeWidth="1.5" style={{ flexShrink: 0, marginTop: '2px' }}>
+                        <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                      </svg>
+                      <span>{error}</span>
+                    </div>
+                    {needsConfirmation && (
+                      <button type="button" onClick={handleResendConfirmation} disabled={resending}
+                        style={{
+                          marginTop: sp[1], padding: '6px 14px', fontSize: size.xs,
+                          background: c.red, color: c.white, border: 'none',
+                          cursor: resending ? 'wait' : 'pointer', fontFamily: f.body,
+                          fontWeight: 600, letterSpacing: '0.02em', width: '100%',
+                          opacity: resending ? 0.7 : 1,
+                        }}>
+                        {resending ? 'Envoi en cours\u2026' : 'Renvoyer l\u2019email de confirmation'}
+                      </button>
+                    )}
                   </div>
                 )}
 

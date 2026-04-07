@@ -130,9 +130,9 @@ export const transition = {
 export const STATUSES = [
   { key: 'pending',     label: 'En attente',             color: c.textSecondary, bg: 'oklch(62% 0.015 60 / 0.10)' },
   { key: 'sourcing',    label: 'Recherche fournisseur',  color: c.blue,          bg: c.blueSoft },
-  { key: 'negotiation', label: 'N\u00e9gociation',      color: c.purple,        bg: c.purpleSoft },
-  { key: 'sample',      label: '\u00c9chantillon',       color: c.amber,         bg: c.amberSoft },
-  { key: 'production',  label: 'Production',             color: c.red,           bg: c.redSoft },
-  { key: 'shipping',    label: 'Exp\u00e9dition',        color: c.teal,          bg: c.tealSoft },
-  { key: 'delivered',   label: 'Livr\u00e9',             color: c.green,         bg: c.greenSoft },
+  { key: 'negotiation', label: 'Négociation',             color: c.purple,        bg: c.purpleSoft },
+  { key: 'sample',      label: 'Échantillon',             color: c.amber,         bg: c.amberSoft },
+  { key: 'production',  label: 'Production',               color: c.red,           bg: c.redSoft },
+  { key: 'shipping',    label: 'Expédition',               color: c.teal,          bg: c.tealSoft },
+  { key: 'delivered',   label: 'Livré',                    color: c.green,         bg: c.greenSoft },
 ]

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { c, f, size, sp, shadow, ease, transition } from '../lib/theme'
 import { TIERS, DEFAULT_TIER, getTierByKey } from '../lib/clientTiers'
 import { getCatalog } from '../lib/catalogsByProfile'
-import { updateProfile } from '../lib/supabase'
+import { updateProfile, sendWelcomeMessage } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
 /* ── KEYFRAMES — premium ── */
@@ -14,15 +14,13 @@ const keyframes = `
 @keyframes stepReveal { from { opacity:0; transform:translateY(20px) scale(0.97) } to { opacity:1; transform:translateY(0) scale(1) } }
 @keyframes goldShimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
 
+.onboarding-nav-bar { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; z-index: 100 !important; padding: 14px 24px !important; background: rgba(15,12,10,0.95) !important; backdrop-filter: blur(12px) !important; border-top: 1px solid rgba(255,255,255,0.06) !important; }
 @media (max-width: 768px) {
-  .onboarding-root { padding: 16px 12px !important; }
   .onboarding-container { max-width: 100% !important; }
   .onboarding-tier-grid { grid-template-columns: 1fr !important; }
   .onboarding-catalog-grid { grid-template-columns: 1fr !important; }
   .onboarding-contact-row { grid-template-columns: 1fr !important; }
-}
-@media (max-width: 480px) {
-  .onboarding-root { padding: 12px 8px !important; }
+  .onboarding-nav-bar { padding: 12px 16px !important; }
 }
 `
 
@@ -40,7 +38,7 @@ const ArtDecoDivider = ({ width = 80, center = true }) => (
 /* ── DRAGON ILLUSTRATION ── */
 const DragonWelcome = () => (
   <div style={{ animation: 'dragonFloat 3s ease-in-out infinite', margin: '0 auto', width: 'fit-content' }}>
-    <svg width="80" height="80" viewBox="0 0 120 120" fill="none">
+    <svg width="56" height="56" viewBox="0 0 120 120" fill="none">
       <path d="M60 15L75 35Q80 42 75 55Q70 65 60 70Q50 65 45 55Q40 42 55 35L60 15Z" fill={c.red} opacity="0.7"/>
       <path d="M50 45Q45 50 45 60Q45 75 60 85Q75 75 75 60Q75 50 70 45" fill={c.gold} opacity="0.35"/>
       <circle cx="55" cy="55" r="2.5" fill={c.gold} opacity="0.8"/>
@@ -87,6 +85,7 @@ export default function Onboarding({ user, profile, onComplete }) {
         onboarding_done: true,
       })
       toast.success('Bienvenue chez CARAXES !')
+      sendWelcomeMessage(user.id).catch(() => {})
       onComplete()
     } catch (err) {
       toast.error('Erreur lors de la finalisation. Réessayez.')
@@ -104,10 +103,15 @@ export default function Onboarding({ user, profile, onComplete }) {
 
   return (
     <div className="onboarding-root" style={{
-      minHeight: '100vh', background: c.bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: f.body, color: c.text, padding: sp[4],
-      overflowX: 'hidden', boxSizing: 'border-box', width: '100%',
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: c.bg, overflowY: 'auto', overflowX: 'hidden',
+      fontFamily: f.body, color: c.text,
+      WebkitOverflowScrolling: 'touch',
+    }}>
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      padding: `${sp[4]} ${sp[4]} 100px`,
+      minHeight: '100%', boxSizing: 'border-box', width: '100%',
     }}>
       <style>{keyframes}</style>
 
@@ -119,22 +123,22 @@ export default function Onboarding({ user, profile, onComplete }) {
       }}>
 
         {/* ── LOGO ── */}
-        <div style={{ textAlign: 'center', marginBottom: sp[3], animation: 'fadeSlideIn 0.5s ease-out' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: sp[2], marginBottom: sp[1] }}>
-            <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+        <div style={{ textAlign: 'center', marginBottom: sp[2], animation: 'fadeSlideIn 0.5s ease-out' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '4px' }}>
+            <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
               <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.95"/>
               <circle cx="16" cy="19" r="2" fill={c.gold} opacity="0.95"/>
               <circle cx="24" cy="19" r="2" fill={c.gold} opacity="0.95"/>
             </svg>
-            <span style={{ fontSize: size.xl, fontFamily: f.display, color: c.gold, letterSpacing: '0.08em', fontWeight: 700 }}>
+            <span style={{ fontSize: size.lg, fontFamily: f.display, color: c.gold, letterSpacing: '0.08em', fontWeight: 700 }}>
               CARAXES
             </span>
           </div>
-          <div style={{ width: 50, height: 2, background: c.red, margin: '0 auto' }} />
+          <div style={{ width: 40, height: 2, background: c.red, margin: '0 auto' }} />
         </div>
 
         {/* ── PROGRESS ── */}
-        <div style={{ marginBottom: sp[4], animation: 'fadeSlideIn 0.5s ease-out 0.1s both' }}>
+        <div style={{ marginBottom: sp[2], animation: 'fadeSlideIn 0.5s ease-out 0.1s both' }}>
           <div style={{ display: 'flex', gap: '3px', padding: '0 15%', marginBottom: sp[1] }}>
             {STEPS.map((_, i) => (
               <div key={i} style={{
@@ -164,19 +168,19 @@ export default function Onboarding({ user, profile, onComplete }) {
           <div style={{ textAlign: 'center', animation: 'fadeSlideIn 0.5s ease-out 0.15s both' }}>
             <DragonWelcome />
             <h1 style={{
-              fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700,
-              margin: 0, marginBottom: sp[1], letterSpacing: '-0.01em', marginTop: sp[3],
+              fontFamily: f.display, fontSize: size.xl, fontWeight: 700,
+              margin: 0, marginBottom: '4px', letterSpacing: '-0.01em', marginTop: sp[2],
             }}>
               Bienvenue chez CARAXES
             </h1>
-            <ArtDecoDivider width={100} />
+            <ArtDecoDivider width={80} />
             <p style={{
-              fontSize: size.sm, color: c.textSecondary, lineHeight: 1.7,
-              maxWidth: 380, margin: `${sp[2]} auto ${sp[4]}`,
+              fontSize: size.xs, color: c.textSecondary, lineHeight: 1.6,
+              maxWidth: 340, margin: `${sp[1]} auto ${sp[3]}`,
             }}>
-              Votre agent de sourcing en Chine. En 2 minutes, on configure votre compte pour vous proposer les bons produits, aux bons prix.
+              Votre agent de sourcing en Chine. En 2 minutes, on configure votre compte.
             </p>
-            <div style={{ display: 'flex', gap: sp[2], justifyContent: 'center', fontSize: '10px', fontFamily: f.mono, color: c.textTertiary, letterSpacing: '0.04em', marginBottom: sp[4] }}>
+            <div style={{ display: 'flex', gap: sp[2], justifyContent: 'center', fontSize: '9px', fontFamily: f.mono, color: c.textTertiary, letterSpacing: '0.04em', marginBottom: sp[3] }}>
               <span>Yiwu</span><span style={{ color: c.gold }}>·</span>
               <span>Guangzhou</span><span style={{ color: c.gold }}>·</span>
               <span>Shenzhen</span>
@@ -205,7 +209,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                   <div key={tier.key}
                     onClick={() => { setSelectedTier(tier.key); setSelectedCategories([]) }}
                     style={{
-                      padding: sp[3], background: isSelected ? c.bgElevated : c.bgSurface,
+                      padding: sp[2], background: isSelected ? c.bgElevated : c.bgSurface,
                       border: `2px solid ${isSelected ? tier.color : c.border}`,
                       cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                       position: 'relative', overflow: 'hidden',
@@ -221,13 +225,13 @@ export default function Onboarding({ user, profile, onComplete }) {
                       transition: `height 0.2s ${ease.smooth}`,
                     }} />
 
-                    <div style={{ textAlign: 'center', marginBottom: sp[2] }}>
-                      <div style={{ fontSize: '32px', marginBottom: sp[1] }}>{tier.icon}</div>
-                      <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: isSelected ? tier.color : c.text }}>{tier.label}</div>
-                      <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '4px' }}>{tier.tagline}</div>
+                    <div style={{ textAlign: 'center', marginBottom: sp[1] }}>
+                      <div style={{ fontSize: '24px', marginBottom: '4px' }}>{tier.icon}</div>
+                      <div style={{ fontFamily: f.display, fontSize: size.sm, fontWeight: 700, color: isSelected ? tier.color : c.text }}>{tier.label}</div>
+                      <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px' }}>{tier.tagline}</div>
                     </div>
 
-                    <p style={{ fontSize: size.xs, color: c.textSecondary, lineHeight: 1.6, marginBottom: sp[2], textAlign: 'center' }}>
+                    <p style={{ fontSize: '11px', color: c.textSecondary, lineHeight: 1.5, marginBottom: sp[1], textAlign: 'center' }}>
                       {tier.description}
                     </p>
 
@@ -288,7 +292,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                 return (
                   <div key={cat.id} onClick={() => toggleCategory(cat.id)}
                     style={{
-                      padding: sp[3], background: isSelected ? c.bgElevated : c.bgSurface,
+                      padding: sp[2], background: isSelected ? c.bgElevated : c.bgSurface,
                       border: `1.5px solid ${isSelected ? currentTier.color : c.border}`,
                       cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
                       position: 'relative', overflow: 'hidden',
@@ -447,7 +451,7 @@ export default function Onboarding({ user, profile, onComplete }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[4] }}>
+            <div className="onboarding-nav-bar" style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[3] }}>
               <button onClick={() => setStep(2)} style={btnSecondary}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textSecondary; e.currentTarget.style.color = c.text }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
@@ -462,12 +466,13 @@ export default function Onboarding({ user, profile, onComplete }) {
                 }}
                 onMouseEnter={(e) => { if (formData.full_name.trim()) { e.currentTarget.style.background = c.goldDim } }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = c.gold }}>
-                {saving ? 'Enregistrement…' : 'Terminer la configuration'}
+                {saving ? 'Enregistrement...' : 'Terminer'}
               </button>
             </div>
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }
@@ -476,7 +481,7 @@ export default function Onboarding({ user, profile, onComplete }) {
 
 function NavButtons({ onBack, onNext, nextLabel = 'Continuer' }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[4] }}>
+    <div className="onboarding-nav-bar" style={{ display: 'flex', justifyContent: 'space-between', marginTop: sp[3] }}>
       <button onClick={onBack} style={btnSecondary}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textSecondary; e.currentTarget.style.color = c.text }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
@@ -523,13 +528,13 @@ function RecapItem({ label, value, color, icon }) {
 /* ── SHARED STYLES ── */
 
 const headingStyle = {
-  fontFamily: f.display, fontSize: size.xl, fontWeight: 700,
-  margin: 0, marginBottom: sp[1], textAlign: 'center', letterSpacing: '-0.01em',
+  fontFamily: f.display, fontSize: size.lg, fontWeight: 700,
+  margin: 0, marginBottom: '4px', textAlign: 'center', letterSpacing: '-0.01em',
 }
 
 const subStyle = {
-  fontSize: size.sm, color: c.textSecondary, textAlign: 'center',
-  marginBottom: sp[4], lineHeight: 1.6,
+  fontSize: size.xs, color: c.textSecondary, textAlign: 'center',
+  marginBottom: sp[3], lineHeight: 1.5,
 }
 
 const statLabelStyle = {

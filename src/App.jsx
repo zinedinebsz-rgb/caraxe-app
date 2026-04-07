@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Admin = lazy(() => import('./pages/Admin'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Settings = lazy(() => import('./pages/Settings'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
 /* ── LOADER ── */
 const Loader = ({ text = 'Chargement\u2026' }) => (
@@ -129,7 +130,13 @@ export default function App() {
       else setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // On password recovery, redirect to the reset page and don't auto-login
+      if (event === 'PASSWORD_RECOVERY') {
+        setSession(session)
+        setLoading(false)
+        return
+      }
       setSession(session)
       if (session?.user) {
         loadProfile(session.user.id)
@@ -167,6 +174,10 @@ export default function App() {
       <Routes>
         <Route path="/login" element={
           session ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />
+        } />
+
+        <Route path="/reset-password" element={
+          <Suspense fallback={<Loader />}><ResetPassword /></Suspense>
         } />
 
         <Route path="/settings" element={

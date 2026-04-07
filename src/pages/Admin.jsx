@@ -4,6 +4,9 @@ import {
   getOrders, updateOrder, deleteOrder, getMessages, sendMessage,
   getDocuments, uploadDocument, getDocumentUrl, getAllClients, getAllProfiles, createOrder,
   subscribeToMessages, subscribeToOrders, supabase, updateProfile, resetPassword,
+  getShipments, createShipment, updateShipment, deleteShipment, getInventory, updateInventoryItem, createInventoryItem, deleteInventoryItem,
+  getProducts, createProduct, updateProduct, deleteProduct, uploadProductImage, deleteProductImage,
+  getCategories, createCategory, updateCategory, deleteCategory,
 } from '../lib/supabase'
 import { CATALOGS, getCatalog } from '../lib/catalogsByProfile'
 import { TIERS, getTierByKey, DEFAULT_TIER, getTierPrice, getTierMOQ } from '../lib/clientTiers'
@@ -143,15 +146,38 @@ export default function Admin({ user, profile, onSignOut }) {
   const [catalogEditData, setCatalogEditData] = useState(null) // editing state
   const [clientPasswordModal, setClientPasswordModal] = useState(null) // client for password management
   const [newTempPassword, setNewTempPassword] = useState('')
-  const [passwordAction, setPasswordAction] = useState(null) // 'reset' | 'set' | null
+  const [passwordAction, setPasswordAction] = useState(null) // 'reset' | 'set' | 'reset-account' | 'done' | null
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [lastSetPassword, setLastSetPassword] = useState('') // password just set, for display
+  const [shipments, setShipments] = useState([])
+  const [inventory, setInventory] = useState([])
+  const [products, setProducts] = useState([])
+  const [showProductModal, setShowProductModal] = useState(false)
+  const [productForm, setProductForm] = useState({ name: '', description: '', category: '', price_min: '', price_max: '', moq: '1', margin_estimate: '', tags: '', tier_keys: ['retail','wholesale','ecommerce'], active: true, featured: false })
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [productUploading, setProductUploading] = useState(false)
+  const productFileRef = useRef(null)
+  const [showCreateShipment, setShowCreateShipment] = useState(false)
+  const [createShipmentData, setCreateShipmentData] = useState({ client_id: '', tracking_number: '', method: 'maritime', destination: '', weight_kg: '', notes: '', status: 'production' })
+  const [showCreateInventory, setShowCreateInventory] = useState(false)
+  const [createInventoryData, setCreateInventoryData] = useState({ client_id: '', product_name: '', sku: '', quantity: '', alert_threshold: '10', warehouse: 'France', unit_price: '', notes: '' })
+  const [editingShipment, setEditingShipment] = useState(null)
+  const [editShipmentData, setEditShipmentData] = useState({})
+  const [editingInventoryItem, setEditingInventoryItem] = useState(null)
+  const [editInventoryData, setEditInventoryData] = useState({})
+  const [expandedTier, setExpandedTier] = useState(null)
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [categories, setCategories] = useState([])
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [categoryForm, setCategoryForm] = useState({ name: '', icon: '📦', description: '', sort_order: 0, active: true, tier_keys: ['retail','wholesale','ecommerce'] })
+  const [editingCategory, setEditingCategory] = useState(null)
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const searchInputRef = useRef(null)
 
   const loadAll = useCallback(async () => {
-    const [ordersData, clientsData, profilesData] = await Promise.all([getOrders(), getAllClients(), getAllProfiles()])
-    setOrders(ordersData); setClients(clientsData); setAllProfiles(profilesData); setLoading(false)
+    const [ordersData, clientsData, profilesData, shipmentsData, inventoryData, productsData, categoriesData] = await Promise.all([getOrders(), getAllClients(), getAllProfiles(), getShipments(), getInventory(), getProducts(), getCategories()])
+    setOrders(ordersData); setClients(clientsData); setAllProfiles(profilesData); setShipments(shipmentsData); setInventory(inventoryData); setProducts(productsData); setCategories(categoriesData); setLoading(false)
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
@@ -197,7 +223,7 @@ export default function Admin({ user, profile, onSignOut }) {
   const clientInitial = (clientId) => clientName(clientId).charAt(0).toUpperCase()
 
   const filtered = orders.filter(o => {
-    const isDone = o.status === 6 || o.status === 'delivered' || o.status === 'completed'
+    const isDone = o.status === 6 || o.status === 'delivered' || o.status === 'livré' || o.status === 'completed' || o.status === 'livré'
     if (filter === 'active' && isDone) return false
     if (filter === 'done' && !isDone) return false
     if (search) {
@@ -216,7 +242,7 @@ export default function Admin({ user, profile, onSignOut }) {
       await sendMessage({ orderId: selectedId, senderId: user.id, senderRole: 'admin', content: text })
     } catch (err) {
       setNewMsg(text)
-      toast.error('Impossible d’envoyer le message.')
+      toast.error("Impossible d'envoyer le message.")
     } finally { setSendingMsg(false) }
   }
 
@@ -233,6 +259,30 @@ export default function Admin({ user, profile, onSignOut }) {
           const statusIndex = STATUSES.findIndex(s => s.key === newStatusKey)
           const progress = Math.round((statusIndex / (STATUSES.length - 1)) * 100)
           await updateOrder(selectedId, { status: statusIndex, progress })
+          // Auto-create shipment when order goes to "shipping" (index 5)
+          if (statusIndex === 5) {
+            const order = orders.find(o => o.id === selectedId)
+            if (order) {
+              const alreadyHasShipment = shipments.some(s => s.order_id === selectedId)
+              if (!alreadyHasShipment) {
+                try {
+                  await createShipment({
+                    client_id: order.client_id,
+                    order_id: order.id,
+                    product_name: order.product || null,
+                    tracking_number: null,
+                    method: 'maritime',
+                    destination: order.city || 'France',
+                    origin: 'Chine',
+                    weight_kg: null,
+                    notes: `Auto-créé depuis commande ${order.ref}`,
+                    status: 0,
+                  })
+                  toast.success('Expédition créée automatiquement')
+                } catch (shipErr) { console.warn('Auto-shipment failed:', shipErr) }
+              }
+            }
+          }
           await loadAll()
           toast.success(`Statut mis à jour : ${statusLabel}`)
         } catch (err) { toast.error('Erreur lors du changement de statut.') }
@@ -274,7 +324,7 @@ export default function Admin({ user, profile, onSignOut }) {
       const docs = await getDocuments(selectedId)
       setDocuments(docs)
       toast.success('Document ajouté')
-    } catch (err) { toast.error('Erreur lors de l’envoi du fichier.') }
+    } catch (err) { toast.error("Erreur lors de l'envoi du fichier.") }
     finally { setUploadingFile(false); fileInputRef.current.value = '' }
   }
 
@@ -305,6 +355,124 @@ export default function Admin({ user, profile, onSignOut }) {
     } catch (err) { toast.error('Erreur lors de la création de la commande.') }
   }
 
+  const shipStatusToInt = { production: 0, QC: 1, douanes: 2, transit: 3, 'livré': 4 }
+  const shipStatusToStr = ['production', 'QC', 'douanes', 'transit', 'livré']
+
+  const handleCreateShipment = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!createShipmentData.client_id || !createShipmentData.destination) return
+    try {
+      await createShipment({
+        client_id: createShipmentData.client_id,
+        order_id: createShipmentData.order_id || null,
+        product_name: createShipmentData.product_name || null,
+        tracking_number: createShipmentData.tracking_number || null,
+        method: createShipmentData.method,
+        destination: createShipmentData.destination,
+        origin: createShipmentData.origin || 'Chine',
+        weight_kg: createShipmentData.weight_kg ? parseFloat(createShipmentData.weight_kg) : null,
+        notes: createShipmentData.notes || null,
+        status: shipStatusToInt[createShipmentData.status] ?? 0,
+      })
+      setCreateShipmentData({ client_id: '', order_id: '', product_name: '', tracking_number: '', method: 'maritime', destination: '', origin: 'Chine', weight_kg: '', notes: '', status: 'production' })
+      setShowCreateShipment(false)
+      await loadAll()
+      toast.success('Envoi enregistré')
+    } catch (err) { console.error('Create shipment error:', err); toast.error('Erreur: ' + (err?.message || "création impossible")) }
+  }
+
+  const handleCreateInventory = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!createInventoryData.client_id || !createInventoryData.product_name) return
+    try {
+      await createInventoryItem({
+        client_id: createInventoryData.client_id,
+        product_name: createInventoryData.product_name,
+        sku: createInventoryData.sku || null,
+        quantity: createInventoryData.quantity ? parseInt(createInventoryData.quantity) : 0,
+        alert_threshold: createInventoryData.alert_threshold ? parseInt(createInventoryData.alert_threshold) : 10,
+        warehouse: createInventoryData.warehouse || 'France',
+        unit_price: createInventoryData.unit_price ? parseFloat(createInventoryData.unit_price) : null,
+        notes: createInventoryData.notes || null,
+      })
+      setCreateInventoryData({ client_id: '', product_name: '', sku: '', quantity: '', alert_threshold: '10', warehouse: 'France', unit_price: '', notes: '' })
+      setShowCreateInventory(false)
+      await loadAll()
+      toast.success('Article ajouté au stock')
+    } catch (err) { toast.error("Erreur lors de la creation de l'article.") }
+  }
+
+  const handleSaveShipment = async () => {
+    if (!editingShipment) return
+    try {
+      const payload = {}
+      if (editShipmentData.tracking_number != null) payload.tracking_number = editShipmentData.tracking_number
+      if (editShipmentData.method != null) payload.method = editShipmentData.method
+      if (editShipmentData.destination != null) payload.destination = editShipmentData.destination
+      if (editShipmentData.weight_kg != null) payload.weight_kg = editShipmentData.weight_kg ? parseFloat(editShipmentData.weight_kg) : null
+      if (editShipmentData.status != null) payload.status = shipStatusToInt[editShipmentData.status] ?? (typeof editShipmentData.status === 'number' ? editShipmentData.status : 0)
+      if (editShipmentData.notes != null) payload.notes = editShipmentData.notes
+      if (editShipmentData.eta != null) payload.eta = editShipmentData.eta
+      if (editShipmentData.origin != null) payload.origin = editShipmentData.origin
+      await updateShipment(editingShipment.id, payload)
+      setEditingShipment(null)
+      await loadAll()
+      toast.success('Envoi mis à jour')
+    } catch (err) { toast.error('Erreur: ' + err.message) }
+  }
+
+  const handleDeleteShipment = async (id) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Supprimer cet envoi',
+      message: 'Cette action est irréversible. Confirmer la suppression ?',
+      onConfirm: async () => {
+        setConfirmDialog({ open: false })
+        try {
+          await deleteShipment(id)
+          await loadAll()
+          toast.success('Envoi supprimé')
+        } catch (err) { toast.error('Erreur: ' + err.message) }
+      },
+    })
+  }
+
+  const handleSaveInventory = async () => {
+    if (!editingInventoryItem) return
+    try {
+      const payload = {}
+      if (editInventoryData.product_name != null) payload.product_name = editInventoryData.product_name
+      if (editInventoryData.sku != null) payload.sku = editInventoryData.sku
+      if (editInventoryData.quantity != null) payload.quantity = parseInt(editInventoryData.quantity) || 0
+      if (editInventoryData.alert_threshold != null) payload.alert_threshold = parseInt(editInventoryData.alert_threshold) || 10
+      if (editInventoryData.warehouse != null) payload.warehouse = editInventoryData.warehouse
+      if (editInventoryData.unit_price != null) payload.unit_price = editInventoryData.unit_price ? parseFloat(editInventoryData.unit_price) : null
+      if (editInventoryData.notes != null) payload.notes = editInventoryData.notes
+      await updateInventoryItem(editingInventoryItem.id, payload)
+      setEditingInventoryItem(null)
+      await loadAll()
+      toast.success('Article mis à jour')
+    } catch (err) { toast.error('Erreur: ' + err.message) }
+  }
+
+  const handleDeleteInventory = async (id) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Supprimer cet article',
+      message: 'Cette action est irréversible. Confirmer la suppression ?',
+      onConfirm: async () => {
+        setConfirmDialog({ open: false })
+        try {
+          await deleteInventoryItem(id)
+          await loadAll()
+          toast.success('Article supprimé')
+        } catch (err) { toast.error('Erreur: ' + err.message) }
+      },
+    })
+  }
+
   const getClientOrderCount = (clientId) => orders.filter(o => o.client_id === clientId).length
   const getClientLastOrderDate = (clientId) => {
     const clientOrders = orders.filter(o => o.client_id === clientId)
@@ -333,14 +501,16 @@ export default function Admin({ user, profile, onSignOut }) {
   ]
 
   const mainTabs = [
-    { key: 'overview', label: 'Vue d’ensemble', icon: icons.trending },
+    { key: 'overview', label: "Vue d'ensemble", icon: icons.trending },
     { key: 'commandes', label: 'Commandes', icon: icons.file },
     { key: 'catalogue', label: 'Catalogue', icon: icons.doc },
+    { key: 'expedition', label: 'Expédition', icon: icons.send, color: c.teal },
+    { key: 'stock', label: 'Stock & E-com', icon: icons.save, color: c.purple },
     { key: 'clients', label: 'Clients', icon: icons.users },
   ]
 
   const activeOrders = orders.filter(o => o.status !== 6 && o.status !== 'delivered').length
-  const deliveredOrders = orders.filter(o => o.status === 6 || o.status === 'delivered').length
+  const deliveredOrders = orders.filter(o => o.status === 6 || o.status === 'delivered' || o.status === 'livré').length
 
   /* ── LOADING ── */
   if (loading) return (
@@ -360,6 +530,11 @@ export default function Admin({ user, profile, onSignOut }) {
           .admin-sidebar { width: 100% !important; }
           .admin-detail { width: 100% !important; }
           .admin-mobile-nav { display: flex !important; }
+          .admin-scroll { padding: 12px !important; }
+          .admin-product-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-scroll { padding: 8px !important; }
         }
       `}</style>
 
@@ -545,10 +720,24 @@ export default function Admin({ user, profile, onSignOut }) {
         <main className="admin-scroll admin-detail" style={{ flex: 1, display: !mobileShowDetail && window.innerWidth <= 768 && mainTab === 'commandes' ? 'none' : 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
 
           {/* ── OVERVIEW TAB ── */}
-          {mainTab === 'overview' && (
+          {mainTab === 'overview' && (() => {
+            const shipmentsInTransit = shipments.filter(s => s.status === 'transit')
+            const shipmentsWaiting = shipments.filter(s => s.status === 'production' || s.status === 'QC' || s.status === 'douanes')
+            const lowStockItems = inventory.filter(item => (item.quantity || 0) <= (item.alert_threshold || 0))
+            const ecomClients = allProfiles.filter(p => p.client_tier === 'ecommerce')
+            const stockClients = allProfiles.filter(p => (p.services_enabled || []).includes('stock'))
+            const logisticsClients = allProfiles.filter(p => (p.services_enabled || []).includes('logistics'))
+            const grossistes = allProfiles.filter(p => p.client_tier === 'grossiste')
+            const detaillants = allProfiles.filter(p => p.client_tier === 'retail')
+            const thisMonth = orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth() && new Date(o.created_at).getFullYear() === new Date().getFullYear())
+            const stockValue = inventory.reduce((acc, item) => acc + ((item.unit_price || 0) * (item.quantity || 0)), 0)
+            const totalQty = inventory.reduce((acc, item) => acc + (item.quantity || 0), 0)
+            const unreadMsgs = messages.filter(m => m.receiver_id === user?.id && !m.read).length
+
+            return (
             <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
               {/* Welcome + Backup */}
-              <div style={{ marginBottom: sp[5], animation: 'fadeSlideIn 0.5s ease-out', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ marginBottom: sp[4], animation: 'fadeSlideIn 0.5s ease-out', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <h1 style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, marginBottom: sp[1], letterSpacing: '-0.02em' }}>
                     Bienvenue, {profile?.full_name?.split(' ')[0]}
@@ -592,53 +781,110 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
               </div>
 
-              {/* Stats cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: sp[3], marginBottom: sp[5] }}>
+              {/* ── ALERTES URGENTES ── */}
+              {(lowStockItems.length > 0 || unreadMsgs > 0 || shipmentsWaiting.length > 0) && (
+                <div style={{ display: 'flex', gap: sp[2], marginBottom: sp[4], flexWrap: 'wrap', animation: 'fadeSlideIn 0.4s ease-out' }}>
+                  {lowStockItems.length > 0 && (
+                    <div onClick={() => setMainTab('stock')} style={{
+                      padding: `${sp[2]} ${sp[3]}`, background: `${c.red}10`, border: `1px solid ${c.red}30`,
+                      display: 'flex', alignItems: 'center', gap: sp[2], cursor: 'pointer',
+                      transition: `all 0.2s ${ease.smooth}`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}20` }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = `${c.red}10` }}>
+                      <span style={{ fontSize: '14px' }}>⚠</span>
+                      <span style={{ fontSize: size.xs, color: c.red, fontWeight: 600 }}>{lowStockItems.length} alerte{lowStockItems.length > 1 ? 's' : ''} stock bas</span>
+                    </div>
+                  )}
+                  {unreadMsgs > 0 && (
+                    <div style={{
+                      padding: `${sp[2]} ${sp[3]}`, background: `${c.gold}10`, border: `1px solid ${c.gold}30`,
+                      display: 'flex', alignItems: 'center', gap: sp[2],
+                    }}>
+                      <Icon d={icons.msg} size={14} color={c.gold} />
+                      <span style={{ fontSize: size.xs, color: c.gold, fontWeight: 600 }}>{unreadMsgs} message{unreadMsgs > 1 ? 's' : ''} non lu{unreadMsgs > 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+                  {shipmentsWaiting.length > 0 && (
+                    <div onClick={() => setMainTab('expedition')} style={{
+                      padding: `${sp[2]} ${sp[3]}`, background: `${c.teal}10`, border: `1px solid ${c.teal}30`,
+                      display: 'flex', alignItems: 'center', gap: sp[2], cursor: 'pointer',
+                      transition: `all 0.2s ${ease.smooth}`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = `${c.teal}20` }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = `${c.teal}10` }}>
+                      <Icon d={icons.send} size={14} color={c.teal} />
+                      <span style={{ fontSize: size.xs, color: c.teal, fontWeight: 600 }}>{shipmentsWaiting.length} envoi{shipmentsWaiting.length > 1 ? 's' : ''} en attente</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── STATS PRINCIPALES (6 cards) ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: sp[3], marginBottom: sp[4] }}>
                 {[
-                  { label: 'Clients', value: allProfiles.length, color: c.gold, sub: `${allProfiles.filter(p => p.client_tier === 'grossiste' || p.client_tier === 'pro').length} grossistes/pro` },
-                  { label: 'En cours', value: activeOrders, color: c.red, sub: orders.length > 0 ? `${Math.round((activeOrders / orders.length) * 100)}% du total` : '0%' },
-                  { label: 'Livrées', value: deliveredOrders, color: c.green, sub: orders.length > 0 ? `taux: ${Math.round((deliveredOrders / orders.length) * 100)}%` : '0%' },
-                  { label: 'Ce mois', value: orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth() && new Date(o.created_at).getFullYear() === new Date().getFullYear()).length, color: c.blue, sub: new Date().toLocaleDateString('fr-FR', { month: 'long' }) },
+                  { label: 'Clients', value: allProfiles.length, color: c.gold, sub: `${grossistes.length} grossistes · ${detaillants.length} détaillants · ${ecomClients.length} e-com`, click: () => setMainTab('clients') },
+                  { label: 'Commandes', value: orders.length, color: c.red, sub: `${activeOrders} en cours · ${deliveredOrders} livrées`, click: () => setMainTab('commandes') },
+                  { label: 'Ce mois', value: thisMonth.length, color: c.blue, sub: new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }), click: () => setMainTab('commandes') },
+                  { label: 'Expéditions', value: shipments.length, color: c.teal, sub: `${shipmentsInTransit.length} en transit · ${shipmentsWaiting.length} en attente`, click: () => setMainTab('expedition') },
+                  { label: 'Stock (articles)', value: inventory.length, color: c.purple, sub: `${totalQty} unités · ${lowStockItems.length} alertes`, click: () => setMainTab('stock') },
+                  { label: 'Valeur stock', value: `${stockValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}€`, color: c.gold, sub: `${stockClients.length} client${stockClients.length > 1 ? 's' : ''} service stock`, click: () => setMainTab('stock') },
                 ].map((stat, i) => (
-                  <div key={i} style={{
-                    padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`,
-                    position: 'relative', overflow: 'hidden',
+                  <div key={i} onClick={stat.click} style={{
+                    padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
+                    position: 'relative', overflow: 'hidden', cursor: 'pointer',
                     transition: `all 0.35s ${ease.luxury}`,
-                    animation: `cardReveal 0.5s ${ease.out} ${i * 100}ms both`,
+                    animation: `cardReveal 0.5s ${ease.out} ${i * 80}ms both`,
                     boxShadow: shadow.card,
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = stat.color; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = shadow.cardHover }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = stat.color; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = shadow.cardHover }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = shadow.card }}>
-                    {/* Accent line top — gradient */}
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, ${stat.color}, transparent)`, opacity: 0.7 }} />
-                    {/* Subtle corner glow */}
-                    <div style={{ position: 'absolute', top: 0, right: 0, width: 60, height: 60, background: `radial-gradient(circle at top right, ${stat.color}08, transparent)`, pointerEvents: 'none' }} />
-                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.10em', fontWeight: 600, marginBottom: sp[2] }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.10em', fontWeight: 600, marginBottom: sp[1] }}>
                       {stat.label}
                     </div>
-                    <div style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, color: stat.color, letterSpacing: '-0.02em', lineHeight: 1 }}>
+                    <div style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: stat.color, letterSpacing: '-0.02em', lineHeight: 1 }}>
                       {stat.value}
                     </div>
-                    <div style={{ fontSize: '9px', color: c.textTertiary, fontFamily: f.mono, marginTop: sp[1], letterSpacing: '0.02em' }}>{stat.sub}</div>
+                    <div style={{ fontSize: '9px', color: c.textTertiary, fontFamily: f.mono, marginTop: sp[1], letterSpacing: '0.02em', lineHeight: 1.4 }}>{stat.sub}</div>
                   </div>
                 ))}
               </div>
 
-              {/* Pipeline Distribution */}
-              <div style={{ marginBottom: sp[5], padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`, animation: 'fadeSlideIn 0.5s ease-out 0.2s both' }}>
+              {/* ── CLIENTS PAR SERVICE ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[3], marginBottom: sp[4], animation: 'fadeSlideIn 0.5s ease-out 0.15s both' }}>
+                {[
+                  { label: 'Sourcing', desc: 'Recherche fournisseurs & négociation', count: allProfiles.length, icon: '◆', color: c.red, note: 'Inclus pour tous' },
+                  { label: 'Expédition', desc: 'Logistique Chine → France', count: logisticsClients.length, icon: '▸', color: c.teal, note: `${logisticsClients.length} client${logisticsClients.length > 1 ? 's' : ''} actif${logisticsClients.length > 1 ? 's' : ''}` },
+                  { label: 'Stock & E-com', desc: 'Stockage + gestion boutique en ligne', count: stockClients.length, icon: '⬡', color: c.purple, note: `${stockClients.length} client${stockClients.length > 1 ? 's' : ''} · ${inventory.length} réf.` },
+                ].map((svc, i) => (
+                  <div key={i} style={{
+                    padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
+                    position: 'relative', overflow: 'hidden',
+                  }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '3px', height: '100%', background: svc.color }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginBottom: sp[1] }}>
+                      <span style={{ fontSize: '12px', color: svc.color }}>{svc.icon}</span>
+                      <span style={{ fontFamily: f.display, fontSize: size.sm, fontWeight: 700, color: svc.color }}>{svc.label}</span>
+                    </div>
+                    <p style={{ fontSize: '10px', color: c.textSecondary, lineHeight: 1.4, margin: 0, marginBottom: sp[2] }}>{svc.desc}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: sp[1], borderTop: `1px solid ${c.borderSubtle}` }}>
+                      <span style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: svc.color }}>{svc.count}</span>
+                      <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.textTertiary }}>{svc.note}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── PIPELINE ── */}
+              <div style={{ marginBottom: sp[4], padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`, animation: 'fadeSlideIn 0.5s ease-out 0.2s both' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
                   <div>
-                    <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 600, letterSpacing: '-0.01em' }}>
-                      Pipeline
-                    </h3>
-                    <div style={{ fontSize: '10px', color: c.textTertiary, fontFamily: f.mono, marginTop: '2px', letterSpacing: '0.04em' }}>
-                      Répartition des commandes par statut
-                    </div>
+                    <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 600, letterSpacing: '-0.01em' }}>Pipeline Commandes</h3>
+                    <div style={{ fontSize: '10px', color: c.textTertiary, fontFamily: f.mono, marginTop: '2px', letterSpacing: '0.04em' }}>Répartition par statut</div>
                   </div>
                   <div style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: c.gold }}>{orders.length}</div>
                 </div>
-
-                {/* Bar */}
                 <div style={{ display: 'flex', gap: '1px', height: '28px', overflow: 'hidden', marginBottom: sp[3] }}>
                   {STATUSES.map((st, i) => {
                     const count = orders.filter(o => o.status === i).length
@@ -656,8 +902,6 @@ export default function Admin({ user, profile, onSignOut }) {
                     )
                   })}
                 </div>
-
-                {/* Legend */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: `${sp[2]} ${sp[3]}` }}>
                   {STATUSES.map((st, i) => {
                     const count = orders.filter(o => o.status === i).length
@@ -672,7 +916,115 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
               </div>
 
-              {/* Recent Activity */}
+              {/* ── EXPÉDITIONS ACTIVES + STOCK E-COM (2 colonnes) ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[3], marginBottom: sp[4], animation: 'fadeSlideIn 0.5s ease-out 0.25s both' }}>
+
+                {/* Expéditions liées aux commandes */}
+                <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: c.teal, opacity: 0.6 }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                      <Icon d={icons.send} size={16} color={c.teal} />
+                      <span style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700 }}>Expéditions</span>
+                    </div>
+                    <button onClick={() => setMainTab('expedition')} style={{
+                      padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
+                      color: c.teal, fontSize: '9px', fontFamily: f.mono, fontWeight: 600,
+                      cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.teal }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border }}>
+                      Voir tout →
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '10px', color: c.textTertiary, marginBottom: sp[2], lineHeight: 1.4 }}>
+                    Envois liés aux commandes en cours — suivi logistique Chine → France
+                  </p>
+                  {shipments.length === 0 ? (
+                    <div style={{ padding: sp[3], textAlign: 'center', color: c.textTertiary, fontSize: size.xs }}>
+                      Aucun envoi — créez un envoi depuis l'onglet Expédition
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                      {shipments.slice(0, 5).map((s, i) => (
+                        <div key={s.id || i} onClick={() => setMainTab('expedition')} style={{
+                          padding: `${sp[1]} ${sp[2]}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          background: c.bgElevated, cursor: 'pointer', transition: `background 0.15s ${ease.smooth}`,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = c.bg }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = c.bgElevated }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.teal, fontWeight: 600 }}>{s.tracking_number || '—'}</span>
+                            <span style={{ fontSize: size.xs, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName(s.client_id)}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                            <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.textTertiary }}>{s.method || ''}</span>
+                            <span style={{
+                              padding: '2px 6px', fontSize: '9px', fontFamily: f.mono, fontWeight: 600,
+                              background: s.status === 'livré' ? `${c.green}15` : s.status === 'transit' ? `${c.gold}15` : `${c.red}15`,
+                              color: s.status === 'livré' ? c.green : s.status === 'transit' ? c.gold : c.red,
+                            }}>{s.status || '?'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stock & E-commerce */}
+                <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: c.purple, opacity: 0.6 }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                      <Icon d={icons.save} size={16} color={c.purple} />
+                      <span style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700 }}>Stock & E-commerce</span>
+                    </div>
+                    <button onClick={() => setMainTab('stock')} style={{
+                      padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
+                      color: c.purple, fontSize: '9px', fontFamily: f.mono, fontWeight: 600,
+                      cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.purple }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border }}>
+                      Voir tout →
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '10px', color: c.textTertiary, marginBottom: sp[2], lineHeight: 1.4 }}>
+                    Inventaire des clients qui nous confient le stockage et la gestion de leur boutique e-commerce
+                  </p>
+                  {inventory.length === 0 ? (
+                    <div style={{ padding: sp[3], textAlign: 'center', color: c.textTertiary, fontSize: size.xs }}>
+                      Aucun article — les clients e-com avec service Stock apparaîtront ici
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                      {inventory.slice(0, 5).map((item, i) => {
+                        const isLow = (item.quantity || 0) <= (item.alert_threshold || 0)
+                        return (
+                          <div key={item.id || i} onClick={() => setMainTab('stock')} style={{
+                            padding: `${sp[1]} ${sp[2]}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            background: isLow ? `${c.red}08` : c.bgElevated, cursor: 'pointer',
+                            transition: `background 0.15s ${ease.smooth}`,
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = c.bg }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = isLow ? `${c.red}08` : c.bgElevated }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], flex: 1, minWidth: 0 }}>
+                              <span style={{ fontSize: size.xs, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>{item.product_name}</span>
+                              {item.sku && <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.textTertiary }}>{item.sku}</span>}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                              <span style={{ fontSize: size.xs, fontFamily: f.mono, fontWeight: 600, color: isLow ? c.red : c.text }}>{item.quantity || 0} u.</span>
+                              {isLow && <span style={{ fontSize: '8px', padding: '1px 4px', background: `${c.red}20`, color: c.red, fontFamily: f.mono, fontWeight: 700 }}>BAS</span>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── ACTIVITÉ RÉCENTE ── */}
               <div style={{ animation: 'fadeSlideIn 0.5s ease-out 0.3s both' }}>
                 <h3 style={{ fontFamily: f.display, fontSize: size.lg, marginBottom: sp[1], fontWeight: 600, letterSpacing: '-0.01em' }}>
                   Activité récente
@@ -680,33 +1032,42 @@ export default function Admin({ user, profile, onSignOut }) {
                 <ArtDecoDivider width={80} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: sp[2] }}>
                   {orders.length === 0 ? (
-                    <DragonEmptyState title="Pas de commandes" subtitle="Créez votre première commande pour voir l’activité ici" />
+                    <DragonEmptyState title="Pas de commandes" subtitle="Créez votre première commande pour voir l'activité ici" />
                   ) : (
-                    orders.slice(0, 8).map((order, i) => (
-                      <div key={order.id} style={{
-                        padding: `${sp[2]} ${sp[3]}`, background: c.bgSurface,
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        transition: `all 0.2s ${ease.smooth}`,
-                        borderBottom: `1px solid ${c.borderSubtle}`,
-                        cursor: 'pointer',
-                        animation: `fadeSlideIn 0.3s ease-out ${i * 40}ms both`,
-                      }}
-                      onClick={() => { setMainTab('commandes'); setSelectedId(order.id) }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = c.bgElevated }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = c.bgSurface }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], flex: 1, minWidth: 0 }}>
-                          <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0 }}>{order.ref}</span>
-                          <span style={{ fontWeight: 600, fontSize: size.sm, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product}</span>
-                          <span style={{ fontSize: size.xs, color: c.textTertiary, flexShrink: 0 }}>{clientName(order.client_id)}</span>
+                    orders.slice(0, 10).map((order, i) => {
+                      const orderShipments = shipments.filter(s => s.client_id === order.client_id)
+                      const hasShipment = orderShipments.length > 0
+                      return (
+                        <div key={order.id} style={{
+                          padding: `${sp[2]} ${sp[3]}`, background: c.bgSurface,
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          transition: `all 0.2s ${ease.smooth}`,
+                          borderBottom: `1px solid ${c.borderSubtle}`,
+                          cursor: 'pointer',
+                          animation: `fadeSlideIn 0.3s ease-out ${i * 40}ms both`,
+                        }}
+                        onClick={() => { setMainTab('commandes'); setSelectedId(order.id) }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = c.bgElevated }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = c.bgSurface }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], flex: 1, minWidth: 0 }}>
+                            <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0 }}>{order.ref}</span>
+                            <span style={{ fontWeight: 600, fontSize: size.sm, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product}</span>
+                            <span style={{ fontSize: size.xs, color: c.textTertiary, flexShrink: 0 }}>{clientName(order.client_id)}</span>
+                            {hasShipment && <span style={{ fontSize: '9px', padding: '1px 5px', background: `${c.teal}15`, color: c.teal, fontFamily: f.mono, fontWeight: 600, flexShrink: 0 }}>📦 {orderShipments.length}</span>}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                            <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.textTertiary }}>{fmtDate(order.created_at)}</span>
+                            <StatusPill status={order.status} />
+                          </div>
                         </div>
-                        <StatusPill status={order.status} />
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {/* ── COMMANDES TAB ── */}
           {mainTab === 'commandes' && selectedId ? (
@@ -1016,60 +1377,97 @@ export default function Admin({ user, profile, onSignOut }) {
           {/* ── CATALOGUE TAB ── */}
           {mainTab === 'catalogue' && (
             <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
-              <div style={{ marginBottom: sp[4], animation: 'fadeSlideIn 0.4s ease-out' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <div>
-                    <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, letterSpacing: '-0.01em' }}>
-                      Catalogue par Profil
-                    </h2>
-                    <ArtDecoDivider width={100} />
-                    <p style={{ fontSize: size.sm, color: c.textSecondary, marginTop: sp[1] }}>
-                      {TIERS.length} profils clients · {Object.values(CATALOGS).flat().length} catégories au total
-                    </p>
-                  </div>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[4], animation: 'fadeSlideIn 0.4s ease-out' }}>
+                <div>
+                  <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, letterSpacing: '-0.01em' }}>Catalogue Produits</h2>
+                  <ArtDecoDivider width={100} />
+                  <p style={{ fontSize: size.sm, color: c.textSecondary, marginTop: sp[1] }}>
+                    {products.length} produit{products.length > 1 ? 's' : ''} personnalisé{products.length > 1 ? 's' : ''} · {TIERS.length} profils · {(() => { const s = new Set(); TIERS.forEach(t => getCatalog(t.key).forEach(ct => s.add(ct.id))); return s.size })()} catégories
+                  </p>
                 </div>
+                <button onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', category: '', price_min: '', price_max: '', moq: '1', margin_estimate: '', tags: '', tier_keys: ['retail','wholesale','ecommerce'], active: true, featured: false }); setShowProductModal(true) }} style={{
+                  padding: `10px ${sp[3]}`, background: c.red, color: c.text, border: 'none',
+                  fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                  transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
+                }}>
+                  <Icon d={icons.plus} size={16} color={c.text} />
+                  Nouveau produit
+                </button>
               </div>
 
-              {/* Tier sections */}
-              {TIERS.map(t => {
-                const tierCatalog = getCatalog(t.key)
-                return (
-                <div key={t.key} style={{ marginBottom: sp[5] }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[3] }}>
-                    <span style={{ fontSize: '20px' }}>{t.icon}</span>
-                    <span style={{
-                      fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: t.color,
-                    }}>{t.label}</span>
-                    <span style={{
-                      fontFamily: f.mono, fontSize: '10px', color: c.textTertiary,
-                      padding: '2px 8px', background: t.colorSoft, border: `1px solid ${t.color}33`,
-                      letterSpacing: '0.04em',
-                    }}>{tierCatalog.length} catégories</span>
-                  </div>
+              {/* Search bar */}
+              <div style={{ marginBottom: sp[4], position: 'relative' }}>
+                <Icon d={icons.search} size={14} color={c.textTertiary} />
+                <input type="text" value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)}
+                  placeholder="Rechercher un produit, une catégorie..."
+                  style={{ ...inputStyle, paddingLeft: sp[5] }}
+                  onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+              </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: sp[2] }}>
-                    {tierCatalog.map((cat, i) => (
-                      <div key={cat.id} style={{
-                        background: c.bgSurface, border: `1px solid ${c.border}`,
-                        transition: `all 0.3s ${ease.out}`, overflow: 'hidden', cursor: 'pointer',
+              {/* ═══ SECTION 1: PRODUITS PERSONNALISÉS (Supabase) ═══ */}
+              <div style={{ marginBottom: sp[5] }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginBottom: sp[3] }}>
+                  <div style={{ width: 24, height: '1px', background: c.red }} />
+                  <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.red, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Produits personnalisés
+                  </span>
+                  <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary }}>({products.length})</span>
+                </div>
+
+                {products.length === 0 ? (
+                  <div style={{ padding: sp[4], textAlign: 'center', color: c.textTertiary, background: c.bgSurface, border: `1px solid ${c.border}` }}>
+                    <div style={{ fontSize: '32px', marginBottom: sp[1], opacity: 0.3 }}>📦</div>
+                    <p style={{ fontSize: size.sm, fontWeight: 600, marginBottom: sp[1] }}>Aucun produit personnalisé</p>
+                    <p style={{ fontSize: size.xs, color: c.textTertiary, maxWidth: 400, margin: '0 auto' }}>
+                      Cliquez sur « Nouveau produit » pour ajouter des produits au catalogue client.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: sp[3] }}>
+                    {products.filter(p => !catalogSearch || p.name?.toLowerCase().includes(catalogSearch.toLowerCase()) || p.category?.toLowerCase().includes(catalogSearch.toLowerCase())).map((prod, i) => (
+                      <div key={prod.id} style={{
+                        background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden',
+                        transition: `all 0.3s ${ease.out}`, cursor: 'pointer', opacity: prod.active ? 1 : 0.5,
+                        animation: `fadeSlideIn 0.3s ease-out ${i * 50}ms both`,
                       }}
-                      onClick={() => { setCatalogProduct({ ...cat, tierKey: t.key, tierLabel: t.label, tierColor: t.color }); setCatalogEditData(null) }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = t.color; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                      onClick={() => {
+                        setEditingProduct(prod)
+                        setProductForm({
+                          name: prod.name || '', description: prod.description || '', category: prod.category || '',
+                          price_min: prod.price_min || '', price_max: prod.price_max || '', moq: prod.moq || '1',
+                          margin_estimate: prod.margin_estimate || '', tags: (prod.tags || []).join(', '),
+                          tier_keys: prod.tier_keys || ['retail','wholesale','ecommerce'],
+                          active: prod.active !== false, featured: prod.featured || false,
+                        })
+                        setShowProductModal(true)
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.transform = 'translateY(-2px)' }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)' }}>
-                        <div style={{ height: 2, background: t.color }} />
-                        <div style={{ padding: `${sp[2]} ${sp[3]}`, display: 'flex', alignItems: 'center', gap: sp[2] }}>
-                          <span style={{ fontSize: '22px' }}>{cat.icon}</span>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, color: c.text }}>{cat.name}</div>
-                            <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px', lineHeight: 1.4 }}>{cat.description}</div>
-                          </div>
-                          <Icon d={icons.chevDown} size={14} color={c.textTertiary} />
+                        <div style={{ height: 160, background: c.bgElevated, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                          {prod.image_urls?.[0] ? (
+                            <img src={prod.image_urls[0]} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <span style={{ fontSize: '40px', opacity: 0.2 }}>📷</span>
+                          )}
+                          {prod.featured && (
+                            <span style={{ position: 'absolute', top: 8, right: 8, background: c.gold, color: c.black, fontSize: '9px', fontWeight: 700, padding: '2px 8px', fontFamily: f.mono }}>STAR</span>
+                          )}
+                          {!prod.active && (
+                            <span style={{ position: 'absolute', top: 8, left: 8, background: c.red, color: c.white, fontSize: '9px', fontWeight: 700, padding: '2px 8px', fontFamily: f.mono }}>INACTIF</span>
+                          )}
+                        </div>
+                        <div style={{ padding: sp[2] }}>
+                          <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, marginBottom: '4px' }}>{prod.name}</div>
+                          {prod.category && <span style={{ fontSize: '9px', color: c.gold, fontFamily: f.mono, padding: '1px 6px', background: c.goldSoft, border: `1px solid ${c.gold}33` }}>{prod.category}</span>}
+                          {prod.description && <p style={{ fontSize: '11px', color: c.textSecondary, marginTop: '6px', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{prod.description}</p>}
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: `1px solid ${c.borderSubtle}` }}>
                           {[
-                            { label: 'Prix', value: cat.priceRange, color: c.green },
-                            { label: 'Marge', value: cat.margin, color: c.gold },
-                            { label: 'MOQ', value: cat.moq.toLocaleString('fr-FR'), color: c.amber },
+                            { label: 'Prix', value: prod.price_min && prod.price_max ? `${prod.price_min}-${prod.price_max}` : prod.price_min || '-', color: c.green },
+                            { label: 'Marge', value: prod.margin_estimate || '-', color: c.gold },
+                            { label: 'MOQ', value: prod.moq || '-', color: c.amber },
                           ].map((cell, j) => (
                             <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
                               <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
@@ -1077,233 +1475,840 @@ export default function Admin({ user, profile, onSignOut }) {
                             </div>
                           ))}
                         </div>
-                        <div style={{ padding: `${sp[1]} ${sp[2]}`, display: 'flex', gap: '3px', flexWrap: 'wrap', borderTop: `1px solid ${c.borderSubtle}` }}>
-                          {cat.topProducts.slice(0, 3).map((p, pi) => (
-                            <span key={pi} style={{ fontSize: '9px', color: c.textTertiary, padding: '1px 6px', background: c.bg, border: `1px solid ${c.borderSubtle}` }}>{p}</span>
-                          ))}
-                        </div>
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* ═══ SECTION 2: CATALOGUE PAR PROFIL (interactif) ═══ */}
+              <div style={{ marginBottom: sp[4] }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginBottom: sp[3] }}>
+                  <div style={{ width: 24, height: '1px', background: c.gold }} />
+                  <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Catalogue par profil client
+                  </span>
                 </div>
-                )
-              })}
+                <p style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3], lineHeight: 1.5 }}>
+                  Catalogue statique affiché aux clients selon leur profil. Cliquez sur un profil pour voir les catégories, produits phares, prix et MOQ.
+                </p>
 
-              {/* ── CATALOG PRODUCT DETAIL MODAL ── */}
-              {catalogProduct && (
-                <div style={{
-                  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                  background: 'rgba(0,0,0,0.7)', zIndex: 1000,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  animation: 'fadeSlideIn 0.2s ease-out',
-                }} onClick={() => { setCatalogProduct(null); setCatalogEditData(null) }}>
-                  <div style={{
-                    width: '95%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto',
-                    background: c.bgSurface, border: `1px solid ${c.border}`,
-                  }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
-                    {/* Header bar */}
-                    <div style={{ height: 3, background: catalogProduct.tierColor }} />
-                    <div style={{ padding: `${sp[3]} ${sp[4]}` }}>
-                      {/* Title row */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: sp[3] }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
-                          <span style={{ fontSize: '32px' }}>{catalogProduct.icon}</span>
-                          <div>
-                            <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, margin: 0 }}>{catalogEditData ? catalogEditData.name : catalogProduct.name}</h3>
-                            <span style={{
-                              fontFamily: f.mono, fontSize: '10px', color: catalogProduct.tierColor,
-                              padding: '2px 8px', background: `${catalogProduct.tierColor}15`, border: `1px solid ${catalogProduct.tierColor}33`,
-                              marginTop: '4px', display: 'inline-block',
-                            }}>{catalogProduct.tierLabel}</span>
-                          </div>
+                {/* Tier selector pills */}
+                <div style={{ display: 'flex', gap: '6px', marginBottom: sp[3], flexWrap: 'wrap' }}>
+                  {TIERS.map(tier => (
+                    <button key={tier.key} onClick={() => setExpandedTier(expandedTier === tier.key ? null : tier.key)} style={{
+                      padding: `8px ${sp[3]}`, border: `1px solid ${expandedTier === tier.key ? tier.color : c.border}`,
+                      background: expandedTier === tier.key ? `${tier.color}15` : c.bgSurface,
+                      color: expandedTier === tier.key ? tier.color : c.textSecondary,
+                      fontFamily: f.body, fontSize: size.sm, fontWeight: expandedTier === tier.key ? 700 : 500,
+                      cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                    }}
+                    onMouseEnter={(e) => { if (expandedTier !== tier.key) { e.currentTarget.style.borderColor = tier.color; e.currentTarget.style.color = tier.color } }}
+                    onMouseLeave={(e) => { if (expandedTier !== tier.key) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary } }}>
+                      <span style={{ fontSize: '16px' }}>{tier.icon}</span>
+                      {tier.label}
+                      <span style={{ fontFamily: f.mono, fontSize: '9px', opacity: 0.7 }}>{getCatalog(tier.key).length}</span>
+                      <span style={{ fontSize: '10px', transform: expandedTier === tier.key ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>▾</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Expanded tier categories */}
+                {expandedTier && (() => {
+                  const tier = TIERS.find(t => t.key === expandedTier)
+                  const cats = getCatalog(expandedTier).filter(cat => !catalogSearch || cat.name.toLowerCase().includes(catalogSearch.toLowerCase()) || cat.topProducts?.some(p => p.toLowerCase().includes(catalogSearch.toLowerCase())))
+                  if (!tier) return null
+                  return (
+                    <div style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
+                      {/* Tier info bar */}
+                      <div style={{ display: 'flex', gap: sp[3], padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
+                        <div style={{ textAlign: 'center', flex: 1 }}>
+                          <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Commande min.</div>
+                          <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.minOrderValue.toLocaleString('fr-FR')}€</div>
                         </div>
-                        <div style={{ display: 'flex', gap: sp[1] }}>
-                          {!catalogEditData ? (
-                            <button onClick={() => setCatalogEditData({ ...catalogProduct })} style={{
-                              padding: `6px ${sp[2]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
-                              color: c.gold, fontSize: size.xs, fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', gap: '4px',
-                            }}>
-                              <Icon d={icons.edit} size={12} color={c.gold} /> Modifier
-                            </button>
-                          ) : (
-                            <>
-                              <button onClick={() => {
-                                // Save edits to catalogsByProfile (in-memory for now, persisted when connected to DB)
-                                const tierCat = CATALOGS[catalogEditData.tierKey]
-                                if (tierCat) {
-                                  const idx = tierCat.findIndex(x => x.id === catalogEditData.id)
-                                  if (idx !== -1) {
-                                    tierCat[idx] = { ...tierCat[idx], name: catalogEditData.name, description: catalogEditData.description, priceRange: catalogEditData.priceRange, moq: Number(catalogEditData.moq), margin: catalogEditData.margin, topProducts: catalogEditData.topProducts, locations: catalogEditData.locations }
-                                  }
-                                }
-                                setCatalogProduct({ ...catalogEditData })
-                                setCatalogEditData(null)
-                                toast.success('Produit mis à jour')
-                              }} style={{
-                                padding: `6px ${sp[2]}`, background: c.green, border: 'none',
-                                color: c.white, fontSize: size.xs, fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '4px',
-                              }}>
-                                <Icon d={icons.save} size={12} color={c.white} /> Sauvegarder
-                              </button>
-                              <button onClick={() => setCatalogEditData(null)} style={{
-                                padding: `6px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
-                                color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer',
-                              }}>Annuler</button>
-                            </>
-                          )}
-                          <button onClick={() => { setCatalogProduct(null); setCatalogEditData(null) }} style={{
-                            padding: '6px', background: 'transparent', border: `1px solid ${c.border}`,
-                            color: c.textTertiary, cursor: 'pointer', display: 'flex',
-                          }}>
-                            <Icon d={icons.close} size={14} color={c.textTertiary} />
-                          </button>
+                        <div style={{ width: '1px', background: c.border }} />
+                        <div style={{ textAlign: 'center', flex: 1 }}>
+                          <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Catégories</div>
+                          <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: c.text }}>{cats.length}</div>
+                        </div>
+                        <div style={{ width: '1px', background: c.border }} />
+                        <div style={{ textAlign: 'center', flex: 1 }}>
+                          <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Multiplicateur</div>
+                          <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: c.gold }}>×{tier.priceMultiplier}</div>
                         </div>
                       </div>
 
-                      {/* Description */}
-                      <div style={{ marginBottom: sp[3] }}>
-                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Description</div>
-                        {catalogEditData ? (
-                          <textarea value={catalogEditData.description} onChange={(e) => setCatalogEditData({ ...catalogEditData, description: e.target.value })} style={{
-                            width: '100%', padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`,
-                            color: c.text, fontFamily: f.body, fontSize: size.sm, resize: 'vertical', minHeight: '60px', outline: 'none',
-                          }} />
-                        ) : (
-                          <p style={{ fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6, margin: 0 }}>{catalogProduct.description}</p>
-                        )}
-                      </div>
+                      {/* Category cards grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: sp[3] }}>
+                        {cats.map((cat, ci) => (
+                          <div key={cat.id} style={{
+                            background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden',
+                            animation: `fadeSlideIn 0.3s ease-out ${ci * 40}ms both`,
+                            transition: `all 0.2s ${ease.smooth}`,
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = tier.color }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border }}>
+                            {/* Category header */}
+                            <div style={{ padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                              <span style={{ fontSize: '24px' }}>{cat.icon}</span>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, color: c.text }}>{cat.name}</div>
+                                <div style={{ fontSize: '11px', color: c.textSecondary, lineHeight: 1.4, marginTop: '2px' }}>{cat.description}</div>
+                              </div>
+                            </div>
 
-                      {/* Stats grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[2], marginBottom: sp[3] }}>
-                        {[
-                          { label: 'Fourchette prix', key: 'priceRange', color: c.green },
-                          { label: 'Marge indicative', key: 'margin', color: c.gold },
-                          { label: 'MOQ minimum', key: 'moq', color: c.amber, isMoq: true },
-                        ].map((field) => (
-                          <div key={field.key} style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}` }}>
-                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>{field.label}</div>
-                            {catalogEditData ? (
-                              <input value={catalogEditData[field.key]} onChange={(e) => setCatalogEditData({ ...catalogEditData, [field.key]: field.isMoq ? e.target.value : e.target.value })} style={{
-                                width: '100%', padding: '4px 6px', background: c.bg, border: `1px solid ${c.border}`,
-                                color: field.color, fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, outline: 'none',
-                              }} />
-                            ) : (
-                              <div style={{ fontFamily: f.mono, fontSize: size.md, fontWeight: 700, color: field.color }}>
-                                {field.isMoq ? Number(catalogProduct[field.key]).toLocaleString('fr-FR') : catalogProduct[field.key]}
+                            {/* Stats */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${c.borderSubtle}` }}>
+                              {[
+                                { label: 'Prix', value: getTierPrice(cat, expandedTier), color: c.green },
+                                { label: 'MOQ', value: getTierMOQ(cat, expandedTier), color: c.amber },
+                                { label: 'Marge', value: cat.margin || '-', color: c.gold },
+                              ].map((cell, j) => (
+                                <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
+                                  <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
+                                  <div style={{ fontFamily: f.mono, fontSize: size.xs, fontWeight: 700, color: cell.color }}>{cell.value}</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Top products */}
+                            {cat.topProducts && cat.topProducts.length > 0 && (
+                              <div style={{ padding: `${sp[2]} ${sp[3]}` }}>
+                                <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Produits phares</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                  {cat.topProducts.map((tp, tpi) => (
+                                    <span key={tpi} style={{
+                                      padding: '2px 8px', background: c.bgElevated, border: `1px solid ${c.borderSubtle}`,
+                                      fontSize: '10px', color: c.textSecondary, fontFamily: f.body,
+                                    }}>{tp}</span>
+                                  ))}
+                                </div>
+                                {cat.locations && (
+                                  <div style={{ marginTop: '6px', fontSize: '10px', color: c.textTertiary, fontFamily: f.mono }}>
+                                    📍 {cat.locations.join(', ')}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
                         ))}
                       </div>
-
-                      {/* Top Products */}
-                      <div style={{ marginBottom: sp[3] }}>
-                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Produits phares</div>
-                        {catalogEditData ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            {catalogEditData.topProducts.map((p, i) => (
-                              <div key={i} style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                <input value={p} onChange={(e) => {
-                                  const updated = [...catalogEditData.topProducts]
-                                  updated[i] = e.target.value
-                                  setCatalogEditData({ ...catalogEditData, topProducts: updated })
-                                }} style={{
-                                  flex: 1, padding: '4px 8px', background: c.bgElevated, border: `1px solid ${c.border}`,
-                                  color: c.text, fontFamily: f.body, fontSize: size.xs, outline: 'none',
-                                }} />
-                                <button onClick={() => {
-                                  const updated = catalogEditData.topProducts.filter((_, j) => j !== i)
-                                  setCatalogEditData({ ...catalogEditData, topProducts: updated })
-                                }} style={{ background: 'transparent', border: 'none', color: c.textTertiary, cursor: 'pointer', padding: '2px' }}>
-                                  <Icon d={icons.close} size={10} color={c.textTertiary} />
-                                </button>
-                              </div>
-                            ))}
-                            <button onClick={() => setCatalogEditData({ ...catalogEditData, topProducts: [...catalogEditData.topProducts, ''] })} style={{
-                              padding: '4px 8px', background: 'transparent', border: `1px dashed ${c.border}`,
-                              color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer',
-                            }}>+ Ajouter un produit</button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {catalogProduct.topProducts.map((p, i) => (
-                              <span key={i} style={{
-                                fontSize: size.xs, color: c.text, padding: '4px 10px',
-                                background: c.bgElevated, border: `1px solid ${c.border}`,
-                              }}>{p}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Locations */}
-                      <div style={{ marginBottom: sp[3] }}>
-                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Zones de sourcing</div>
-                        {catalogEditData ? (
-                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            {catalogEditData.locations.map((loc, i) => (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <input value={loc} onChange={(e) => {
-                                  const updated = [...catalogEditData.locations]
-                                  updated[i] = e.target.value
-                                  setCatalogEditData({ ...catalogEditData, locations: updated })
-                                }} style={{
-                                  padding: '4px 8px', background: c.bgElevated, border: `1px solid ${c.border}`,
-                                  color: c.text, fontFamily: f.body, fontSize: size.xs, outline: 'none', width: '120px',
-                                }} />
-                                <button onClick={() => {
-                                  const updated = catalogEditData.locations.filter((_, j) => j !== i)
-                                  setCatalogEditData({ ...catalogEditData, locations: updated })
-                                }} style={{ background: 'transparent', border: 'none', color: c.textTertiary, cursor: 'pointer', padding: '2px' }}>
-                                  <Icon d={icons.close} size={10} color={c.textTertiary} />
-                                </button>
-                              </div>
-                            ))}
-                            <button onClick={() => setCatalogEditData({ ...catalogEditData, locations: [...catalogEditData.locations, ''] })} style={{
-                              padding: '4px 8px', background: 'transparent', border: `1px dashed ${c.border}`,
-                              color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono, cursor: 'pointer',
-                            }}>+</button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            {catalogProduct.locations.map((loc, i) => (
-                              <span key={i} style={{
-                                fontSize: size.xs, color: c.gold, padding: '3px 10px',
-                                background: c.goldSoft, border: `1px solid ${c.gold}33`,
-                                fontFamily: f.mono, fontWeight: 600,
-                              }}>{loc}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Supplier section (future) */}
-                      <div style={{
-                        padding: sp[3], background: c.bg, border: `1px dashed ${c.border}`,
-                        marginBottom: sp[2],
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[2] }}>
-                          <Icon d={icons.link} size={16} color={c.textTertiary} />
-                          <div>
-                            <div style={{ fontFamily: f.display, fontSize: size.sm, fontWeight: 700, color: c.textSecondary }}>Fournisseurs</div>
-                            <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px' }}>Connectez vos fournisseurs pour ce produit</div>
-                          </div>
-                        </div>
-                        <div style={{
-                          padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: sp[1],
-                          color: c.textTertiary, fontSize: size.xs, fontFamily: f.mono,
-                        }}>
-                          <Icon d={icons.plus} size={12} color={c.textTertiary} />
-                          Ajouter un fournisseur (bientôt disponible)
-                        </div>
-                      </div>
                     </div>
+                  )
+                })()}
+              </div>
+
+              {/* ═══ SECTION 3: GESTION DES CATEGORIES ═══ */}
+              <div style={{ marginBottom: sp[4], animation: 'fadeSlideIn 0.4s ease-out' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[3] }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                    <div style={{ width: 24, height: '1px', background: c.gold }} />
+                    <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Gestion des categories
+                    </span>
+                  </div>
+                  <button onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', icon: '📦', description: '', sort_order: 0, active: true, tier_keys: ['retail','wholesale','ecommerce'] }); setShowCategoryModal(true) }} style={{
+                    padding: `8px ${sp[3]}`, background: c.red, color: c.text, border: 'none',
+                    fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                    transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}>
+                    <Icon d={icons.plus} size={16} color={c.text} />
+                    Nouvelle categorie
+                  </button>
+                </div>
+                <p style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3], lineHeight: 1.5 }}>
+                  Gérez les catégories de produits utilisées dans le catalogue client.
+                </p>
+
+                {categories.length === 0 ? (
+                  <DragonEmptyState title="Aucune categorie" subtitle="Crée votre premiere categorie pour organiser le catalogue" />
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: sp[3] }}>
+                    {categories.map((cat, idx) => {
+                      const productCount = products.filter(p => p.category === cat.name).length
+                      return (
+                        <div key={cat.id} style={{
+                          background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden',
+                          animation: `fadeSlideIn 0.3s ease-out ${idx * 40}ms both`,
+                          transition: `all 0.2s ${ease.smooth}`,
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.boxShadow = `0 4px 12px ${c.gold}22` }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = 'none' }}>
+                          {/* Category header */}
+                          <div style={{ padding: sp[3], borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'flex-start', gap: sp[2], justifyContent: 'space-between' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginBottom: '6px' }}>
+                                <span style={{ fontSize: '28px' }}>{cat.icon}</span>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, color: c.text }}>{cat.name}</div>
+                                  {!cat.active && <span style={{ fontSize: '9px', color: c.red, fontFamily: f.mono, fontWeight: 600 }}>INACTIVE</span>}
+                                </div>
+                              </div>
+                              {cat.description && <p style={{ fontSize: '11px', color: c.textSecondary, lineHeight: 1.4 }}>{cat.description}</p>}
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${c.borderSubtle}` }}>
+                            <div style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: `1px solid ${c.borderSubtle}`, textAlign: 'center' }}>
+                              <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Produits</div>
+                              <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: c.gold }}>{productCount}</div>
+                            </div>
+                            <div style={{ padding: `${sp[1]} ${sp[2]}`, textAlign: 'center' }}>
+                              <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Ordre</div>
+                              <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: c.amber }}>{cat.sort_order}</div>
+                            </div>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div style={{ padding: sp[2], display: 'flex', gap: '6px' }}>
+                            <button onClick={() => { setEditingCategory(cat); setCategoryForm({ name: cat.name, icon: cat.icon, description: cat.description || '', sort_order: cat.sort_order || 0, active: cat.active, tier_keys: cat.tier_keys || ['retail','wholesale','ecommerce'] }); setShowCategoryModal(true) }} style={{
+                              flex: 1, padding: '6px', background: c.bgElevated, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: '10px', fontWeight: 600, cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = `${c.gold}11` }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgElevated }}>
+                              <Icon d={icons.edit} size={12} /> Editer
+                            </button>
+                            <button onClick={async () => {
+                              if (!confirm(`Supprimer la categorie "${cat.name}" ?`)) return
+                              try {
+                                await deleteCategory(cat.id)
+                                await loadAll()
+                                toast.success('Categorie supprimee')
+                              } catch (err) { toast.error('Erreur: ' + err.message) }
+                            }} style={{
+                              flex: 1, padding: '6px', background: 'transparent', border: `1px solid ${c.red}33`, color: c.red, fontFamily: f.body, fontSize: '10px', fontWeight: 600, cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.red; e.currentTarget.style.background = `${c.red}11` }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${c.red}33`; e.currentTarget.style.background = 'transparent' }}>
+                              <Icon d={icons.trash} size={12} /> Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* ── CATEGORY DETAIL/EDIT MODAL ── */}
+              {showCategoryModal && (
+                <div style={{
+                  position: 'fixed', inset: 0, background: c.bgOverlay, zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)',
+                  animation: 'fadeSlideIn 0.2s ease-out',
+                }} onClick={() => setShowCategoryModal(false)}>
+                  <div style={{
+                    background: c.bgBase, border: `1px solid ${c.border}`, width: '90%', maxWidth: '500px', maxHeight: '85vh', overflow: 'auto',
+                    borderRadius: '2px', animation: 'cardReveal 0.3s ease-out',
+                  }} onClick={e => e.stopPropagation()}>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault()
+                      try {
+                        if (editingCategory) {
+                          await updateCategory(editingCategory.id, categoryForm)
+                          toast.success('Categorie mise a jour')
+                        } else {
+                          await createCategory(categoryForm)
+                          toast.success('Categorie creee')
+                        }
+                        setShowCategoryModal(false)
+                        await loadAll()
+                      } catch (err) { toast.error('Erreur: ' + err.message) }
+                    }} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      <div style={{ padding: sp[4], borderBottom: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, margin: 0 }}>
+                          {editingCategory ? 'Editer la categorie' : 'Nouvelle categorie'}
+                        </h3>
+                        <button type="button" onClick={() => setShowCategoryModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.textSecondary }}>
+                          <Icon d={icons.close} size={20} color={c.textSecondary} />
+                        </button>
+                      </div>
+
+                      <div style={{ flex: 1, padding: sp[4], overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+                        <div>
+                          <label style={labelStyle}>Nom *</label>
+                          <input type="text" required value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})}
+                            placeholder="Ex: Textile, Alimentaire..." style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                        </div>
+
+                        <div>
+                          <label style={labelStyle}>Icone (emoji)</label>
+                          <input type="text" maxLength="2" value={categoryForm.icon} onChange={e => setCategoryForm({...categoryForm, icon: e.target.value})}
+                            placeholder="📦" style={{...inputStyle, fontSize: '18px', textAlign: 'center'}}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                          <div style={{ fontSize: '9px', color: c.textTertiary, marginTop: '4px' }}>Entrez un emoji ou copiez/collez le votre</div>
+                        </div>
+
+                        <div>
+                          <label style={labelStyle}>Description</label>
+                          <textarea value={categoryForm.description} onChange={e => setCategoryForm({...categoryForm, description: e.target.value})}
+                            placeholder="Description de la categorie..." style={{...inputStyle, minHeight: '60px', fontFamily: f.body}}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                        </div>
+
+                        <div>
+                          <label style={labelStyle}>Ordre de tri</label>
+                          <input type="number" value={categoryForm.sort_order} onChange={e => setCategoryForm({...categoryForm, sort_order: parseInt(e.target.value) || 0})}
+                            placeholder="0" style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                          <div style={{ fontSize: '9px', color: c.textTertiary, marginTop: '4px' }}>Ordre d'affichage (ascendant)</div>
+                        </div>
+
+                        <div>
+                          <label style={{ ...labelStyle, marginBottom: sp[2] }}>Tiers disponibles</label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {['retail', 'wholesale', 'ecommerce'].map(tier => (
+                              <label key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: size.sm }}>
+                                <input type="checkbox" checked={categoryForm.tier_keys.includes(tier)} onChange={e => {
+                                  if (e.target.checked) {
+                                    setCategoryForm({...categoryForm, tier_keys: [...categoryForm.tier_keys, tier]})
+                                  } else {
+                                    setCategoryForm({...categoryForm, tier_keys: categoryForm.tier_keys.filter(t => t !== tier)})
+                                  }
+                                }} />
+                                {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: size.sm }}>
+                          <input type="checkbox" checked={categoryForm.active} onChange={e => setCategoryForm({...categoryForm, active: e.target.checked})} />
+                          Actif (visible aux clients)
+                        </label>
+                      </div>
+
+                      <div style={{ padding: sp[4], borderTop: `1px solid ${c.border}`, display: 'flex', gap: sp[2] }}>
+                        {editingCategory && (
+                          <button type="button" onClick={async () => {
+                            if (!confirm('Supprimer cette categorie ?')) return
+                            try {
+                              await deleteCategory(editingCategory.id)
+                              setShowCategoryModal(false)
+                              await loadAll()
+                              toast.success('Categorie supprimee')
+                            } catch (err) { toast.error('Erreur: ' + err.message) }
+                          }} style={{
+                            padding: `10px ${sp[3]}`, background: 'transparent', color: c.red,
+                            border: `1px solid ${c.red}33`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                            cursor: 'pointer',
+                          }}>
+                            Supprimer
+                          </button>
+                        )}
+                        <div style={{ flex: 1 }} />
+                        <button type="button" onClick={() => setShowCategoryModal(false)} style={{
+                          padding: `10px ${sp[3]}`, background: 'transparent', color: c.textSecondary,
+                          border: `1px solid ${c.border}`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                        }}>Annuler</button>
+                        <button type="submit" style={{
+                          padding: `10px ${sp[3]}`, background: c.red, color: c.text,
+                          border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                          cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}>
+                          {editingCategory ? 'Sauvegarder' : 'Creer la categorie'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               )}
+
+              {/* ── PRODUCT DETAIL/EDIT MODAL ── */}
+              {showProductModal && (
+                <div style={{
+                  position: 'fixed', inset: 0, background: c.bgOverlay, zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)',
+                  animation: 'fadeSlideIn 0.2s ease-out',
+                }} onClick={() => setShowProductModal(false)}>
+                  <div style={{
+                    background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+                    maxWidth: '560px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+                    animation: 'fadeSlideIn 0.3s ease-out',
+                  }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
+                    <button onClick={() => setShowProductModal(false)} style={{
+                      position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
+                      color: c.textTertiary, cursor: 'pointer', padding: 0, width: '28px', height: '28px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = c.red }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}>
+                      <Icon d={icons.close} size={16} />
+                    </button>
+
+                    <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px' }}>
+                      {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
+                    </h2>
+                    <ArtDecoDivider width={80} />
+
+                    {/* Image upload section */}
+                    {editingProduct && (
+                      <div style={{ marginTop: sp[3], marginBottom: sp[3] }}>
+                        <label style={labelStyle}>Images</label>
+                        <div style={{ display: 'flex', gap: sp[2], flexWrap: 'wrap', marginBottom: sp[1] }}>
+                          {(editingProduct.image_urls || []).map((url, i) => (
+                            <div key={i} style={{ width: 80, height: 80, position: 'relative', border: `1px solid ${c.border}`, overflow: 'hidden' }}>
+                              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <button onClick={async () => {
+                                await deleteProductImage(url)
+                                const newUrls = editingProduct.image_urls.filter((_, j) => j !== i)
+                                await updateProduct(editingProduct.id, { image_urls: newUrls })
+                                setEditingProduct({ ...editingProduct, image_urls: newUrls })
+                                toast.success('Image supprimée')
+                              }} style={{
+                                position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.7)', border: 'none',
+                                color: c.white, cursor: 'pointer', width: 18, height: 18, fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>x</button>
+                            </div>
+                          ))}
+                          <button onClick={() => productFileRef.current?.click()} disabled={productUploading} style={{
+                            width: 80, height: 80, border: `2px dashed ${c.border}`, background: 'transparent',
+                            color: c.textTertiary, cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center', fontSize: '10px', gap: '4px',
+                          }}>
+                            <Icon d={icons.plus} size={16} color={c.textTertiary} />
+                            {productUploading ? '...' : 'Photo'}
+                          </button>
+                        </div>
+                        <input ref={productFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file || !editingProduct) return
+                          setProductUploading(true)
+                          try {
+                            const url = await uploadProductImage(file, editingProduct.id)
+                            const newUrls = [...(editingProduct.image_urls || []), url]
+                            await updateProduct(editingProduct.id, { image_urls: newUrls })
+                            setEditingProduct({ ...editingProduct, image_urls: newUrls })
+                            toast.success('Image ajoutée')
+                          } catch (err) { toast.error("Erreur upload: " + err.message) }
+                          setProductUploading(false)
+                          e.target.value = ''
+                        }} />
+                      </div>
+                    )}
+
+                    <form onSubmit={async (e) => {
+                      e.preventDefault()
+                      if (!productForm.name.trim()) return
+                      const payload = {
+                        name: productForm.name, description: productForm.description, category: productForm.category,
+                        price_min: productForm.price_min ? parseFloat(productForm.price_min) : null,
+                        price_max: productForm.price_max ? parseFloat(productForm.price_max) : null,
+                        moq: productForm.moq ? parseInt(productForm.moq) : 1,
+                        margin_estimate: productForm.margin_estimate,
+                        tags: productForm.tags ? productForm.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+                        tier_keys: productForm.tier_keys,
+                        active: productForm.active, featured: productForm.featured,
+                      }
+                      try {
+                        if (editingProduct) {
+                          await updateProduct(editingProduct.id, payload)
+                          toast.success('Produit mis à jour')
+                        } else {
+                          await createProduct(payload)
+                          toast.success('Produit créé')
+                        }
+                        setShowProductModal(false)
+                        await loadAll()
+                      } catch (err) { toast.error('Erreur: ' + err.message) }
+                    }} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
+                      <div>
+                        <label style={labelStyle}>Nom du produit *</label>
+                        <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})}
+                          placeholder="Ex: Tapis de priere premium" style={inputStyle}
+                          onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                          onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                      </div>
+
+                      <div>
+                        <label style={labelStyle}>Description</label>
+                        <textarea value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})}
+                          placeholder="Description du produit..." style={{...inputStyle, minHeight: '60px', fontFamily: f.body}}
+                          onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                          onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                        <div>
+                          <label style={labelStyle}>Catégorie</label>
+                          <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})}
+                            style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
+                            <option value="">Selectionner une categorie</option>
+                            {categories.filter(c => c.active).map(cat => (
+                              <option key={cat.id} value={cat.name}>{cat.icon} {cat.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={labelStyle}>MOQ</label>
+                          <input type="number" value={productForm.moq} onChange={e => setProductForm({...productForm, moq: e.target.value})}
+                            placeholder="1" style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[2] }}>
+                        <div>
+                          <label style={labelStyle}>Prix min (CNY)</label>
+                          <input type="number" step="0.01" value={productForm.price_min} onChange={e => setProductForm({...productForm, price_min: e.target.value})}
+                            placeholder="0" style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Prix max (CNY)</label>
+                          <input type="number" step="0.01" value={productForm.price_max} onChange={e => setProductForm({...productForm, price_max: e.target.value})}
+                            placeholder="0" style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Marge estimée</label>
+                          <input type="text" value={productForm.margin_estimate} onChange={e => setProductForm({...productForm, margin_estimate: e.target.value})}
+                            placeholder="x3-x5" style={inputStyle}
+                            onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                            onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={labelStyle}>Tags (separes par virgule)</label>
+                        <input type="text" value={productForm.tags} onChange={e => setProductForm({...productForm, tags: e.target.value})}
+                          placeholder="halal, premium, bestseller" style={inputStyle}
+                          onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
+                          onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                      </div>
+
+                      {/* Toggles */}
+                      <div style={{ display: 'flex', gap: sp[3] }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: size.sm }}>
+                          <input type="checkbox" checked={productForm.active} onChange={e => setProductForm({...productForm, active: e.target.checked})} />
+                          Actif (visible clients)
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: size.sm }}>
+                          <input type="checkbox" checked={productForm.featured} onChange={e => setProductForm({...productForm, featured: e.target.checked})} />
+                          Mis en avant
+                        </label>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: sp[2], paddingTop: sp[2], borderTop: `1px solid ${c.border}` }}>
+                        {editingProduct && (
+                          <button type="button" onClick={async () => {
+                            if (!confirm('Supprimer ce produit ?')) return
+                            try {
+                              for (const url of (editingProduct.image_urls || [])) { await deleteProductImage(url) }
+                              await deleteProduct(editingProduct.id)
+                              setShowProductModal(false)
+                              await loadAll()
+                              toast.success('Produit supprime')
+                            } catch (err) { toast.error('Erreur: ' + err.message) }
+                          }} style={{
+                            padding: `10px ${sp[3]}`, background: 'transparent', color: c.red,
+                            border: `1px solid ${c.red}33`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                            cursor: 'pointer',
+                          }}>
+                            Supprimer
+                          </button>
+                        )}
+                        <div style={{ flex: 1 }} />
+                        <button type="button" onClick={() => setShowProductModal(false)} style={{
+                          padding: `10px ${sp[3]}`, background: 'transparent', color: c.textSecondary,
+                          border: `1px solid ${c.border}`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                        }}>Annuler</button>
+                        <button type="submit" style={{
+                          padding: `10px ${sp[3]}`, background: c.red, color: c.text,
+                          border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                          cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}>
+                          {editingProduct ? 'Sauvegarder' : 'Creer le produit'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── EXPEDITION TAB ── */}
+          {mainTab === 'expedition' && (
+            <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[4], animation: 'fadeSlideIn 0.4s ease-out' }}>
+                <div>
+                  <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                    Expédition & Logistique
+                  </h2>
+                  <ArtDecoDivider width={80} color={c.teal} />
+                  <p style={{ fontSize: size.sm, color: c.textSecondary, marginTop: sp[1] }}>
+                    Suivi des envois et logistique
+                  </p>
+                </div>
+                <button onClick={() => setShowCreateShipment(true)} style={{
+                  padding: `10px ${sp[3]}`, background: c.teal, color: c.text, border: 'none',
+                  fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                  transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
+                  borderRadius: '3px', boxShadow: shadow.md,
+                }}>
+                  <Icon d={icons.plus} size={16} color={c.text} />
+                  Nouvel envoi
+                </button>
+              </div>
+
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: sp[3], marginBottom: sp[4] }}>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.05s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>TOTAL ENVOIS</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.teal }}>{shipments.length}</p>
+                </div>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.1s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>EN TRANSIT</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.gold }}>{shipments.filter(s => s.status === 'transit').length}</p>
+                </div>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.15s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>LIVRÉS</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.teal }}>{shipments.filter(s => s.status === 'livré').length}</p>
+                </div>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.2s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>EN ATTENTE</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.red }}>{shipments.filter(s => s.status === 'production' || s.status === 'QC' || s.status === 'douanes').length}</p>
+                </div>
+              </div>
+
+              {/* Shipments list/table */}
+              <div style={{ background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', overflow: 'hidden' }}>
+                {shipments.length === 0 ? (
+                  <div style={{ padding: sp[4], textAlign: 'center', color: c.textTertiary }}>
+                    <p style={{ fontSize: size.sm, marginBottom: sp[2] }}>Aucun envoi enregistré</p>
+                    <p style={{ fontSize: size.xs, color: c.textTertiary }}>Les envois apparaîtront ici une fois créés</p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: size.sm }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${c.border}`, background: c.bg }}>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Client</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Tracking</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Statut</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Méthode</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Origine</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Destination</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>ETA</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Poids</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shipments.map((shipment, idx) => (
+                          <tr key={shipment.id || idx} style={{ borderBottom: `1px solid ${c.borderSubtle}`, animation: `fadeSlideIn 0.4s ease-out ${0.05 + idx * 0.02}s both` }}>
+                            <td style={{ padding: sp[3], color: c.text }}>{clientName(shipment.client_id) || 'N/A'}</td>
+                            <td style={{ padding: sp[3], color: c.textSecondary, fontFamily: f.mono, fontSize: size.xs }}>{shipment.tracking_number || '—'}</td>
+                            <td style={{ padding: sp[3] }}>
+                              <span style={{
+                                display: 'inline-block', padding: '3px 8px',
+                                background: (shipStatusToStr[shipment.status] || shipment.status) === 'livré' ? 'oklch(65% 0.13 142 / 0.1)' :
+                                           (shipStatusToStr[shipment.status] || shipment.status) === 'transit' ? 'oklch(55% 0.22 25 / 0.1)' : 'oklch(42% 0.18 345 / 0.1)',
+                                color: (shipStatusToStr[shipment.status] || shipment.status) === 'livré' ? c.teal :
+                                       (shipStatusToStr[shipment.status] || shipment.status) === 'transit' ? c.gold : c.red,
+                                fontSize: size.xs, fontFamily: f.mono, borderRadius: '2px',
+                              }}>
+                                {shipStatusToStr[shipment.status] || shipment.status || 'unknown'}
+                              </span>
+                            </td>
+                            <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{shipment.method || '—'}</td>
+                            <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{shipment.origin || '—'}</td>
+                            <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{shipment.destination || '—'}</td>
+                            <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{shipment.eta || '—'}</td>
+                            <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{shipment.weight_kg ? `${shipment.weight_kg} kg` : '—'}</td>
+                            <td style={{ padding: sp[3], display: 'flex', gap: sp[1] }}>
+                              <button onClick={() => {
+                                setEditingShipment(shipment)
+                                setEditShipmentData({
+                                  tracking_number: shipment.tracking_number || '',
+                                  method: shipment.method || 'maritime',
+                                  destination: shipment.destination || '',
+                                  weight_kg: shipment.weight_kg || shipment.weight || '',
+                                  status: (typeof shipment.status === 'number' ? shipStatusToStr[shipment.status] : shipment.status) || 'production',
+                                  notes: shipment.notes || '',
+                                  eta: shipment.eta || '',
+                                  origin: shipment.origin || '',
+                                })
+                              }} style={{
+                                padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
+                                color: c.teal, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
+                                transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = `${c.teal}15`; e.currentTarget.style.borderColor = c.teal }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
+                                <Icon d={icons.edit} size={12} color={c.teal} />
+                              </button>
+                              <button onClick={() => handleDeleteShipment(shipment.id)} style={{
+                                padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
+                                color: c.red, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
+                                transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}15`; e.currentTarget.style.borderColor = c.red }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
+                                <Icon d={icons.trash} size={12} color={c.red} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── STOCK TAB ── */}
+          {mainTab === 'stock' && (
+            <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[4], animation: 'fadeSlideIn 0.4s ease-out' }}>
+                <div>
+                  <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, letterSpacing: '-0.01em' }}>
+                    Stock & E-commerce
+                  </h2>
+                  <ArtDecoDivider width={80} color={c.purple} />
+                  <p style={{ fontSize: size.sm, color: c.textSecondary, marginTop: sp[1], lineHeight: 1.5 }}>
+                    Inventaire des clients qui nous confient le stockage et la gestion de leur boutique en ligne.
+                    <br /><span style={{ fontSize: size.xs, color: c.textTertiary }}>Service réservé aux profils E-commerce avec option « Stock & Boutique » activée.</span>
+                  </p>
+                </div>
+                <button onClick={() => setShowCreateInventory(true)} style={{
+                  padding: `10px ${sp[3]}`, background: c.purple, color: c.text, border: 'none',
+                  fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                  transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
+                  borderRadius: '3px', boxShadow: shadow.md,
+                }}>
+                  <Icon d={icons.plus} size={16} color={c.text} />
+                  Nouvel article
+                </button>
+              </div>
+
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: sp[3], marginBottom: sp[4] }}>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.05s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>RÉFÉRENCES</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.purple }}>{inventory.length}</p>
+                </div>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.1s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>QUANTITÉ TOTALE</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.purple }}>{inventory.reduce((acc, item) => acc + (item.quantity || 0), 0)}</p>
+                </div>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.15s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>ALERTES STOCK</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.red }}>{inventory.filter(item => (item.quantity || 0) <= (item.alert_threshold || 0)).length}</p>
+                </div>
+                <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', animation: 'fadeSlideIn 0.4s ease-out 0.2s both' }}>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>VALEUR ESTIMÉE</p>
+                  <p style={{ fontSize: size.lg, fontWeight: 700, color: c.gold }}>€ {inventory.reduce((acc, item) => acc + ((item.unit_price || 0) * (item.quantity || 0)), 0).toFixed(2)}</p>
+                </div>
+              </div>
+
+              {/* Inventory table */}
+              <div style={{ background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px', overflow: 'hidden' }}>
+                {inventory.length === 0 ? (
+                  <div style={{ padding: sp[4], textAlign: 'center', color: c.textTertiary }}>
+                    <p style={{ fontSize: size.sm, marginBottom: sp[2] }}>Aucun article en stock</p>
+                    <p style={{ fontSize: size.xs, color: c.textTertiary }}>Créez des articles pour commencer à gérer votre inventaire</p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: size.sm }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${c.border}`, background: c.bg }}>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Produit</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>SKU</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Quantité</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Seuil alerte</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Entrepôt</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Statut</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Mis à jour</th>
+                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inventory.map((item, idx) => {
+                          const isLowStock = (item.quantity || 0) <= (item.alert_threshold || 0)
+                          return (
+                            <tr key={item.id || idx} style={{
+                              borderBottom: `1px solid ${c.borderSubtle}`,
+                              background: isLowStock ? 'oklch(42% 0.18 345 / 0.05)' : 'transparent',
+                              animation: `fadeSlideIn 0.4s ease-out ${0.05 + idx * 0.02}s both`
+                            }}>
+                              <td style={{ padding: sp[3], color: c.text }}>{item.product_name || 'N/A'}</td>
+                              <td style={{ padding: sp[3], color: c.textSecondary, fontFamily: f.mono, fontSize: size.xs }}>{item.sku || '—'}</td>
+                              <td style={{ padding: sp[3], color: isLowStock ? c.red : c.text, fontWeight: isLowStock ? 600 : 400 }}>{item.quantity || 0}</td>
+                              <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{item.alert_threshold || '—'}</td>
+                              <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{item.warehouse || '—'}</td>
+                              <td style={{ padding: sp[3] }}>
+                                <span style={{
+                                  display: 'inline-block', padding: '3px 8px',
+                                  background: isLowStock ? 'oklch(42% 0.18 345 / 0.1)' : 'oklch(65% 0.13 142 / 0.1)',
+                                  color: isLowStock ? c.red : c.teal,
+                                  fontSize: size.xs, fontFamily: f.mono, borderRadius: '2px',
+                                }}>
+                                  {isLowStock ? 'ALERTE' : 'OK'}
+                                </span>
+                              </td>
+                              <td style={{ padding: sp[3], color: c.textSecondary, fontSize: size.xs }}>{item.updated_at ? new Date(item.updated_at).toLocaleDateString('fr-FR') : '—'}</td>
+                              <td style={{ padding: sp[3], display: 'flex', gap: sp[1] }}>
+                                <button onClick={() => {
+                                  setEditingInventoryItem(item)
+                                  setEditInventoryData({
+                                    product_name: item.product_name || '',
+                                    sku: item.sku || '',
+                                    quantity: item.quantity || 0,
+                                    alert_threshold: item.alert_threshold || 10,
+                                    warehouse: item.warehouse || 'France',
+                                    unit_price: item.unit_price || '',
+                                    notes: item.notes || '',
+                                  })
+                                }} style={{
+                                  padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
+                                  color: c.purple, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
+                                  transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = `${c.purple}15`; e.currentTarget.style.borderColor = c.purple }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
+                                  <Icon d={icons.edit} size={12} color={c.purple} />
+                                </button>
+                                <button onClick={() => handleDeleteInventory(item.id)} style={{
+                                  padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
+                                  color: c.red, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
+                                  transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}15`; e.currentTarget.style.borderColor = c.red }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
+                                  <Icon d={icons.trash} size={12} color={c.red} />
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -1369,6 +2374,13 @@ export default function Admin({ user, profile, onSignOut }) {
                                 <span style={{ fontWeight: 600, fontSize: size.sm, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {client.full_name || client.email}
                                 </span>
+                                {client.role === 'admin' && (
+                                  <span style={{
+                                    padding: '1px 6px', background: `${c.purple}20`, border: `1px solid ${c.purple}40`,
+                                    fontSize: '8px', fontFamily: f.mono, fontWeight: 700, color: c.purple,
+                                    letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0,
+                                  }}>ADMIN</span>
+                                )}
                               </div>
                               <div style={{ fontSize: size.xs, color: c.textTertiary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {client.email}
@@ -1394,6 +2406,43 @@ export default function Admin({ user, profile, onSignOut }) {
                               transition: `all 0.15s ${ease.smooth}`,
                             }}>{t.icon} {t.label}</button>
                           ))}
+                        </div>
+
+                        {/* Services toggles */}
+                        <div style={{ display: 'flex', gap: '6px', padding: `0 ${sp[3]} ${sp[2]}`, flexWrap: 'wrap' }}>
+                          {[
+                            { key: 'sourcing', label: 'Sourcing', color: c.red, icon: '◆', free: true },
+                            { key: 'logistics', label: 'Expédition', color: c.teal, icon: '▸' },
+                            { key: 'stock', label: 'Stock & Boutique', color: c.purple, icon: '⬡' },
+                          ].map(svc => {
+                            const enabled = (client.services_enabled || ['sourcing']).includes(svc.key)
+                            return (
+                              <button key={svc.key} onClick={(e) => {
+                                e.stopPropagation()
+                                if (svc.free) return // sourcing always on
+                                const current = client.services_enabled || ['sourcing']
+                                const next = enabled
+                                  ? current.filter(s => s !== svc.key)
+                                  : [...current, svc.key]
+                                updateProfile(client.id, { services_enabled: next }).then(() => loadAll())
+                              }} style={{
+                                padding: '3px 8px',
+                                background: enabled ? `${svc.color}18` : 'transparent',
+                                border: `1px solid ${enabled ? svc.color + '40' : c.borderSubtle}`,
+                                color: enabled ? svc.color : c.textGhost,
+                                fontSize: '9px', fontFamily: f.mono, fontWeight: enabled ? 600 : 400,
+                                cursor: svc.free ? 'default' : 'pointer',
+                                letterSpacing: '0.03em',
+                                transition: `all 0.15s ${ease.smooth}`,
+                                display: 'flex', alignItems: 'center', gap: '4px',
+                                opacity: svc.free ? 0.7 : 1,
+                              }}>
+                                <span style={{ fontSize: '8px' }}>{enabled ? '●' : '○'}</span>
+                                {svc.icon} {svc.label}
+                                {svc.free && <span style={{ fontSize: '7px', opacity: 0.6 }}>INCLUS</span>}
+                              </button>
+                            )
+                          })}
                         </div>
 
                         {/* Contact info */}
@@ -1440,7 +2489,7 @@ export default function Admin({ user, profile, onSignOut }) {
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}15`; e.currentTarget.style.color = c.red }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary }}>
-                            <Icon d={icons.lock} size={10} color="currentColor" /> Mot de passe
+                            <Icon d={icons.lock} size={10} color="currentColor" /> G&eacute;rer
                           </button>
                         </div>
                       </div>
@@ -1491,7 +2540,7 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Client Password ════════════ */}
       {clientPasswordModal && (
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex',
+          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000,
           animation: 'fadeSlideIn 0.2s ease-out',
         }} onClick={() => setClientPasswordModal(null)}>
@@ -1511,7 +2560,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   <Icon d={icons.lock} size={16} color={c.gold} />
                 </div>
                 <div>
-                  <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.md }}>Mot de passe</div>
+                  <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.md }}>Gestion du compte</div>
                   <div style={{ fontSize: size.xs, color: c.textTertiary }}>{clientPasswordModal.full_name || clientPasswordModal.email}</div>
                 </div>
               </div>
@@ -1566,6 +2615,55 @@ export default function Admin({ user, profile, onSignOut }) {
                     <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>Crée un nouveau mot de passe que vous communiquez au client</div>
                   </div>
                 </button>
+
+                <div style={{ height: 1, background: c.border, margin: `${sp[1]} 0` }} />
+
+                <button onClick={() => setPasswordAction('reset-account')} style={{
+                  width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'oklch(55% 0.18 35)'; e.currentTarget.style.background = 'oklch(55% 0.18 35 / 0.08)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgElevated }}>
+                  <Icon d={icons.refresh} size={16} color="oklch(55% 0.18 35)" />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>Réinitialiser le compte</div>
+                    <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>Remet l'onboarding à zéro — le client devra reconfigurer son profil</div>
+                  </div>
+                </button>
+
+                <div style={{ height: 1, background: c.border, margin: `${sp[1]} 0` }} />
+
+                {/* Toggle admin role */}
+                <button onClick={async () => {
+                  const isAdmin = clientPasswordModal.role === 'admin'
+                  const newRole = isAdmin ? 'client' : 'admin'
+                  try {
+                    await updateProfile(clientPasswordModal.id, { role: newRole })
+                    toast.success(isAdmin ? 'Compte repassé en client' : 'Compte promu admin')
+                    setClientPasswordModal(null)
+                    loadAll()
+                  } catch (err) {
+                    toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                  }
+                }} style={{
+                  width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.purple; e.currentTarget.style.background = `${c.purple}10` }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgElevated }}>
+                  <Icon d={icons.shield} size={16} color={c.purple} />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{clientPasswordModal.role === 'admin' ? 'Retirer les droits admin' : 'Passer en admin'}</div>
+                    <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>
+                      {clientPasswordModal.role === 'admin'
+                        ? 'Ce compte redeviendra un compte client standard'
+                        : 'Ce compte aura accès au panel d\'administration'
+                      }
+                    </div>
+                  </div>
+                </button>
               </div>
             )}
 
@@ -1612,7 +2710,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   padding: sp[3], background: `${c.red}10`, border: `1px solid ${c.red}33`, marginBottom: sp[3],
                 }}>
                   <p style={{ fontSize: size.sm, color: c.text, lineHeight: 1.6, margin: 0 }}>
-                    Ce mot de passe temporaire remplacera l’ancien. Communiquez-le au client de manière sécurisée.
+                    Ce mot de passe temporaire remplacera l'ancien. Communiquez-le au client de manière sécurisée.
                   </p>
                 </div>
                 <div style={{ marginBottom: sp[3] }}>
@@ -1648,8 +2746,8 @@ export default function Admin({ user, profile, onSignOut }) {
                       const { error } = await supabase.auth.admin.updateUserById(clientPasswordModal.id, { password: newTempPassword })
                       if (error) throw error
                       toast.success('Mot de passe mis à jour')
-                      setClientPasswordModal(null)
-                      setNewTempPassword('')
+                      setLastSetPassword(newTempPassword)
+                      setPasswordAction('done')
                     } catch (err) {
                       // If admin API not available, fall back to reset email
                       if (err.message?.includes('not authorized') || err.message?.includes('not allowed') || err.status === 403 || err.status === 401) {
@@ -1667,6 +2765,93 @@ export default function Admin({ user, profile, onSignOut }) {
                     opacity: passwordLoading ? 0.6 : 1,
                   }}>
                     {passwordLoading ? 'Mise à jour...' : 'Appliquer'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Password just set — display for copy */}
+            {passwordAction === 'done' && lastSetPassword && (
+              <div style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
+                <div style={{
+                  padding: sp[3], background: 'oklch(35% 0.12 145 / 0.12)', border: '1px solid oklch(55% 0.15 145 / 0.3)', marginBottom: sp[3],
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>Mot de passe défini</div>
+                  <div style={{
+                    fontFamily: f.mono, fontSize: size.lg, fontWeight: 700, color: c.text,
+                    padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
+                    userSelect: 'all', cursor: 'text', letterSpacing: '0.05em',
+                  }}>{lastSetPassword}</div>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, margin: `${sp[2]} 0 0`, lineHeight: 1.5 }}>
+                    Communiquez ce mot de passe au client. Il ne sera plus visible apr&egrave;s fermeture.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: sp[2] }}>
+                  <button onClick={() => {
+                    navigator.clipboard.writeText(lastSetPassword)
+                    toast.success('Mot de passe copié')
+                  }} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: c.gold, border: 'none',
+                    color: c.bg, fontSize: size.sm, fontFamily: f.body, fontWeight: 700, cursor: 'pointer',
+                  }}>Copier le mot de passe</button>
+                  <button onClick={() => {
+                    setClientPasswordModal(null); setLastSetPassword(''); setNewTempPassword('')
+                  }} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
+                    color: c.textTertiary, fontSize: size.sm, fontFamily: f.body, fontWeight: 600, cursor: 'pointer',
+                  }}>Fermer</button>
+                </div>
+              </div>
+            )}
+
+            {/* Reset account flow */}
+            {passwordAction === 'reset-account' && (
+              <div style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
+                <div style={{
+                  padding: sp[3], background: 'oklch(55% 0.18 35 / 0.08)', border: '1px solid oklch(55% 0.18 35 / 0.25)', marginBottom: sp[3],
+                }}>
+                  <p style={{ fontSize: size.sm, color: c.text, lineHeight: 1.6, margin: 0 }}>
+                    <strong>Attention :</strong> Cette action remet le compte de <strong>{clientPasswordModal.full_name || clientPasswordModal.email}</strong> à zéro.
+                    Le client devra refaire l'onboarding (choix du profil, catalogue, infos de contact).
+                  </p>
+                </div>
+                <div style={{
+                  padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, marginBottom: sp[3],
+                  fontSize: size.xs, color: c.textTertiary, lineHeight: 1.5,
+                }}>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1], color: c.textTertiary }}>Ce qui sera réinitialisé</div>
+                  <div>&#x25C6; Onboarding remis à « non complété »</div>
+                  <div>&#x25C6; Profil client (tier, contact, société) vidé</div>
+                  <div style={{ marginTop: sp[1], color: c.gold }}>&#x25C6; Les commandes existantes sont conservées</div>
+                </div>
+                <div style={{ display: 'flex', gap: sp[2] }}>
+                  <button onClick={() => setPasswordAction(null)} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
+                    color: c.textTertiary, fontSize: size.sm, fontFamily: f.body, fontWeight: 600, cursor: 'pointer',
+                  }}>Annuler</button>
+                  <button onClick={async () => {
+                    setPasswordLoading(true)
+                    try {
+                      await updateProfile(clientPasswordModal.id, {
+                        onboarding_done: false,
+                        client_tier: null,
+                        company_name: null,
+                        phone: null,
+                        city: null,
+                      })
+                      toast.success('Compte réinitialisé — le client devra refaire l\'onboarding')
+                      setClientPasswordModal(null)
+                      loadAll()
+                    } catch (err) {
+                      toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                    } finally { setPasswordLoading(false) }
+                  }} disabled={passwordLoading} style={{
+                    flex: 1, padding: `10px ${sp[2]}`, background: 'oklch(55% 0.18 35)', border: 'none',
+                    color: c.white, fontSize: size.sm, fontFamily: f.body, fontWeight: 700,
+                    cursor: passwordLoading ? 'wait' : 'pointer', opacity: passwordLoading ? 0.6 : 1,
+                  }}>
+                    {passwordLoading ? 'Réinitialisation...' : 'Confirmer la réinitialisation'}
                   </button>
                 </div>
               </div>
@@ -1779,6 +2964,468 @@ export default function Admin({ user, profile, onSignOut }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ MODAL: Nouvel envoi ═══════ */}
+      {showCreateShipment && (
+        <div style={{
+          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
+          animation: 'fadeSlideIn 0.2s ease-out',
+        }} onClick={() => setShowCreateShipment(false)}>
+          <div style={{
+            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+            animation: 'fadeSlideIn 0.3s ease-out',
+          }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowCreateShipment(false)} style={{
+              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
+              color: c.textTertiary, cursor: 'pointer', padding: 0, width: '28px', height: '28px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: `all 0.2s ${ease.smooth}`,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = c.teal }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}>
+              <Icon d={icons.close} size={16} />
+            </button>
+
+            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.01em', color: c.teal }}>
+              Nouvel envoi
+            </h2>
+            <ArtDecoDivider width={80} color={c.teal} />
+
+            <form onSubmit={handleCreateShipment} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
+              <div>
+                <label style={labelStyle}>Client *</label>
+                <select value={createShipmentData.client_id} onChange={e => setCreateShipmentData({...createShipmentData, client_id: e.target.value})}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
+                  <option value="">Choisir un client...</option>
+                  {allProfiles.map(cl => (<option key={cl.id} value={cl.id}>{cl.full_name || cl.email}</option>))}
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Commande liée</label>
+                <select value={createShipmentData.order_id} onChange={e => {
+                  const ord = orders.find(o => o.id === e.target.value)
+                  setCreateShipmentData({...createShipmentData, order_id: e.target.value, product_name: ord?.product || createShipmentData.product_name, client_id: ord?.client_id || createShipmentData.client_id})
+                }}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
+                  <option value="">Aucune (envoi libre)</option>
+                  {orders.map(o => (<option key={o.id} value={o.id}>{o.ref} — {o.product} ({clientName(o.client_id)})</option>))}
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Produit</label>
+                <input type="text" value={createShipmentData.product_name} onChange={e => setCreateShipmentData({...createShipmentData, product_name: e.target.value})}
+                  placeholder="Nom du produit..." style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Destination *</label>
+                  <input type="text" value={createShipmentData.destination} onChange={e => setCreateShipmentData({...createShipmentData, destination: e.target.value})}
+                    placeholder="Paris, Lyon..." style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Méthode</label>
+                  <select value={createShipmentData.method} onChange={e => setCreateShipmentData({...createShipmentData, method: e.target.value})}
+                    style={{...inputStyle, cursor: 'pointer', appearance: 'none'}}
+                    onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
+                    <option value="maritime">Maritime</option>
+                    <option value="aerien">Aérien</option>
+                    <option value="ferroviaire">Ferroviaire</option>
+                    <option value="express">Express</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Statut</label>
+                <select value={createShipmentData.status} onChange={e => setCreateShipmentData({...createShipmentData, status: e.target.value})}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none'}}
+                  onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
+                  <option value="production">En production</option>
+                  <option value="QC">Contrôle qualité</option>
+                  <option value="douanes">Douanes</option>
+                  <option value="transit">En transit</option>
+                  <option value="livré">Livré</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>N. de suivi</label>
+                  <input type="text" value={createShipmentData.tracking_number} onChange={e => setCreateShipmentData({...createShipmentData, tracking_number: e.target.value})}
+                    placeholder="Tracking number" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Poids (kg)</label>
+                  <input type="number" step="0.1" value={createShipmentData.weight_kg} onChange={e => setCreateShipmentData({...createShipmentData, weight_kg: e.target.value})}
+                    placeholder="0" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={createShipmentData.notes} onChange={e => setCreateShipmentData({...createShipmentData, notes: e.target.value})}
+                  placeholder="Details..." style={{...inputStyle, minHeight: '60px', fontFamily: f.body}}
+                  onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+              </div>
+
+              <div style={{ display: 'flex', gap: sp[2], paddingTop: sp[2], borderTop: `1px solid ${c.border}` }}>
+                <button type="button" onClick={() => setShowCreateShipment(false)} style={{
+                  flex: 1, padding: `10px ${sp[3]}`, background: 'transparent', color: c.textSecondary,
+                  border: `1px solid ${c.border}`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                  cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textSecondary; e.currentTarget.style.color = c.text }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
+                  Annuler
+                </button>
+                <button type="submit" style={{
+                  flex: 1, padding: `10px ${sp[3]}`, background: c.teal, color: c.text,
+                  border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                  cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}>
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ MODAL: Nouvel article stock ═══════ */}
+      {showCreateInventory && (
+        <div style={{
+          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
+          animation: 'fadeSlideIn 0.2s ease-out',
+        }} onClick={() => setShowCreateInventory(false)}>
+          <div style={{
+            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+            animation: 'fadeSlideIn 0.3s ease-out',
+          }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowCreateInventory(false)} style={{
+              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
+              color: c.textTertiary, cursor: 'pointer', padding: 0, width: '28px', height: '28px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: `all 0.2s ${ease.smooth}`,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = c.purple }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}>
+              <Icon d={icons.close} size={16} />
+            </button>
+
+            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.01em', color: c.purple }}>
+              Nouvel article
+            </h2>
+            <ArtDecoDivider width={80} color={c.purple} />
+
+            <form onSubmit={handleCreateInventory} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
+              <div>
+                <label style={labelStyle}>Client *</label>
+                <select value={createInventoryData.client_id} onChange={e => setCreateInventoryData({...createInventoryData, client_id: e.target.value})}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
+                  <option value="">Choisir un client...</option>
+                  {allProfiles.map(cl => (<option key={cl.id} value={cl.id}>{cl.full_name || cl.email}</option>))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Produit *</label>
+                  <input type="text" value={createInventoryData.product_name} onChange={e => setCreateInventoryData({...createInventoryData, product_name: e.target.value})}
+                    placeholder="Nom du produit" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>SKU</label>
+                  <input type="text" value={createInventoryData.sku} onChange={e => setCreateInventoryData({...createInventoryData, sku: e.target.value})}
+                    placeholder="REF-001" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Quantité</label>
+                  <input type="number" value={createInventoryData.quantity} onChange={e => setCreateInventoryData({...createInventoryData, quantity: e.target.value})}
+                    placeholder="0" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Alerte seuil</label>
+                  <input type="number" value={createInventoryData.alert_threshold} onChange={e => setCreateInventoryData({...createInventoryData, alert_threshold: e.target.value})}
+                    placeholder="10" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Prix unit.</label>
+                  <input type="number" step="0.01" value={createInventoryData.unit_price} onChange={e => setCreateInventoryData({...createInventoryData, unit_price: e.target.value})}
+                    placeholder="0.00" style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                    onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Entrepôt</label>
+                <input type="text" value={createInventoryData.warehouse} onChange={e => setCreateInventoryData({...createInventoryData, warehouse: e.target.value})}
+                  placeholder="France" style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={createInventoryData.notes} onChange={e => setCreateInventoryData({...createInventoryData, notes: e.target.value})}
+                  placeholder="Details..." style={{...inputStyle, minHeight: '60px', fontFamily: f.body}}
+                  onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }} />
+              </div>
+
+              <div style={{ display: 'flex', gap: sp[2], paddingTop: sp[2], borderTop: `1px solid ${c.border}` }}>
+                <button type="button" onClick={() => setShowCreateInventory(false)} style={{
+                  flex: 1, padding: `10px ${sp[3]}`, background: 'transparent', color: c.textSecondary,
+                  border: `1px solid ${c.border}`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                  cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textSecondary; e.currentTarget.style.color = c.text }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
+                  Annuler
+                </button>
+                <button type="submit" style={{
+                  flex: 1, padding: `10px ${sp[3]}`, background: c.purple, color: c.text,
+                  border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+                  cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}>
+                  Ajouter au stock
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ MODAL: Edit Shipment ═══════ */}
+      {editingShipment && (
+        <div style={{
+          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
+          animation: 'fadeSlideIn 0.2s ease-out',
+        }} onClick={() => setEditingShipment(null)}>
+          <div style={{
+            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+            animation: 'fadeSlideIn 0.3s ease-out',
+          }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
+            <button onClick={() => setEditingShipment(null)} style={{
+              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
+              color: c.textTertiary, cursor: 'pointer', padding: 0,
+            }}>
+              <Icon d={icons.close} size={16} />
+            </button>
+
+            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', color: c.teal }}>
+              Modifier l'envoi
+            </h2>
+            <ArtDecoDivider width={80} />
+            <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
+              Client : {clientName(editingShipment.client_id)}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+              <div>
+                <label style={labelStyle}>Statut</label>
+                <select value={editShipmentData.status} onChange={e => setEditShipmentData({...editShipmentData, status: e.target.value})}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none'}}>
+                  <option value="production">En production</option>
+                  <option value="QC">Contrôle qualité</option>
+                  <option value="douanes">Douanes</option>
+                  <option value="transit">En transit</option>
+                  <option value="livré">Livré</option>
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>N. de suivi</label>
+                  <input type="text" value={editShipmentData.tracking_number} onChange={e => setEditShipmentData({...editShipmentData, tracking_number: e.target.value})}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Méthode</label>
+                  <select value={editShipmentData.method} onChange={e => setEditShipmentData({...editShipmentData, method: e.target.value})}
+                    style={{...inputStyle, cursor: 'pointer', appearance: 'none'}}>
+                    <option value="maritime">Maritime</option>
+                    <option value="aerien">Aérien</option>
+                    <option value="ferroviaire">Ferroviaire</option>
+                    <option value="express">Express</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Origine</label>
+                  <input type="text" value={editShipmentData.origin} onChange={e => setEditShipmentData({...editShipmentData, origin: e.target.value})}
+                    placeholder="Yiwu, Shenzhen..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Destination</label>
+                  <input type="text" value={editShipmentData.destination} onChange={e => setEditShipmentData({...editShipmentData, destination: e.target.value})}
+                    style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Poids (kg)</label>
+                  <input type="number" step="0.1" value={editShipmentData.weight_kg} onChange={e => setEditShipmentData({...editShipmentData, weight_kg: e.target.value})}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>ETA</label>
+                  <input type="text" value={editShipmentData.eta} onChange={e => setEditShipmentData({...editShipmentData, eta: e.target.value})}
+                    placeholder="2026-05-15" style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={editShipmentData.notes} onChange={e => setEditShipmentData({...editShipmentData, notes: e.target.value})}
+                  style={{...inputStyle, minHeight: '60px', fontFamily: f.body}} />
+              </div>
+              <div style={{ display: 'flex', gap: sp[2], paddingTop: sp[2], borderTop: `1px solid ${c.border}` }}>
+                <button type="button" onClick={() => handleDeleteShipment(editingShipment.id)} style={{
+                  padding: `10px ${sp[3]}`, background: 'transparent', color: c.red,
+                  border: `1px solid ${c.red}33`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                }}>Supprimer</button>
+                <div style={{ flex: 1 }} />
+                <button type="button" onClick={() => setEditingShipment(null)} style={{
+                  padding: `10px ${sp[3]}`, background: 'transparent', color: c.textSecondary,
+                  border: `1px solid ${c.border}`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                }}>Annuler</button>
+                <button type="button" onClick={handleSaveShipment} style={{
+                  padding: `10px ${sp[3]}`, background: c.teal, color: c.text,
+                  border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                }}>Sauvegarder</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ MODAL: Edit Inventory ═══════ */}
+      {editingInventoryItem && (
+        <div style={{
+          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
+          animation: 'fadeSlideIn 0.2s ease-out',
+        }} onClick={() => setEditingInventoryItem(null)}>
+          <div style={{
+            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+            animation: 'fadeSlideIn 0.3s ease-out',
+          }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
+            <button onClick={() => setEditingInventoryItem(null)} style={{
+              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
+              color: c.textTertiary, cursor: 'pointer', padding: 0,
+            }}>
+              <Icon d={icons.close} size={16} />
+            </button>
+
+            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', color: c.purple }}>
+              Modifier l'article
+            </h2>
+            <ArtDecoDivider width={80} />
+            <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
+              Client : {clientName(editingInventoryItem.client_id)}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Produit</label>
+                  <input type="text" value={editInventoryData.product_name} onChange={e => setEditInventoryData({...editInventoryData, product_name: e.target.value})}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>SKU</label>
+                  <input type="text" value={editInventoryData.sku} onChange={e => setEditInventoryData({...editInventoryData, sku: e.target.value})}
+                    style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[2] }}>
+                <div>
+                  <label style={labelStyle}>Quantité</label>
+                  <input type="number" value={editInventoryData.quantity} onChange={e => setEditInventoryData({...editInventoryData, quantity: e.target.value})}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Seuil alerte</label>
+                  <input type="number" value={editInventoryData.alert_threshold} onChange={e => setEditInventoryData({...editInventoryData, alert_threshold: e.target.value})}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Prix unitaire</label>
+                  <input type="number" step="0.01" value={editInventoryData.unit_price} onChange={e => setEditInventoryData({...editInventoryData, unit_price: e.target.value})}
+                    style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Entrepôt</label>
+                <input type="text" value={editInventoryData.warehouse} onChange={e => setEditInventoryData({...editInventoryData, warehouse: e.target.value})}
+                  style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={editInventoryData.notes} onChange={e => setEditInventoryData({...editInventoryData, notes: e.target.value})}
+                  style={{...inputStyle, minHeight: '60px', fontFamily: f.body}} />
+              </div>
+              <div style={{ display: 'flex', gap: sp[2], paddingTop: sp[2], borderTop: `1px solid ${c.border}` }}>
+                <button type="button" onClick={() => handleDeleteInventory(editingInventoryItem.id)} style={{
+                  padding: `10px ${sp[3]}`, background: 'transparent', color: c.red,
+                  border: `1px solid ${c.red}33`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                }}>Supprimer</button>
+                <div style={{ flex: 1 }} />
+                <button type="button" onClick={() => setEditingInventoryItem(null)} style={{
+                  padding: `10px ${sp[3]}`, background: 'transparent', color: c.textSecondary,
+                  border: `1px solid ${c.border}`, fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                }}>Annuler</button>
+                <button type="button" onClick={handleSaveInventory} style={{
+                  padding: `10px ${sp[3]}`, background: c.purple, color: c.text,
+                  border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
+                }}>Sauvegarder</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

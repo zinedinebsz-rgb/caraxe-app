@@ -5,6 +5,7 @@ import {
   getOrders, createOrder, getMessages, sendMessage,
   markMessagesRead, getDocuments, getDocumentUrl,
   subscribeToMessages, subscribeToOrders, supabase,
+  getShipments, createShipment, getInventory, getActiveProducts, sendWelcomeMessage,
 } from '../lib/supabase'
 import { getCatalog } from '../lib/catalogsByProfile'
 import { getTierByKey, getTierPrice, getTierMOQ, DEFAULT_TIER } from '../lib/clientTiers'
@@ -48,24 +49,37 @@ function DragonEmptyState({ text = 'Sélectionnez une commande', sub = '' }) {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', height: '100%', textAlign: 'center',
-      padding: sp[4],
+      padding: sp[4], animation: `fadeSlideUp 0.6s ${ease.out}`,
     }}>
-      <svg viewBox="0 0 200 200" width={100} height={100} style={{ opacity: 0.12, marginBottom: sp[4] }}>
-        <path d="M100 20 L130 60 L100 50 L70 60 Z" fill={c.gold} stroke={c.gold} strokeWidth="1" />
-        <circle cx="100" cy="100" r="40" fill="none" stroke={c.gold} strokeWidth="1" />
-        <path d="M70 100 Q60 90 60 80 Q60 70 75 70" fill="none" stroke={c.gold} strokeWidth="1" />
-        <path d="M130 100 Q140 90 140 80 Q140 70 125 70" fill="none" stroke={c.gold} strokeWidth="1" />
-        <circle cx="85" cy="95" r="3" fill={c.gold} />
-        <circle cx="115" cy="95" r="3" fill={c.gold} />
-        <path d="M100 110 Q90 120 85 130" fill="none" stroke={c.gold} strokeWidth="1" />
-        <path d="M100 110 Q110 120 115 130" fill="none" stroke={c.gold} strokeWidth="1" />
-        <path d="M80 140 L90 160 L100 155 L110 160 L120 140" fill="none" stroke={c.gold} strokeWidth="1" />
-      </svg>
+      {/* Dragon icon — cinematic glow */}
+      <div style={{
+        position: 'relative', marginBottom: sp[4],
+      }}>
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 120, height: 120,
+          background: `radial-gradient(circle, oklch(55% 0.22 25 / 0.06) 0%, transparent 70%)`,
+          pointerEvents: 'none',
+        }} />
+        <svg viewBox="0 0 200 200" width={110} height={110} style={{ opacity: 0.35, position: 'relative' }}>
+          <path d="M100 20 L130 60 L100 50 L70 60 Z" fill={c.gold} stroke={c.gold} strokeWidth="1" />
+          <circle cx="100" cy="100" r="40" fill="none" stroke={c.gold} strokeWidth="1.5" />
+          <path d="M70 100 Q60 90 60 80 Q60 70 75 70" fill="none" stroke={c.gold} strokeWidth="1.5" />
+          <path d="M130 100 Q140 90 140 80 Q140 70 125 70" fill="none" stroke={c.gold} strokeWidth="1.5" />
+          <circle cx="85" cy="95" r="3" fill={c.gold} />
+          <circle cx="115" cy="95" r="3" fill={c.gold} />
+          <path d="M100 110 Q90 120 85 130" fill="none" stroke={c.gold} strokeWidth="1.5" />
+          <path d="M100 110 Q110 120 115 130" fill="none" stroke={c.gold} strokeWidth="1.5" />
+          <path d="M80 140 L90 160 L100 155 L110 160 L120 140" fill="none" stroke={c.gold} strokeWidth="1.5" />
+        </svg>
+      </div>
       <p style={{
-        fontSize: size.md, fontFamily: f.display, color: c.textSecondary,
+        fontSize: size.lg, fontFamily: f.display, color: c.text,
         margin: 0, marginBottom: sp[1], letterSpacing: '0.02em',
+        fontWeight: 500,
       }}>{text}</p>
-      {sub && <p style={{ fontSize: size.sm, color: c.textTertiary, margin: 0 }}>{sub}</p>}
+      {sub && <p style={{ fontSize: size.sm, color: c.textSecondary, margin: 0, lineHeight: 1.6, maxWidth: 340 }}>{sub}</p>}
     </div>
   )
 }
@@ -348,11 +362,13 @@ function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
       position: 'fixed', inset: 0, background: c.bgOverlay,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 1000, animation: `fadeIn 0.2s ${ease.out}`,
+      backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
     }} onClick={onClose}>
       <div style={{
         background: c.bgElevated, border: `1px solid ${c.border}`,
-        width: '100%', maxWidth: 480, padding: sp[4], boxShadow: shadow.lg,
+        width: '100%', maxWidth: 480, padding: sp[4], boxShadow: shadow.xl,
         position: 'relative',
+        animation: `cardReveal 0.3s ${ease.out}`,
       }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
@@ -507,7 +523,13 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const [unreadCounts, setUnreadCounts] = useState({})
   const [activeTab, setActiveTab] = useState('messages')
   const [viewMode, setViewMode] = useState('orders')
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState(null)
   const [mobileShowSidebar, setMobileShowSidebar] = useState(true)
+  const [shipments, setShipments] = useState([])
+  const [inventory, setInventory] = useState([])
+  const [dynamicProducts, setDynamicProducts] = useState([])
+  const [isNewShipmentOpen, setIsNewShipmentOpen] = useState(false)
+  const [creatingShipment, setCreatingShipment] = useState(false)
   const messagesEndRef = useRef(null)
   const uploadInputRef = useRef(null)
 
@@ -520,6 +542,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
       } catch (err) { console.error('Failed to load orders:', err) }
     }
     loadOrders()
+    // Load shipments, inventory, and dynamic products
+    getShipments(user.id).then(setShipments).catch(() => {})
+    getInventory(user.id).then(setInventory).catch(() => {})
+    getActiveProducts().then(setDynamicProducts).catch(() => {})
     const sub = subscribeToOrders(() => {
       getOrders(user.id).then(data => {
         setOrders(data || [])
@@ -600,8 +626,9 @@ export default function Dashboard({ user, profile, onSignOut }) {
       })
       const updated = await getOrders(user.id)
       setOrders(updated)
+      if (updated?.length > 0) setSelectedOrder(updated[0])
       toast.success('Demande envoyée !')
-    } catch (err) { toast.error('Erreur lors de la création.') }
+    } catch (err) { console.error('createOrder failed:', err); toast.error('Erreur : ' + (err?.message || 'création impossible')) }
     finally { setCreatingOrder(false) }
   }
 
@@ -639,20 +666,34 @@ export default function Dashboard({ user, profile, onSignOut }) {
     }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeSlideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes cardReveal { from { opacity:0; transform:translateY(12px) scale(0.98) } to { opacity:1; transform:translateY(0) scale(1) } }
+        @keyframes shimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+        @keyframes unreadPulse {
+          0%, 100% { box-shadow: 0 0 0 0 ${c.redGlow}; }
+          50% { box-shadow: 0 0 0 6px oklch(55% 0.22 25 / 0); }
+        }
         @media (max-width: 768px) {
           .sidebar { width: 100% !important; border-right: none !important; }
           .main-panel { width: 100% !important; }
           .desktop-only { display: none !important; }
           .mobile-back-btn { display: block !important; }
+          .dash-tabs { flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .dash-tabs::-webkit-scrollbar { display: none; }
+          .dash-content { padding: 12px !important; }
+          .dash-catalog-grid { grid-template-columns: 1fr !important; }
+          .header-center-tabs { display: none !important; }
+        }
+        @media (max-width: 480px) {
+          .dash-content { padding: 8px !important; }
         }
         input::placeholder, textarea::placeholder { color: ${c.textTertiary}; opacity: 0.5; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${c.border}; }
-        @keyframes unreadPulse {
-          0%, 100% { box-shadow: 0 0 0 0 ${c.redGlow}; }
-          50% { box-shadow: 0 0 0 6px oklch(55% 0.22 25 / 0); }
-        }
+        ::-webkit-scrollbar-thumb:hover { background: oklch(30% 0.008 50); }
+        * { scrollbar-width: thin; scrollbar-color: ${c.border} transparent; }
       `}</style>
 
       {/* ── HEADER ── */}
@@ -688,21 +729,31 @@ export default function Dashboard({ user, profile, onSignOut }) {
         </div>
 
         {/* Center — View toggle */}
-        <div style={{
+        <div className="header-center-tabs" style={{
           display: 'flex', gap: '1px', background: c.border, padding: '1px',
           position: 'absolute', left: '50%', transform: 'translateX(-50%)',
         }}>
-          {[
-            { key: 'orders', label: 'Commandes', activeColor: c.red },
-            { key: 'catalogue', label: 'Catalogue', activeColor: c.gold },
-          ].map(v => (
+          {(() => {
+          const services = profile?.services_enabled || ['sourcing']
+          const tabs = [
+            { key: 'orders', label: 'Commandes', activeColor: c.red, icon: '◆' },
+            { key: 'catalogue', label: 'Catalogue', activeColor: c.gold, icon: '◈' },
+          ]
+          if (services.includes('logistics') || services.includes('expedition')) {
+            tabs.push({ key: 'expedition', label: 'Expédition', activeColor: c.teal, icon: '▸' })
+          }
+          if (services.includes('stock') || services.includes('boutique')) {
+            tabs.push({ key: 'stock', label: 'Stock', activeColor: c.purple, icon: '⬡' })
+          }
+          return tabs
+        })().map(v => (
             <button key={v.key} onClick={() => setViewMode(v.key)} style={{
               padding: `6px ${sp[3]}`, background: viewMode === v.key ? v.activeColor : c.bgSurface,
-              border: 'none', color: viewMode === v.key ? (v.key === 'catalogue' ? c.black : c.white) : c.textSecondary,
+              border: 'none', color: viewMode === v.key ? (v.key === 'catalogue' || v.key === 'stock' ? c.black : c.white) : c.textSecondary,
               fontSize: '10px', fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
               letterSpacing: '0.06em', textTransform: 'uppercase',
               transition: `all 0.2s ${ease.smooth}`,
-            }}>{v.label}</button>
+            }}>{v.icon} {v.label}</button>
           ))}
         </div>
 
@@ -777,7 +828,12 @@ export default function Dashboard({ user, profile, onSignOut }) {
           /* ── CATALOGUE REFACTORED ── */
           (() => {
             const tierKey = profile?.client_tier || DEFAULT_TIER
-            const catalog = getCatalog(tierKey)
+            const fullCatalog = getCatalog(tierKey)
+            const preferredCats = profile?.preferred_categories || []
+            const preferredSet = new Set(preferredCats)
+            const sortedCatalog = preferredCats.length > 0
+              ? [...fullCatalog.filter(cat => preferredSet.has(cat.id)), ...fullCatalog.filter(cat => !preferredSet.has(cat.id))]
+              : fullCatalog
             return (
           <div style={{ flex: 1, overflowY: 'auto', padding: sp[4], background: c.bg }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -793,7 +849,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   margin: 0, fontFamily: f.display, fontSize: size['2xl'],
                   color: c.text, letterSpacing: '-0.02em', fontWeight: 500,
                 }}>
-                  {catalog.length} catégories <em style={{ fontStyle: 'italic', color: c.gold }}>adaptées</em> à votre profil
+                  {fullCatalog.length} cat{'é'}gories <em style={{ fontStyle: 'italic', color: c.gold }}>adapt{'é'}es</em> {'à'} votre profil
                 </h2>
                 <p style={{
                   margin: `${sp[2]} 0 0`, fontSize: size.sm, color: c.textSecondary,
@@ -801,22 +857,88 @@ export default function Dashboard({ user, profile, onSignOut }) {
                 }}>
                   Produits sourcés directement depuis nos usines partenaires en Chine.
                   Prix et quantités minimales calibrés pour votre profil {tier.icon} {tier.label}.
+                  <br /><span style={{ color: c.gold, fontStyle: 'italic', fontSize: '11px' }}>Les prix et MOQ affichés sont des estimations indicatives — le tarif final dépend du volume, des specs et du fournisseur sélectionné.</span>
                 </p>
+
+                {/* Demande produit personnalisé */}
+                <div style={{
+                  marginTop: sp[3], padding: `${sp[2]} ${sp[3]}`,
+                  background: `${c.gold}08`, border: `1px solid ${c.gold}25`,
+                  display: 'flex', alignItems: 'center', gap: sp[2], flexWrap: 'wrap',
+                }}>
+                  <span style={{ fontSize: '16px' }}>💡</span>
+                  <span style={{ fontSize: size.sm, color: c.textSecondary, flex: 1 }}>
+                    Votre produit n'est pas dans le catalogue ?{' '}
+                    <a href="mailto:contact@caraxes.fr?subject=Demande%20de%20sourcing%20personnalis%C3%A9" style={{
+                      color: c.gold, fontWeight: 600, textDecoration: 'none', borderBottom: `1px solid ${c.gold}40`,
+                    }}>Faites-nous votre demande par email</a>
+                    {' '}&mdash; on source n'importe quel produit depuis la Chine.
+                  </span>
+                </div>
               </div>
+
+              {/* ── DYNAMIC PRODUCTS FROM SUPABASE ── */}
+              {dynamicProducts.length > 0 && (
+                <div style={{ marginBottom: sp[5] }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginBottom: sp[3] }}>
+                    <div style={{ width: 24, height: '1px', background: c.red }} />
+                    <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.red, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Nos produits
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: sp[3] }}>
+                    {dynamicProducts.map((prod, i) => (
+                      <div key={prod.id} style={{
+                        background: c.bgElevated, border: `1px solid ${c.border}`, overflow: 'hidden',
+                        transition: `all 0.25s ${ease.smooth}`, cursor: 'pointer',
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.transform = 'translateY(-3px)' }}
+                      onMouseOut={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)' }}>
+                        <div style={{ height: 180, background: c.bgSurface, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                          {prod.image_urls?.[0] ? (
+                            <img src={prod.image_urls[0]} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <span style={{ fontSize: '48px', opacity: 0.15 }}>📦</span>
+                          )}
+                        </div>
+                        <div style={{ padding: sp[3] }}>
+                          <div style={{ fontFamily: f.display, fontWeight: 600, fontSize: size.base, marginBottom: '4px' }}>{prod.name}</div>
+                          {prod.category && <span style={{ fontSize: '9px', color: c.gold, fontFamily: f.mono, padding: '1px 6px', background: c.goldSoft, border: `1px solid ${c.gold}33` }}>{prod.category}</span>}
+                          {prod.description && <p style={{ fontSize: '11px', color: c.textSecondary, marginTop: '6px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{prod.description}</p>}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: `1px solid ${c.borderSubtle}` }}>
+                          {[
+                            { label: 'Prix', value: prod.price_min && prod.price_max ? `${prod.price_min}-${prod.price_max}` : '-', color: c.green },
+                            { label: 'Marge', value: prod.margin_estimate || '-', color: c.gold },
+                            { label: 'MOQ', value: prod.moq || '-', color: c.amber },
+                          ].map((cell, j) => (
+                            <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
+                              <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
+                              <div style={{ fontFamily: f.mono, fontSize: size.xs, fontWeight: 700, color: cell.color }}>{cell.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{
                 display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
                 gap: sp[3],
               }}>
-                {catalog.map(cat => {
+                {sortedCatalog.map((cat, catIdx) => {
+                  const isPreferred = preferredSet.has(cat.id)
                   const tierPrice = getTierPrice(cat, tierKey)
                   const moq = getTierMOQ(cat.moq, tierKey)
                   return (
-                    <div key={cat.id} style={{
+                    <div key={cat.id} onClick={() => setSelectedCatalogItem(cat)} style={{
                       background: c.bgElevated, border: `1px solid ${c.border}`,
                       padding: 0, transition: `all 0.25s ${ease.smooth}`,
+                      animation: `cardReveal 0.4s ${ease.out} ${catIdx * 50}ms both`,
                       position: 'relative', overflow: 'hidden',
-                      display: 'flex', flexDirection: 'column',
+                      display: 'flex', flexDirection: 'column', cursor: 'pointer',
                     }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.borderColor = tier.color
@@ -830,7 +952,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       }}>
 
                       {/* Accent bar */}
-                      <div style={{ height: 3, background: `linear-gradient(90deg, ${tier.color}, ${tier.color}44)` }} />
+                      <div style={{ height: 3, background: `linear-gradient(90deg, ${isPreferred && preferredCats.length > 0 ? c.gold : tier.color}, ${isPreferred && preferredCats.length > 0 ? c.gold : tier.color}44)` }} />
 
                       {/* Header */}
                       <div style={{ padding: `${sp[3]} ${sp[3]} ${sp[2]}` }}>
@@ -838,14 +960,19 @@ export default function Dashboard({ user, profile, onSignOut }) {
                           <span style={{
                             fontSize: '26px', width: 46, height: 46,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: c.bgSurface, border: `1px solid ${c.borderSubtle}`,
-                            borderRadius: '8px', flexShrink: 0,
+                            background: c.bgSurface, border: `1px solid ${isPreferred && preferredCats.length > 0 ? c.gold + '44' : c.borderSubtle}`,
+                            flexShrink: 0,
                           }}>{cat.icon}</span>
                           <div style={{ flex: 1 }}>
-                            <div style={{
-                              fontFamily: f.display, fontSize: size.base, color: c.text,
-                              fontWeight: 600, lineHeight: 1.3,
-                            }}>{cat.name}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                              <span style={{
+                                fontFamily: f.display, fontSize: size.base, color: c.text,
+                                fontWeight: 600, lineHeight: 1.3,
+                              }}>{cat.name}</span>
+                              {isPreferred && preferredCats.length > 0 && (
+                                <span style={{ fontSize: '8px', fontFamily: f.mono, fontWeight: 700, color: c.gold, background: c.goldSoft, padding: '1px 6px', border: `1px solid ${c.gold}33`, letterSpacing: '0.06em' }}>VOTRE S{'É'}LECTION</span>
+                              )}
+                            </div>
                             <div style={{
                               fontSize: '11px', color: c.textTertiary, marginTop: '3px',
                               lineHeight: 1.5,
@@ -861,9 +988,9 @@ export default function Dashboard({ user, profile, onSignOut }) {
                         border: `1px solid ${c.borderSubtle}`, marginBottom: sp[2],
                       }}>
                         {[
-                          { label: 'Prix unit.', value: tierPrice, color: c.green },
-                          { label: 'Marge', value: cat.margin, color: c.gold },
-                          { label: 'MOQ', value: moq.toLocaleString('fr-FR'), color: c.amber },
+                          { label: 'Prix unit. ~', value: '~' + tierPrice, color: c.green, est: true },
+                          { label: 'Marge est.', value: cat.margin, color: c.gold, est: true },
+                          { label: 'MOQ ~', value: '~' + moq.toLocaleString('fr-FR'), color: c.amber, est: true },
                         ].map((m, i) => (
                           <div key={i} style={{
                             padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, textAlign: 'center',
@@ -925,10 +1052,533 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   )
                 })}
               </div>
+
+              {/* ── CATALOG DETAIL MODAL ── */}
+              {selectedCatalogItem && (() => {
+                const cat = selectedCatalogItem
+                const tierPrice = getTierPrice(cat, tierKey)
+                const moq = getTierMOQ(cat.moq, tierKey)
+                return (
+                  <div onClick={() => setSelectedCatalogItem(null)} style={{
+                    position: 'fixed', inset: 0, background: c.bgOverlay,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 9999, padding: sp[3],
+                    animation: `fadeIn 0.2s ${ease.out}`,
+                    backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+                  }}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                      background: c.bgElevated, border: `1px solid ${c.border}`,
+                      maxWidth: 560, width: '100%', maxHeight: '85vh', overflowY: 'auto',
+                      position: 'relative', boxShadow: shadow.xl,
+                      animation: `cardReveal 0.35s ${ease.out}`,
+                    }}>
+                      {/* Accent bar */}
+                      <div style={{ height: 4, background: `linear-gradient(90deg, ${tier.color}, ${tier.color}44)` }} />
+
+                      {/* Close btn */}
+                      <button onClick={() => setSelectedCatalogItem(null)} style={{
+                        position: 'absolute', top: 16, right: 16, background: 'none',
+                        border: 'none', color: c.textSecondary, cursor: 'pointer', padding: 4,
+                      }}><Icon d={icons.close} /></button>
+
+                      <div style={{ padding: sp[4] }}>
+                        {/* Header */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[3] }}>
+                          <span style={{
+                            fontSize: '36px', width: 56, height: 56,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: c.bgSurface, border: `1px solid ${c.borderSubtle}`,
+                          }}>{cat.icon}</span>
+                          <div>
+                            <h3 style={{ margin: 0, fontFamily: f.display, fontSize: size.lg, color: c.text, fontWeight: 600 }}>{cat.name}</h3>
+                            <p style={{ margin: '4px 0 0', fontSize: size.sm, color: c.textSecondary, lineHeight: 1.5 }}>{cat.description}</p>
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div style={{
+                          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px',
+                          background: c.borderSubtle, border: `1px solid ${c.borderSubtle}`, marginBottom: sp[3],
+                        }}>
+                          {[
+                            { label: 'Prix unitaire ~', value: '~' + tierPrice, color: c.green },
+                            { label: 'Marge estimée', value: cat.margin, color: c.gold },
+                            { label: 'MOQ ~', value: '~' + moq.toLocaleString('fr-FR'), color: c.amber },
+                          ].map((m, i) => (
+                            <div key={i} style={{ padding: `${sp[2]} ${sp[2]}`, background: c.bgSurface, textAlign: 'center' }}>
+                              <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>{m.label}</div>
+                              <div style={{ fontSize: size.base, fontWeight: 700, color: m.color }}>{m.value}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{
+                          padding: `${sp[1]} ${sp[2]}`, background: `${c.gold}08`, border: `1px solid ${c.gold}22`,
+                          marginBottom: sp[3], fontSize: '11px', color: c.gold, fontStyle: 'italic', lineHeight: 1.6,
+                        }}>
+                          Les prix et MOQ sont des estimations indicatives. Le tarif final sera ajusté selon le volume commandé, les spécifications exactes et le fournisseur sélectionné.
+                        </div>
+
+                        {/* Products list */}
+                        <div style={{ marginBottom: sp[3] }}>
+                          <div style={{
+                            fontFamily: f.mono, fontSize: '9px', color: c.textTertiary,
+                            letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: sp[2], fontWeight: 600,
+                          }}>Produits disponibles dans cette catégorie</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {cat.topProducts.map((p, i) => (
+                              <div key={i} style={{
+                                display: 'flex', alignItems: 'center', gap: sp[2],
+                                padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface,
+                                border: `1px solid ${c.borderSubtle}`,
+                              }}>
+                                <span style={{ fontSize: '14px', color: c.gold, fontWeight: 700, fontFamily: f.mono }}>{String(i + 1).padStart(2, '0')}</span>
+                                <span style={{ fontSize: size.sm, color: c.text, flex: 1 }}>{p}</span>
+                                <button onClick={(e) => {
+                                  e.stopPropagation(); setPrefilledProduct(p); setSelectedCatalogItem(null); setViewMode('orders'); setIsNewOrderOpen(true)
+                                }} style={{
+                                  padding: '4px 10px', background: 'none', border: `1px solid ${tier.color}44`,
+                                  color: tier.color, fontSize: '9px', fontFamily: f.mono, cursor: 'pointer',
+                                  letterSpacing: '0.04em', fontWeight: 600, textTransform: 'uppercase',
+                                  transition: `all 0.2s ${ease.smooth}`,
+                                }}
+                                  onMouseOver={e => { e.currentTarget.style.background = tier.color; e.currentTarget.style.color = c.bg }}
+                                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = tier.color }}
+                                >Commander</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Locations */}
+                        <div style={{ display: 'flex', gap: sp[1], alignItems: 'center', marginBottom: sp[3] }}>
+                          <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Zones de sourcing :</span>
+                          {cat.locations.map(loc => (
+                            <span key={loc} style={{
+                              padding: '3px 8px', background: c.bgSurface, border: `1px solid ${c.borderSubtle}`,
+                              fontSize: '10px', fontFamily: f.mono, color: c.textSecondary,
+                            }}>{loc}</span>
+                          ))}
+                        </div>
+
+                        {/* CTA */}
+                        <button onClick={() => {
+                          setPrefilledProduct(cat.name); setSelectedCatalogItem(null); setViewMode('orders'); setIsNewOrderOpen(true)
+                        }} style={{
+                          width: '100%', padding: `${sp[2]}`,
+                          background: tier.color, border: 'none', color: c.bg,
+                          fontSize: size.sm, fontFamily: f.mono, fontWeight: 700,
+                          letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer',
+                          transition: `all 0.2s ${ease.smooth}`,
+                        }}
+                          onMouseOver={e => { e.currentTarget.style.opacity = '0.85' }}
+                          onMouseOut={e => { e.currentTarget.style.opacity = '1' }}
+                        >Demander un devis pour {cat.name}</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
             )
           })()
+        ) : viewMode === 'expedition' ? (
+          /* ─── EXPEDITION VIEW ─── */
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }} className="admin-scroll">
+            <div style={{ padding: sp[4], maxWidth: '900px', width: '100%', margin: '0 auto' }}>
+              {/* Header + New Shipment Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[4] }}>
+                <div>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.teal, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[1] }}>Service 02</div>
+                  <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: c.text, margin: 0, marginBottom: sp[1] }}>Suivi des expéditions</h2>
+                  <p style={{ color: c.textSecondary, fontSize: size.sm, margin: 0 }}>Suivez vos envois depuis l'usine jusqu'à votre porte en France.</p>
+                </div>
+                <button onClick={() => setIsNewShipmentOpen(!isNewShipmentOpen)} style={{
+                  padding: `${sp[1]} ${sp[3]}`, background: isNewShipmentOpen ? c.bgElevated : c.teal,
+                  border: `1px solid ${isNewShipmentOpen ? c.border : c.teal}`, color: isNewShipmentOpen ? c.textSecondary : c.black,
+                  fontSize: '10px', fontFamily: f.mono, fontWeight: 700, cursor: 'pointer',
+                  letterSpacing: '0.04em', textTransform: 'uppercase',
+                  transition: `all 0.2s ${ease.smooth}`,
+                }}>{isNewShipmentOpen ? 'Annuler' : '+ Nouvel envoi'}</button>
+              </div>
+
+              {/* ─── NEW SHIPMENT FORM ─── */}
+              {isNewShipmentOpen && (
+                <div style={{
+                  background: c.bgSurface, border: `1px solid ${c.teal}33`, padding: sp[3],
+                  marginBottom: sp[3], animation: `fadeSlideIn 0.2s ease-out both`,
+                }}>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.teal, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: sp[3] }}>Créer un envoi</div>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault()
+                    setCreatingShipment(true)
+                    try {
+                      const fd = new FormData(e.target)
+                      const shipStatusMap = { production: 0, quality: 1, transit: 2, customs: 3, delivered: 4 }
+                      const newShip = {
+                        client_id: user.id,
+                        product_name: fd.get('product_name'),
+                        tracking_number: fd.get('tracking_number') || null,
+                        status: shipStatusMap[fd.get('status')] ?? 0,
+                        method: fd.get('method') || null,
+                        weight_kg: parseFloat(fd.get('weight')) || null,
+                        origin: fd.get('origin') || 'Chine',
+                        destination: fd.get('destination') || 'France',
+                        eta: fd.get('eta') || null,
+                        order_id: fd.get('order_id') || null,
+                      }
+                      await createShipment(newShip)
+                      const fresh = await getShipments(user.id)
+                      setShipments(fresh)
+                      setIsNewShipmentOpen(false)
+                      toast?.success?.('Envoi créé avec succès')
+                    } catch (err) {
+                      console.error('Create shipment error:', err)
+                      toast?.error?.('Erreur lors de la création')
+                    } finally { setCreatingShipment(false) }
+                  }}>
+                    {/* Link to order */}
+                    <div style={{ marginBottom: sp[2] }}>
+                      <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Commande liée</label>
+                      <select name="order_id" style={{
+                        width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                        color: c.text, fontSize: size.sm, fontFamily: f.body,
+                      }}>
+                        <option value="">— Aucune —</option>
+                        {orders.filter(o => { const st = typeof o.status === 'number' ? o.status : 0; return st >= 3 }).map(o => (
+                          <option key={o.id} value={o.id}>{o.ref} — {o.product}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Product name */}
+                    <div style={{ marginBottom: sp[2] }}>
+                      <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Produit / Description</label>
+                      <input name="product_name" required placeholder="Ex: Tapis de prière 1000u" style={{
+                        width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                        color: c.text, fontSize: size.sm, fontFamily: f.body,
+                      }} />
+                    </div>
+                    {/* Grid: tracking, status, method, weight */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2], marginBottom: sp[2] }}>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>N° Tracking</label>
+                        <input name="tracking_number" placeholder="Optionnel" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }} />
+                      </div>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Statut</label>
+                        <select name="status" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }}>
+                          <option value="production">Production</option>
+                          <option value="quality">Contrôle qualité</option>
+                          <option value="transit">En transit</option>
+                          <option value="customs">Douanes</option>
+                          <option value="delivered">Livré</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Mode</label>
+                        <select name="method" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }}>
+                          <option value="">—</option>
+                          <option value="Maritime">Maritime</option>
+                          <option value="Aérien">Aérien</option>
+                          <option value="Ferroviaire">Ferroviaire</option>
+                          <option value="Express">Express</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Poids</label>
+                        <input name="weight" placeholder="Ex: 250 kg" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }} />
+                      </div>
+                    </div>
+                    {/* Grid: origin, destination, ETA */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: sp[2], marginBottom: sp[3] }}>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Départ</label>
+                        <input name="origin" defaultValue="Chine" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }} />
+                      </div>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>Arrivée</label>
+                        <input name="destination" defaultValue="France" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }} />
+                      </div>
+                      <div>
+                        <label style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '4px' }}>ETA</label>
+                        <input name="eta" type="date" style={{
+                          width: '100%', padding: sp[1], background: c.bgElevated, border: `1px solid ${c.border}`,
+                          color: c.text, fontSize: size.sm, fontFamily: f.body,
+                        }} />
+                      </div>
+                    </div>
+                    <button type="submit" disabled={creatingShipment} style={{
+                      padding: `${sp[1]} ${sp[3]}`, background: c.teal, border: 'none',
+                      color: c.black, fontSize: '10px', fontFamily: f.mono, fontWeight: 700,
+                      cursor: creatingShipment ? 'wait' : 'pointer', opacity: creatingShipment ? 0.6 : 1,
+                      letterSpacing: '0.04em', textTransform: 'uppercase',
+                    }}>{creatingShipment ? 'Création...' : 'Créer l\'envoi'}</button>
+                  </form>
+                </div>
+              )}
+
+              {/* ─── ORDERS IN SHIPPING WITHOUT SHIPMENT ─── */}
+              {(() => {
+                const shippingOrders = orders.filter(o => {
+                  const st = typeof o.status === 'number' ? o.status : 0
+                  return st >= 4 && !shipments.some(s => s.order_id === o.id)
+                })
+                if (shippingOrders.length === 0) return null
+                return (
+                  <div style={{
+                    background: `${c.gold}08`, border: `1px solid ${c.gold}22`,
+                    padding: sp[3], marginBottom: sp[3],
+                  }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.gold, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: sp[2] }}>
+                      Commandes en expédition sans envoi
+                    </div>
+                    <p style={{ fontSize: size.xs, color: c.textSecondary, margin: `0 0 ${sp[2]}` }}>
+                      Ces commandes sont en phase d'expédition mais n'ont pas encore d'envoi associé.
+                    </p>
+                    {shippingOrders.map(o => (
+                      <div key={o.id} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: `${sp[1]} 0`, borderBottom: `1px solid ${c.gold}15`,
+                      }}>
+                        <div>
+                          <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.gold, marginRight: sp[1] }}>{o.ref}</span>
+                          <span style={{ fontSize: size.sm, color: c.text }}>{o.product}</span>
+                          <StatusPill status={o.status} size="sm" />
+                        </div>
+                        <button onClick={async () => {
+                          setCreatingShipment(true)
+                          try {
+                            await createShipment({
+                              client_id: user.id,
+                              product_name: o.product,
+                              status: 0,
+                              origin: 'Chine',
+                              destination: 'France',
+                              order_id: o.id,
+                            })
+                            const fresh = await getShipments(user.id)
+                            setShipments(fresh)
+                            toast?.success?.(`Envoi créé pour ${o.ref}`)
+                          } catch (err) {
+                            console.error(err)
+                            toast?.error?.('Erreur')
+                          } finally { setCreatingShipment(false) }
+                        }} style={{
+                          padding: '3px 10px', background: c.teal, border: 'none',
+                          color: c.black, fontSize: '9px', fontFamily: f.mono, fontWeight: 700,
+                          cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase',
+                          whiteSpace: 'nowrap',
+                        }}>Créer l'envoi</button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+
+              {shipments.length === 0 && orders.filter(o => { const st = typeof o.status === 'number' ? o.status : 0; return st >= 4 && !shipments.some(s => s.order_id === o.id) }).length === 0 ? (
+                <div style={{ padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`, textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', opacity: 0.15, marginBottom: sp[2] }}>🚢</div>
+                  <div style={{ fontFamily: f.display, fontSize: size.lg, color: c.textSecondary, marginBottom: sp[1] }}>Aucune expédition en cours</div>
+                  <p style={{ fontSize: size.sm, color: c.textTertiary, margin: 0, maxWidth: '40ch', marginLeft: 'auto', marginRight: 'auto' }}>
+                    Vos expéditions apparaîtront ici dès qu'une commande sera en phase d'envoi. Cliquez sur "+ Nouvel envoi" pour en créer une manuellement.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+                  {shipments.map((ship, i) => {
+                    const steps = [
+                      { key: 'production', label: 'Production', icon: '🏭' },
+                      { key: 'quality', label: 'Contrôle qualité', icon: '✓' },
+                      { key: 'transit', label: 'En transit', icon: '🚢' },
+                      { key: 'customs', label: 'Douanes', icon: '📋' },
+                      { key: 'delivered', label: 'Livré', icon: '✦' },
+                    ]
+                    const currentStep = typeof ship.status === 'number' ? ship.status : (steps.findIndex(s => s.key === ship.status) || 0)
+                    return (
+                      <div key={ship.id || i} style={{
+                        background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[3],
+                        animation: `fadeSlideIn 0.3s ease-out ${i * 80}ms both`,
+                      }}>
+                        {/* Shipment header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[3] }}>
+                          <div>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.teal, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>{ship.tracking_number || 'EN ATTENTE'}</div>
+                            <div style={{ fontWeight: 700, fontSize: size.md, color: c.text }}>{ship.product_name || ship.description || 'Envoi'}</div>
+                            {/* Link to related order */}
+                            {(() => {
+                              const relatedOrder = ship.order_id ? orders.find(o => o.id === ship.order_id) : null
+                              if (!relatedOrder) return null
+                              return (
+                                <button onClick={() => { setSelectedOrder(relatedOrder); setViewMode('orders') }} style={{
+                                  background: 'none', border: 'none', padding: 0, marginTop: '4px',
+                                  fontFamily: f.mono, fontSize: '9px', color: c.gold, cursor: 'pointer',
+                                  letterSpacing: '0.04em', textDecoration: 'underline', textDecorationColor: `${c.gold}44`,
+                                }}>
+                                  ← Commande {relatedOrder.ref} · {relatedOrder.product}
+                                </button>
+                              )
+                            })()}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase' }}>ETA</div>
+                            <div style={{ fontSize: size.sm, fontWeight: 600, color: c.gold }}>{ship.eta ? new Date(ship.eta).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}</div>
+                          </div>
+                        </div>
+                        {/* Progress timeline */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: sp[2] }}>
+                          {steps.map((step, si) => (
+                            <div key={step.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                              <div style={{
+                                width: 28, height: 28,
+                                background: si <= currentStep ? c.teal : c.bgElevated,
+                                border: `2px solid ${si <= currentStep ? c.teal : c.border}`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '12px', color: si <= currentStep ? c.black : c.textTertiary,
+                                fontWeight: 700, zIndex: 1,
+                                transition: `all 0.35s ${ease.out}`,
+                                boxShadow: si === currentStep ? `0 0 12px ${c.teal}33` : 'none',
+                              }}>{si < currentStep ? '\u2713' : step.icon}</div>
+                              <div style={{ fontSize: '9px', color: si <= currentStep ? c.teal : c.textTertiary, marginTop: '6px', textAlign: 'center', fontFamily: f.mono, letterSpacing: '0.02em' }}>{step.label}</div>
+                              {si < steps.length - 1 && (
+                                <div style={{ position: 'absolute', top: 14, left: '60%', width: '80%', height: 2, background: si < currentStep ? c.teal : c.border, zIndex: 0 }} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {/* Details row */}
+                        <div style={{ display: 'flex', gap: sp[3], paddingTop: sp[2], borderTop: `1px solid ${c.borderSubtle}` }}>
+                          {ship.method && <div><span style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase' }}>Mode</span><div style={{ fontSize: size.sm, color: c.text }}>{ship.method}</div></div>}
+                          {ship.weight && <div><span style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase' }}>Poids</span><div style={{ fontSize: size.sm, color: c.text }}>{ship.weight}</div></div>}
+                          {ship.origin && <div><span style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase' }}>Départ</span><div style={{ fontSize: size.sm, color: c.text }}>{ship.origin}</div></div>}
+                          {ship.destination && <div><span style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase' }}>Arrivée</span><div style={{ fontSize: size.sm, color: c.text }}>{ship.destination}</div></div>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : viewMode === 'stock' ? (
+          /* ─── STOCK & BOUTIQUE VIEW ─── */
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }} className="admin-scroll">
+            <div style={{ padding: sp[4], maxWidth: '900px', width: '100%', margin: '0 auto' }}>
+              {/* Header */}
+              <div style={{ marginBottom: sp[4] }}>
+                <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.purple, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[1] }}>Service 03 — Option</div>
+                <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: c.text, margin: 0, marginBottom: sp[1] }}>Gestion de stock & Boutique</h2>
+                <p style={{ color: c.textSecondary, fontSize: size.sm, margin: 0 }}>Votre entrepôt en Chine et votre boutique en ligne, gérés par CARAXES.</p>
+              </div>
+
+              {/* Stats row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: sp[2], marginBottom: sp[4] }}>
+                {[
+                  { label: 'Références', value: inventory.length, color: c.purple },
+                  { label: 'Stock total', value: inventory.reduce((s, i) => s + (i.quantity || 0), 0).toLocaleString('fr-FR') + ' u.', color: c.teal },
+                  { label: 'Alertes stock', value: inventory.filter(i => (i.quantity || 0) <= (i.alert_threshold || 10)).length, color: c.red },
+                  { label: 'Valeur est.', value: '—', color: c.gold },
+                ].map((stat, i) => (
+                  <div key={i} style={{
+                    padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
+                    animation: `fadeSlideIn 0.3s ease-out ${i * 60}ms both`,
+                  }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>{stat.label}</div>
+                    <div style={{ fontSize: size.xl, fontWeight: 700, fontFamily: f.display, color: stat.color }}>{stat.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {inventory.length === 0 ? (
+                <div style={{ padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`, textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', opacity: 0.15, marginBottom: sp[2] }}>📦</div>
+                  <div style={{ fontFamily: f.display, fontSize: size.lg, color: c.textSecondary, marginBottom: sp[1] }}>Votre entrepôt est vide</div>
+                  <p style={{ fontSize: size.sm, color: c.textTertiary, margin: 0, maxWidth: '48ch', marginLeft: 'auto', marginRight: 'auto' }}>
+                    Dès que vous activez le service de gestion de stock, votre inventaire apparaîtra ici avec suivi en temps réel, alertes stock bas et gestion des mouvements.
+                  </p>
+                  <div style={{ marginTop: sp[3], display: 'inline-flex', gap: sp[2] }}>
+                    <a href="https://wa.me/8618042710257?text=Bonjour%2C%20je%20souhaite%20activer%20le%20service%20gestion%20de%20stock" target="_blank" rel="noopener noreferrer" style={{
+                      padding: `${sp[1]} ${sp[3]}`, background: c.purple, border: 'none', color: c.white,
+                      fontSize: size.xs, fontFamily: f.mono, fontWeight: 700, cursor: 'pointer',
+                      letterSpacing: '0.04em', textTransform: 'uppercase', textDecoration: 'none',
+                    }}>Activer ce service</a>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden' }}>
+                  {/* Table header */}
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px',
+                    padding: `${sp[1]} ${sp[3]}`, borderBottom: `1px solid ${c.border}`, background: c.bgElevated,
+                  }}>
+                    {['Produit', 'Qté', 'Seuil', 'Entrepôt', 'État'].map(h => (
+                      <div key={h} style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+                    ))}
+                  </div>
+                  {/* Table rows */}
+                  {inventory.map((item, i) => {
+                    const isLow = (item.quantity || 0) <= (item.alert_threshold || 10)
+                    return (
+                      <div key={item.id || i} style={{
+                        display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px',
+                        padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`,
+                        animation: `fadeSlideIn 0.2s ease-out ${i * 40}ms both`,
+                        transition: `background 0.2s ${ease.smooth}`,
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = c.bgElevated}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: size.sm, color: c.text }}>{item.product_name}</div>
+                          {item.sku && <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary }}>{item.sku}</div>}
+                        </div>
+                        <div style={{ fontSize: size.sm, fontWeight: 700, color: isLow ? c.red : c.text, fontFamily: f.mono }}>{(item.quantity || 0).toLocaleString('fr-FR')}</div>
+                        <div style={{ fontSize: size.sm, color: c.textTertiary, fontFamily: f.mono }}>{item.alert_threshold || 10}</div>
+                        <div style={{ fontSize: size.xs, color: c.textSecondary }}>{item.warehouse || 'Yiwu'}</div>
+                        <div>
+                          <span style={{
+                            padding: '2px 8px', fontSize: '9px', fontFamily: f.mono, fontWeight: 700,
+                            background: isLow ? c.redSoft : c.greenSoft,
+                            color: isLow ? c.red : c.green,
+                            letterSpacing: '0.04em', textTransform: 'uppercase',
+                          }}>{isLow ? 'Bas' : 'OK'}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Boutique section */}
+              <div style={{ marginTop: sp[4] }}>
+                <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.purple, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[2] }}>Boutique en ligne</div>
+                <div style={{ padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}`, textAlign: 'center' }}>
+                  <div style={{ fontSize: '32px', opacity: 0.15, marginBottom: sp[2] }}>🛒</div>
+                  <div style={{ fontFamily: f.display, fontSize: size.md, color: c.textSecondary, marginBottom: sp[1] }}>Boutique en préparation</div>
+                  <p style={{ fontSize: size.xs, color: c.textTertiary, margin: 0, maxWidth: '40ch', marginLeft: 'auto', marginRight: 'auto' }}>
+                    Votre boutique Shopify/WooCommerce sera accessible ici avec les stats de commandes et le fulfillment automatisé.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         ) : (
           <>
             {/* ── SIDEBAR ── */}
@@ -1029,6 +1679,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     padding: `${sp[3]} ${sp[4]}`,
                     borderBottom: `1px solid ${c.border}`,
                     background: c.bgSurface,
+                    animation: `fadeSlideIn 0.3s ${ease.out}`,
                   }}>
                     <div style={{
                       display: 'flex', justifyContent: 'space-between',
@@ -1079,6 +1730,151 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   <div style={{ padding: `${sp[3]} ${sp[4]} 0` }}>
                     <PipelineTracker status={selectedOrder.status} />
                   </div>
+
+                  {/* ─── LINKED SHIPMENTS ─── */}
+                  {(() => {
+                    const linked = shipments.filter(s => s.order_id === selectedOrder.id)
+                    const orderStatus = typeof selectedOrder.status === 'number' ? selectedOrder.status : 0
+                    if (linked.length === 0 && orderStatus < 4) return null
+                    const shipSteps = [
+                      { key: 'production', label: 'Prod.', icon: '🏭' },
+                      { key: 'quality', label: 'QC', icon: '✓' },
+                      { key: 'transit', label: 'Transit', icon: '🚢' },
+                      { key: 'customs', label: 'Douanes', icon: '📋' },
+                      { key: 'delivered', label: 'Livré', icon: '✦' },
+                    ]
+                    return (
+                      <div style={{ padding: `${sp[2]} ${sp[4]}` }}>
+                        <div style={{
+                          background: `${c.teal}08`, border: `1px solid ${c.teal}22`,
+                          padding: sp[3],
+                        }}>
+                          <div style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            marginBottom: linked.length > 0 ? sp[2] : 0,
+                          }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.teal, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                              🚢 Expédition liée
+                            </div>
+                            <button onClick={() => setViewMode('expedition')} style={{
+                              background: 'none', border: `1px solid ${c.teal}33`, padding: '2px 8px',
+                              fontFamily: f.mono, fontSize: '8px', color: c.teal, cursor: 'pointer',
+                              letterSpacing: '0.04em', textTransform: 'uppercase',
+                              transition: `all 0.2s ${ease.smooth}`,
+                            }}
+                              onMouseOver={e => { e.currentTarget.style.background = `${c.teal}15`; e.currentTarget.style.borderColor = `${c.teal}66` }}
+                              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = `${c.teal}33` }}
+                            >Voir expéditions →</button>
+                          </div>
+                          {linked.length > 0 ? linked.map((ship, si) => {
+                            const curStep = typeof ship.status === 'number' ? ship.status : (shipSteps.findIndex(s => s.key === ship.status) || 0)
+                            return (
+                              <div key={ship.id || si} style={{ marginTop: si > 0 ? sp[2] : 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[1] }}>
+                                  <span style={{ fontWeight: 600, fontSize: size.sm, color: c.text }}>{ship.product_name || ship.description || 'Envoi'}</span>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, marginRight: '4px' }}>ETA</span>
+                                    <span style={{ fontSize: size.sm, fontWeight: 600, color: c.gold }}>{ship.eta ? new Date(ship.eta).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}</span>
+                                  </div>
+                                </div>
+                                {/* Mini timeline */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                                  {shipSteps.map((step, sti) => (
+                                    <div key={step.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                                      <div style={{
+                                        width: 22, height: 22,
+                                        background: sti <= curStep ? c.teal : c.bgElevated,
+                                        border: `2px solid ${sti <= curStep ? c.teal : c.border}`,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '10px', color: sti <= curStep ? c.black : c.textTertiary,
+                                        fontWeight: 700, zIndex: 1,
+                                        boxShadow: sti === curStep ? `0 0 8px ${c.teal}33` : 'none',
+                                      }}>{sti < curStep ? '✓' : step.icon}</div>
+                                      <div style={{ fontSize: '7px', color: sti <= curStep ? c.teal : c.textTertiary, marginTop: '4px', textAlign: 'center', fontFamily: f.mono }}>{step.label}</div>
+                                      {sti < shipSteps.length - 1 && (
+                                        <div style={{ position: 'absolute', top: 11, left: '60%', width: '80%', height: 2, background: sti < curStep ? c.teal : c.border, zIndex: 0 }} />
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                                {ship.tracking_number && (
+                                  <div style={{ marginTop: sp[1], fontFamily: f.mono, fontSize: '9px', color: c.textTertiary }}>
+                                    N° {ship.tracking_number}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }) : (
+                            <div style={{ fontSize: size.sm, color: c.textSecondary, fontStyle: 'italic' }}>
+                              Commande en phase d'expédition — aucun envoi enregistré pour le moment.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* ─── LINKED STOCK ─── */}
+                  {(() => {
+                    const productName = selectedOrder.product?.toLowerCase() || ''
+                    const matchedStock = inventory.filter(i =>
+                      i.product_name?.toLowerCase().includes(productName) ||
+                      productName.includes(i.product_name?.toLowerCase() || '')
+                    )
+                    if (matchedStock.length === 0) return null
+                    return (
+                      <div style={{ padding: `0 ${sp[4]} ${sp[2]}` }}>
+                        <div style={{
+                          background: `${c.purple}08`, border: `1px solid ${c.purple}22`,
+                          padding: sp[3],
+                        }}>
+                          <div style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            marginBottom: sp[2],
+                          }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.purple, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                              📦 Stock lié
+                            </div>
+                            <button onClick={() => setViewMode('stock')} style={{
+                              background: 'none', border: `1px solid ${c.purple}33`, padding: '2px 8px',
+                              fontFamily: f.mono, fontSize: '8px', color: c.purple, cursor: 'pointer',
+                              letterSpacing: '0.04em', textTransform: 'uppercase',
+                              transition: `all 0.2s ${ease.smooth}`,
+                            }}
+                              onMouseOver={e => { e.currentTarget.style.background = `${c.purple}15`; e.currentTarget.style.borderColor = `${c.purple}66` }}
+                              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = `${c.purple}33` }}
+                            >Voir stock →</button>
+                          </div>
+                          {matchedStock.map((item, ii) => {
+                            const isLow = (item.quantity || 0) <= (item.alert_threshold || 10)
+                            return (
+                              <div key={item.id || ii} style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                padding: `${sp[1]} 0`,
+                                borderTop: ii > 0 ? `1px solid ${c.purple}15` : 'none',
+                              }}>
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: size.sm, color: c.text }}>{item.product_name}</div>
+                                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary }}>{item.warehouse || 'Yiwu'}</div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                                  <span style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: isLow ? c.red : c.text }}>
+                                    {(item.quantity || 0).toLocaleString('fr-FR')} u.
+                                  </span>
+                                  <span style={{
+                                    padding: '2px 8px', fontSize: '8px', fontFamily: f.mono, fontWeight: 700,
+                                    background: isLow ? c.redSoft : c.greenSoft,
+                                    color: isLow ? c.red : c.green,
+                                    letterSpacing: '0.04em', textTransform: 'uppercase',
+                                  }}>{isLow ? 'Stock bas' : 'OK'}</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   {/* WhatsApp CTA */}
                   <div style={{ padding: `0 ${sp[4]} ${sp[2]}` }}>
