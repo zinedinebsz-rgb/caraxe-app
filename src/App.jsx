@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { supabase, getProfile } from './lib/supabase'
 import { c, f, size, sp, ease } from './lib/theme'
 import { ToastProvider } from './components/Toast'
@@ -13,8 +13,17 @@ const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Settings = lazy(() => import('./pages/Settings'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
+/* ── SCROLL TO TOP ON ROUTE CHANGE ── */
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 /* ── LOADER ── */
-const Loader = ({ text = 'Chargement\u2026' }) => (
+const Loader = ({ text = 'Chargement…' }) => (
   <div style={{
     height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: c.bg, flexDirection: 'column', gap: '20px',
@@ -171,6 +180,7 @@ export default function App() {
     <ErrorBoundary>
     <ToastProvider>
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={
           session ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />

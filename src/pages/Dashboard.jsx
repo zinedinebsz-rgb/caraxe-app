@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { c, f, size, sp, shadow, ease, transition, STATUSES } from '../lib/theme'
 import {
@@ -6,10 +6,11 @@ import {
   markMessagesRead, getDocuments, getDocumentUrl,
   subscribeToMessages, subscribeToOrders, supabase,
   getShipments, createShipment, getInventory, getActiveProducts, sendWelcomeMessage,
+  getShops, createEcomOrder, getEcomServices, getUnreadCounts,
 } from '../lib/supabase'
 import { getCatalog } from '../lib/catalogsByProfile'
 import { getTierByKey, getTierPrice, getTierMOQ, DEFAULT_TIER } from '../lib/clientTiers'
-import StatusPill, { ProgressBar } from '../components/StatusPill'
+import StatusPill, { ProgressBar, PipelineStepper } from '../components/StatusPill'
 import { useToast } from '../components/Toast'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -43,37 +44,14 @@ const icons = {
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 const fmtQty = (n) => (n || 0).toLocaleString('fr-FR')
 
-/* ── DRAGON EMPTY STATE ── */
+/* ── EMPTY STATE ── */
 function DragonEmptyState({ text = 'Sélectionnez une commande', sub = '' }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', height: '100%', textAlign: 'center',
-      padding: sp[4], animation: `fadeSlideUp 0.6s ${ease.out}`,
+      padding: sp[4],
     }}>
-      {/* Dragon icon — cinematic glow */}
-      <div style={{
-        position: 'relative', marginBottom: sp[4],
-      }}>
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 120, height: 120,
-          background: `radial-gradient(circle, oklch(55% 0.22 25 / 0.06) 0%, transparent 70%)`,
-          pointerEvents: 'none',
-        }} />
-        <svg viewBox="0 0 200 200" width={110} height={110} style={{ opacity: 0.35, position: 'relative' }}>
-          <path d="M100 20 L130 60 L100 50 L70 60 Z" fill={c.gold} stroke={c.gold} strokeWidth="1" />
-          <circle cx="100" cy="100" r="40" fill="none" stroke={c.gold} strokeWidth="1.5" />
-          <path d="M70 100 Q60 90 60 80 Q60 70 75 70" fill="none" stroke={c.gold} strokeWidth="1.5" />
-          <path d="M130 100 Q140 90 140 80 Q140 70 125 70" fill="none" stroke={c.gold} strokeWidth="1.5" />
-          <circle cx="85" cy="95" r="3" fill={c.gold} />
-          <circle cx="115" cy="95" r="3" fill={c.gold} />
-          <path d="M100 110 Q90 120 85 130" fill="none" stroke={c.gold} strokeWidth="1.5" />
-          <path d="M100 110 Q110 120 115 130" fill="none" stroke={c.gold} strokeWidth="1.5" />
-          <path d="M80 140 L90 160 L100 155 L110 160 L120 140" fill="none" stroke={c.gold} strokeWidth="1.5" />
-        </svg>
-      </div>
       <p style={{
         fontSize: size.lg, fontFamily: f.display, color: c.text,
         margin: 0, marginBottom: sp[1], letterSpacing: '0.02em',
@@ -86,32 +64,26 @@ function DragonEmptyState({ text = 'Sélectionnez une commande', sub = '' }) {
 
 /* ── ORDER CARD (SIDEBAR) ── */
 function OrderCard({ order, selected, onClick, unreadCount }) {
-  const [hovered, setHovered] = useState(false)
   const statusObj = (typeof order.status === 'number' ? STATUSES[order.status] : STATUSES.find(s => s.key === order.status)) || STATUSES[0]
 
   return (
     <div onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         padding: `14px ${sp[3]}`,
         cursor: 'pointer',
-        background: selected ? c.bgElevated : hovered ? `oklch(11% 0.006 50)` : 'transparent',
+        background: selected ? c.bgElevated : 'transparent',
         borderLeft: `2px solid ${selected ? c.red : 'transparent'}`,
         borderBottom: `1px solid ${c.borderSubtle}`,
-        transition: `all 0.25s ${ease.luxury}`,
+        transition: `background 0.2s ${ease.smooth}, border-color 0.2s ${ease.smooth}`,
         position: 'relative',
-        transform: hovered && !selected ? 'translateX(2px)' : 'translateX(0)',
       }}>
-      {/* Unread badge — premium pulse */}
+      {/* Unread badge */}
       {unreadCount > 0 && (
         <div style={{
           position: 'absolute', top: 14, right: sp[2],
           minWidth: 18, height: 18, borderRadius: '9999px',
           background: c.red, color: c.white, fontSize: '9px', fontWeight: 700,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px',
-          boxShadow: `0 0 0 0 ${c.redGlow}`,
-          animation: 'unreadPulse 2s ease infinite',
         }}>{unreadCount}</div>
       )}
 
@@ -125,8 +97,7 @@ function OrderCard({ order, selected, onClick, unreadCount }) {
       {/* Product name */}
       <div style={{
         fontWeight: 600, fontSize: size.sm, marginBottom: '8px',
-        lineHeight: 1.35, color: selected ? c.text : hovered ? c.text : 'oklch(82% 0.01 70)',
-        transition: transition.color,
+        lineHeight: 1.35, color: selected ? c.text : c.text,
         fontFamily: f.body, letterSpacing: '0.01em',
       }}>{order.product}</div>
 
@@ -167,14 +138,13 @@ function DateSeparator({ date }) {
   )
 }
 
-/* ── CHAT BUBBLE — premium ── */
+/* ── CHAT BUBBLE ── */
 function ChatBubble({ msg }) {
   const isAgent = msg.sender_role === 'admin'
   return (
     <div style={{
       display: 'flex', justifyContent: isAgent ? 'flex-start' : 'flex-end',
       marginBottom: sp[2],
-      animation: `fadeSlideIn 0.3s ${ease.out}`,
     }}>
       <div style={{
         maxWidth: '72%', padding: `14px ${sp[3]}`,
@@ -207,21 +177,18 @@ function ChatBubble({ msg }) {
 
 /* ── DOCUMENT CARD ── */
 function DocumentCard({ doc, onDownload }) {
-  const [hovered, setHovered] = useState(false)
   const fileName = doc.name || doc.file_name || 'Document'
   const fileExt = fileName.split('.').pop().toUpperCase()
 
   return (
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       onClick={onDownload}
       style={{
         display: 'flex', alignItems: 'center', gap: sp[2],
         padding: `${sp[2]} ${sp[3]}`,
-        background: hovered ? c.bgHover : c.bgElevated,
-        border: `1px solid ${hovered ? c.gold : c.border}`,
-        transition: `all 0.2s ${ease.smooth}`,
+        background: c.bgElevated,
+        border: `1px solid ${c.border}`,
+        transition: `border-color 0.2s ${ease.smooth}`,
         cursor: 'pointer',
       }}>
       <div style={{
@@ -241,7 +208,7 @@ function DocumentCard({ doc, onDownload }) {
         </div>
       </div>
       <div style={{
-        opacity: hovered ? 1 : 0.4,
+        opacity: 0.6,
         transition: `opacity 0.2s ${ease.smooth}`,
       }}>
         <Icon d={icons.download} size={16} color={c.gold} />
@@ -250,72 +217,20 @@ function DocumentCard({ doc, onDownload }) {
   )
 }
 
-/* ── PIPELINE TRACKER (REDESIGNED) ── */
+/* ── PIPELINE TRACKER — Art Deco Diamond ── */
 function PipelineTracker({ status }) {
-  const stages = STATUSES
-  const currentIndex = typeof status === 'number' ? status : stages.findIndex(s => s.key === status)
-
   return (
     <div style={{
       background: c.bgElevated, border: `1px solid ${c.border}`,
-      padding: `${sp[3]} ${sp[3]}`, marginBottom: sp[3],
+      padding: `${sp[3]} ${sp[3]}`, paddingBottom: sp[4], marginBottom: sp[3],
     }}>
       <div style={{
-        fontSize: '10px', color: c.textTertiary, marginBottom: sp[2],
+        fontSize: '10px', color: c.textTertiary, marginBottom: sp[1],
         fontFamily: f.mono, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600,
       }}>
         Progression
       </div>
-
-      {/* Track */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: sp[2] }}>
-        {stages.map((stage, idx) => {
-          const isCompleted = idx < currentIndex
-          const isCurrent = idx === currentIndex
-          return (
-            <div key={stage.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-              {/* Step marker */}
-              <div style={{
-                width: isCurrent ? 36 : 28, height: isCurrent ? 36 : 28,
-                background: isCurrent ? stage.color : isCompleted ? c.green : c.bgSurface,
-                border: `2px solid ${isCurrent ? stage.color : isCompleted ? c.green : c.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: f.mono, fontSize: isCurrent ? size.xs : '10px', fontWeight: 700,
-                color: isCurrent || isCompleted ? c.white : c.textTertiary,
-                flexShrink: 0, zIndex: 2,
-                transition: `all 0.35s ${ease.out}`,
-                boxShadow: isCurrent ? `0 0 16px ${stage.color}44` : 'none',
-              }}>
-                {isCompleted ? '✓' : idx + 1}
-              </div>
-              {/* Connector */}
-              {idx < stages.length - 1 && (
-                <div style={{
-                  flex: 1, height: '2px', margin: '0 -1px',
-                  background: idx < currentIndex ? c.green : c.border,
-                  transition: `background 0.35s ${ease.smooth}`,
-                }} />
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Labels */}
-      <div style={{ display: 'flex', gap: '3px' }}>
-        {stages.map((stage, idx) => (
-          <div key={stage.key} style={{
-            flex: 1, textAlign: 'center',
-            fontSize: '10px', lineHeight: 1.3,
-            color: idx === currentIndex ? stage.color : idx < currentIndex ? c.text : c.textTertiary,
-            fontWeight: idx === currentIndex ? 700 : 400,
-            fontFamily: idx === currentIndex ? f.mono : f.body,
-            transition: `all 0.3s ${ease.smooth}`,
-          }}>
-            {stage.label}
-          </div>
-        ))}
-      </div>
+      <PipelineStepper currentStatus={status} />
     </div>
   )
 }
@@ -368,7 +283,6 @@ function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
         background: c.bgElevated, border: `1px solid ${c.border}`,
         width: '100%', maxWidth: 480, padding: sp[4], boxShadow: shadow.xl,
         position: 'relative',
-        animation: `cardReveal 0.3s ${ease.out}`,
       }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
@@ -406,8 +320,8 @@ function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
         <div style={{ minHeight: 180 }}>
           {step === 1 && (
             <div>
-              <label style={modalLabel}>Que recherchez-vous ?</label>
-              <input type="text" placeholder="Ex: vêtements coton, chaussures sport..."
+              <label style={modalLabel} htmlFor="product-input">Que recherchez-vous ?</label>
+              <input id="product-input" type="text" placeholder="Ex: vêtements coton, chaussures sport..."
                 value={formData.product} onChange={(e) => handleChange('product', e.target.value)}
                 style={modalInput} autoFocus
                 onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
@@ -422,24 +336,24 @@ function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
               <div>
-                <label style={modalLabel}>Quantité</label>
-                <input type="number" placeholder="Ex: 1000" value={formData.quantity}
+                <label style={modalLabel} htmlFor="quantity-input">Quantité</label>
+                <input id="quantity-input" type="number" placeholder="Ex: 1000" value={formData.quantity}
                   onChange={(e) => handleChange('quantity', e.target.value)} style={modalInput}
                   onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
                 />
               </div>
               <div>
-                <label style={modalLabel}>Budget</label>
-                <input type="text" placeholder="Ex: 5 000 €" value={formData.budget}
+                <label style={modalLabel} htmlFor="budget-input">Budget</label>
+                <input id="budget-input" type="text" placeholder="Ex: 5 000 €" value={formData.budget}
                   onChange={(e) => handleChange('budget', e.target.value)} style={modalInput}
                   onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
                 />
               </div>
               <div>
-                <label style={modalLabel}>Délai souhaité</label>
-                <input type="date" value={formData.deadline}
+                <label style={modalLabel} htmlFor="deadline-input">Délai souhaité</label>
+                <input id="deadline-input" type="date" value={formData.deadline}
                   onChange={(e) => handleChange('deadline', e.target.value)} style={modalInput}
                   onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
@@ -450,8 +364,8 @@ function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
 
           {step === 3 && (
             <div>
-              <label style={modalLabel}>Notes (optionnel)</label>
-              <textarea placeholder="Spécifications, références visuelles, exigences..."
+              <label style={modalLabel} htmlFor="notes-input">Notes (optionnel)</label>
+              <textarea id="notes-input" placeholder="Spécifications, références visuelles, exigences..."
                 value={formData.notes} onChange={(e) => handleChange('notes', e.target.value)}
                 style={{ ...modalInput, minHeight: 140, resize: 'none' }}
                 onFocus={(e) => { e.target.style.borderColor = c.red; e.target.style.boxShadow = `0 0 0 3px ${c.redSoft}` }}
@@ -504,6 +418,284 @@ function NewOrderModal({ isOpen, onClose, onSubmit, initialProduct = '' }) {
   )
 }
 
+/* ── ECOM ORDER MODAL ── */
+const ECOM_PACKS = [
+  { key: 'creation', label: 'Création Boutique', price: 1490, priceFmt: '1 490 €', desc: 'Boutique clé en main : design, catalogue, paiement, livraison', recurring: false },
+  { key: 'gestion', label: 'Gestion Boutique', price: 249, priceFmt: '249 €/mois', desc: 'Gestion complète : MAJ produits, SAV, fulfillment, analytics', recurring: true },
+  { key: 'bundle', label: 'Bundle Sourcing + E-com', price: 1490, priceFmt: 'À partir de 1 341 €', desc: 'Création + sourcing combinés, -10% sur le total', recurring: false, discount: 10 },
+]
+
+const PLATFORMS = [
+  { key: 'shopify', label: 'Shopify', desc: 'Idéal pour débuter rapidement' },
+  { key: 'woocommerce', label: 'WooCommerce', desc: 'Plus flexible, basé sur WordPress' },
+  { key: 'prestashop', label: 'PrestaShop', desc: 'Populaire en France' },
+  { key: 'undecided', label: 'Je ne sais pas', desc: 'On vous conseillera' },
+]
+
+function EcomOrderModal({ isOpen, onClose, onSubmit, submitting }) {
+  const [step, setStep] = useState(1)
+  const [selectedPack, setSelectedPack] = useState(null)
+  const [form, setForm] = useState({
+    platform: '', shopName: '', productCategory: '', estimatedProducts: '',
+    hasBranding: false, notes: '', paymentMethod: '',
+  })
+
+  const update = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const pack = ECOM_PACKS.find(p => p.key === selectedPack)
+
+  const handleSubmit = () => {
+    const resolvedPack = ECOM_PACKS.find(p => p.key === selectedPack)
+    if (!selectedPack || !resolvedPack || !form.paymentMethod) return
+    onSubmit({
+      serviceType: selectedPack,
+      pack: selectedPack,
+      platform: form.platform || 'undecided',
+      shopName: form.shopName,
+      productCategory: form.productCategory,
+      estimatedProducts: form.estimatedProducts,
+      hasBranding: form.hasBranding,
+      notes: form.notes,
+      paymentMethod: form.paymentMethod,
+      price: resolvedPack.price,
+      isRecurring: resolvedPack.recurring || false,
+      discountPct: resolvedPack.discount || 0,
+    })
+  }
+
+  const reset = () => {
+    setStep(1); setSelectedPack(null)
+    setForm({ platform: '', shopName: '', productCategory: '', estimatedProducts: '', hasBranding: false, notes: '', paymentMethod: '' })
+  }
+
+  useEffect(() => { if (!isOpen) reset() }, [isOpen])
+
+  if (!isOpen) return null
+
+  const modalInput = {
+    width: '100%', padding: `14px ${sp[2]}`, fontSize: size.sm, fontFamily: f.body,
+    background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text,
+    boxSizing: 'border-box', outline: 'none', transition: `border-color 0.2s ${ease.smooth}, box-shadow 0.2s ${ease.smooth}`,
+  }
+  const modalLabel = {
+    display: 'block', marginBottom: sp[1], fontSize: '10px', fontFamily: f.mono,
+    color: c.textTertiary, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600,
+  }
+  const stepLabels = ['Service', 'Détails', 'Paiement']
+
+  const canNext = step === 1 ? !!selectedPack : step === 2 ? true : !!form.paymentMethod
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: c.bgOverlay,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, animation: `fadeIn 0.2s ${ease.out}`,
+      backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+    }} onClick={onClose}>
+      <div style={{
+        background: c.bgElevated, border: `1px solid ${c.border}`,
+        width: '100%', maxWidth: 540, padding: sp[4], boxShadow: shadow.xl,
+        position: 'relative', maxHeight: '90vh', overflow: 'auto',
+      }} onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: size.lg, fontFamily: f.display, color: c.text, letterSpacing: '-0.01em' }}>
+              Commander un service e-commerce
+            </h2>
+            <div style={{ display: 'flex', gap: sp[2], marginTop: sp[1] }}>
+              {stepLabels.map((label, i) => (
+                <span key={i} style={{
+                  fontSize: '9px', fontFamily: f.mono, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: i + 1 === step ? c.gold : i + 1 < step ? c.green : c.textTertiary,
+                  fontWeight: i + 1 === step ? 700 : 400,
+                }}>{i + 1}. {label}</span>
+              ))}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: sp[1], color: c.textSecondary, display: 'flex' }}>
+            <Icon d={icons.close} size={18} color="currentColor" />
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ width: '100%', height: 2, background: c.bgSurface, marginBottom: sp[4], overflow: 'hidden' }}>
+          <div style={{ width: `${(step / 3) * 100}%`, height: '100%', background: c.gold, transition: `width 0.4s ${ease.out}` }} />
+        </div>
+
+        {/* Step 1: Choose pack */}
+        {step === 1 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
+            <p style={{ fontSize: size.sm, color: c.textSecondary, margin: `0 0 ${sp[2]}`, lineHeight: 1.6 }}>
+              Choisissez le service e-commerce qui correspond à vos besoins.
+            </p>
+            {ECOM_PACKS.map(pk => (
+              <div key={pk.key} onClick={() => setSelectedPack(pk.key)} style={{
+                padding: sp[3], border: `1px solid ${selectedPack === pk.key ? c.gold : c.border}`,
+                background: selectedPack === pk.key ? 'oklch(18% 0.01 85 / 0.3)' : c.bgSurface,
+                cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`, position: 'relative',
+              }}>
+                {selectedPack === pk.key && <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 2, background: c.gold }} />}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontFamily: f.display, fontSize: size.base, fontWeight: 700, color: c.text }}>{pk.label}</span>
+                  <span style={{ fontFamily: f.mono, fontSize: size.sm, color: c.gold, fontWeight: 700 }}>{pk.priceFmt}</span>
+                </div>
+                <p style={{ margin: 0, fontSize: size.xs, color: c.textSecondary, lineHeight: 1.5 }}>{pk.desc}</p>
+                {pk.discount && <span style={{ display: 'inline-block', marginTop: '6px', padding: '2px 8px', fontSize: '9px', fontFamily: f.mono, background: c.greenSoft, color: c.green, fontWeight: 700, letterSpacing: '0.06em' }}>-{pk.discount}% BUNDLE</span>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Step 2: Details */}
+        {step === 2 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+            <div>
+              <label style={modalLabel}>Plateforme souhaitée</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[1] }}>
+                {PLATFORMS.map(pl => (
+                  <div key={pl.key} onClick={() => update('platform', pl.key)} style={{
+                    padding: `10px ${sp[2]}`, border: `1px solid ${form.platform === pl.key ? c.gold : c.border}`,
+                    background: form.platform === pl.key ? 'oklch(18% 0.01 85 / 0.3)' : 'transparent',
+                    cursor: 'pointer', transition: `all 0.15s ${ease.smooth}`, textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: size.sm, fontWeight: 600, color: form.platform === pl.key ? c.gold : c.text, fontFamily: f.body }}>{pl.label}</div>
+                    <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px' }}>{pl.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={modalLabel}>Nom de la boutique</label>
+              <input type="text" placeholder="Ex: Ma Boutique Halal" value={form.shopName}
+                onChange={(e) => update('shopName', e.target.value)} style={modalInput}
+                onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = `0 0 0 3px oklch(75% 0.12 85 / 0.15)` }}
+                onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+              <div>
+                <label style={modalLabel}>Catégorie produits</label>
+                <input type="text" placeholder="Textile, alimentaire..." value={form.productCategory}
+                  onChange={(e) => update('productCategory', e.target.value)} style={modalInput}
+                  onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = `0 0 0 3px oklch(75% 0.12 85 / 0.15)` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+              <div>
+                <label style={modalLabel}>Nb produits estimé</label>
+                <input type="number" placeholder="20" value={form.estimatedProducts}
+                  onChange={(e) => update('estimatedProducts', e.target.value)} style={modalInput}
+                  onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = `0 0 0 3px oklch(75% 0.12 85 / 0.15)` }}
+                  onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+              <div onClick={() => update('hasBranding', !form.hasBranding)} style={{
+                width: 20, height: 20, border: `1px solid ${form.hasBranding ? c.gold : c.border}`,
+                background: form.hasBranding ? c.gold : 'transparent', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                transition: `all 0.15s ${ease.smooth}`,
+              }}>
+                {form.hasBranding && <span style={{ color: c.black, fontSize: '12px', fontWeight: 700 }}>✓</span>}
+              </div>
+              <label style={{ fontSize: size.sm, color: c.textSecondary, cursor: 'pointer' }} onClick={() => update('hasBranding', !form.hasBranding)}>
+                J'ai déjà un logo / charte graphique
+              </label>
+            </div>
+            <div>
+              <label style={modalLabel}>Notes additionnelles</label>
+              <textarea placeholder="Domaine souhaité, réseaux sociaux, inspiration..."
+                value={form.notes} onChange={(e) => update('notes', e.target.value)}
+                style={{ ...modalInput, minHeight: 80, resize: 'none' }}
+                onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = `0 0 0 3px oklch(75% 0.12 85 / 0.15)` }}
+                onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Payment */}
+        {step === 3 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+            {/* Recap */}
+            <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}` }}>
+              <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[1] }}>Récapitulatif</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: f.display, fontSize: size.base, fontWeight: 700, color: c.text }}>{pack?.label}</span>
+                <span style={{ fontFamily: f.mono, fontSize: size.lg, color: c.gold, fontWeight: 700 }}>{pack?.priceFmt}</span>
+              </div>
+              {form.shopName && <div style={{ fontSize: size.xs, color: c.textSecondary, marginTop: '4px' }}>Boutique : {form.shopName}</div>}
+              {form.platform && form.platform !== 'undecided' && <div style={{ fontSize: size.xs, color: c.textSecondary, marginTop: '2px' }}>Plateforme : {PLATFORMS.find(p => p.key === form.platform)?.label}</div>}
+            </div>
+
+            <div>
+              <label style={modalLabel}>Moyen de paiement</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1] }}>
+                {[
+                  { key: 'stripe', label: 'Carte bancaire', desc: 'Paiement sécurisé via Stripe — traitement immédiat', icon: '💳' },
+                  { key: 'virement', label: 'Virement bancaire', desc: 'Validé manuellement sous 24-48h après réception', icon: '🏦' },
+                ].map(pm => (
+                  <div key={pm.key} onClick={() => update('paymentMethod', pm.key)} style={{
+                    padding: sp[3], border: `1px solid ${form.paymentMethod === pm.key ? c.gold : c.border}`,
+                    background: form.paymentMethod === pm.key ? 'oklch(18% 0.01 85 / 0.3)' : 'transparent',
+                    cursor: 'pointer', transition: `all 0.15s ${ease.smooth}`,
+                    display: 'flex', alignItems: 'center', gap: sp[2],
+                  }}>
+                    <span style={{ fontSize: '20px' }}>{pm.icon}</span>
+                    <div>
+                      <div style={{ fontSize: size.sm, fontWeight: 600, color: form.paymentMethod === pm.key ? c.gold : c.text }}>{pm.label}</div>
+                      <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px' }}>{pm.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {form.paymentMethod === 'virement' && (
+              <div style={{ padding: sp[2], background: 'oklch(25% 0.01 85 / 0.5)', border: `1px solid ${c.border}`, fontSize: size.xs, color: c.textSecondary, lineHeight: 1.6 }}>
+                Après validation de la commande, vous recevrez une référence unique et les coordonnées bancaires pour effectuer le virement. La commande sera activée dès réception du paiement.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: sp[2], marginTop: sp[4], justifyContent: 'flex-end' }}>
+          {step > 1 && (
+            <button onClick={() => setStep(step - 1)} style={{
+              padding: `12px ${sp[3]}`, background: 'transparent', border: `1px solid ${c.border}`,
+              color: c.text, fontSize: size.sm, cursor: 'pointer', fontFamily: f.body,
+              transition: `all 0.2s ${ease.smooth}`,
+            }}
+              onMouseOver={(e) => e.target.style.borderColor = c.gold}
+              onMouseOut={(e) => e.target.style.borderColor = c.border}
+            >Retour</button>
+          )}
+          {step < 3 ? (
+            <button onClick={() => setStep(step + 1)} disabled={!canNext} style={{
+              padding: `12px ${sp[3]}`, background: canNext ? c.gold : c.bgSurface,
+              border: `1px solid ${canNext ? c.gold : c.border}`, color: canNext ? c.black : c.textTertiary,
+              fontSize: size.sm, cursor: canNext ? 'pointer' : 'not-allowed', fontFamily: f.body, fontWeight: 600,
+              transition: `all 0.2s ${ease.smooth}`, opacity: canNext ? 1 : 0.5,
+            }}>Suivant</button>
+          ) : (
+            <button onClick={handleSubmit} disabled={!canNext || submitting} style={{
+              padding: `12px ${sp[4]}`, background: canNext && !submitting ? c.gold : c.bgSurface,
+              border: `1px solid ${canNext ? c.gold : c.border}`, color: canNext && !submitting ? c.black : c.textTertiary,
+              fontSize: size.sm, fontWeight: 700, cursor: canNext && !submitting ? 'pointer' : 'not-allowed',
+              fontFamily: f.body, transition: `all 0.2s ${ease.smooth}`, letterSpacing: '0.02em',
+              opacity: canNext && !submitting ? 1 : 0.5,
+            }}>
+              {submitting ? 'Envoi en cours...' : form.paymentMethod === 'stripe' ? 'Payer par carte' : 'Valider la commande'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── MAIN DASHBOARD ── */
 export default function Dashboard({ user, profile, onSignOut }) {
   const navigate = useNavigate()
@@ -521,15 +713,21 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
   const [prefilledProduct, setPrefilledProduct] = useState('')
   const [unreadCounts, setUnreadCounts] = useState({})
+  const [showNotifPanel, setShowNotifPanel] = useState(false)
   const [activeTab, setActiveTab] = useState('messages')
   const [viewMode, setViewMode] = useState('orders')
   const [selectedCatalogItem, setSelectedCatalogItem] = useState(null)
   const [mobileShowSidebar, setMobileShowSidebar] = useState(true)
   const [shipments, setShipments] = useState([])
   const [inventory, setInventory] = useState([])
+  const [shops, setShops] = useState([])
   const [dynamicProducts, setDynamicProducts] = useState([])
   const [isNewShipmentOpen, setIsNewShipmentOpen] = useState(false)
   const [creatingShipment, setCreatingShipment] = useState(false)
+  const [isEcomOrderOpen, setIsEcomOrderOpen] = useState(false)
+  const [submittingEcom, setSubmittingEcom] = useState(false)
+  const [ecomServices, setEcomServices] = useState([])
+  const [ecomVirementInfo, setEcomVirementInfo] = useState(null)
   const messagesEndRef = useRef(null)
   const uploadInputRef = useRef(null)
 
@@ -539,23 +737,30 @@ export default function Dashboard({ user, profile, onSignOut }) {
         const data = await getOrders(user.id)
         setOrders(data || [])
         if (data?.length > 0) setSelectedOrder(data[0])
-      } catch (err) { console.error('Failed to load orders:', err) }
+      } catch (err) { console.error('Failed to load orders:', err); toast.error('Erreur lors du chargement des commandes') }
     }
     loadOrders()
     // Load shipments, inventory, and dynamic products
-    getShipments(user.id).then(setShipments).catch(() => {})
-    getInventory(user.id).then(setInventory).catch(() => {})
-    getActiveProducts().then(setDynamicProducts).catch(() => {})
+    getShipments(user.id).then(setShipments).catch((err) => { console.error('Failed to load shipments:', err); toast.error('Erreur : expéditions') })
+    getInventory(user.id).then(setInventory).catch((err) => { console.error('Failed to load inventory:', err); toast.error('Erreur : stock') })
+    getActiveProducts().then(setDynamicProducts).catch((err) => { console.error('Failed to load products:', err); toast.error('Erreur : produits') })
+    getShops(user.id).then(setShops).catch((err) => { console.error('Failed to load shops:', err); toast.error('Erreur : boutiques') })
+    getEcomServices(user.id).then(setEcomServices).catch((err) => console.error('Failed to load ecom services:', err))
+    getUnreadCounts(user.id).then(setUnreadCounts).catch((err) => console.error('Failed to load unread counts:', err))
     const sub = subscribeToOrders(() => {
-      getOrders(user.id).then(data => {
-        setOrders(data || [])
-        // Update selectedOrder with fresh data to avoid stale state
-        setSelectedOrder(prev => {
-          if (!prev) return prev
-          const updated = data?.find(o => o.id === prev.id)
-          return updated || prev
-        })
-      })
+      try {
+        getOrders(user.id).then(data => {
+          setOrders(data || [])
+          // Update selectedOrder with fresh data to avoid stale state
+          setSelectedOrder(prev => {
+            if (!prev) return prev
+            const updated = data?.find(o => o.id === prev.id)
+            return updated || prev
+          })
+        }).catch(err => console.error('Error loading orders in subscription:', err))
+      } catch (err) {
+        console.error('Error in subscribeToOrders callback:', err)
+      }
     })
     return () => sub?.unsubscribe?.()
   }, [user.id])
@@ -567,11 +772,20 @@ export default function Dashboard({ user, profile, onSignOut }) {
         const data = await getMessages(selectedOrder.id)
         setMessages(data || [])
         await markMessagesRead(selectedOrder.id, user.id)
-      } catch (err) { console.error('Failed to load messages:', err) }
+        setUnreadCounts(prev => ({ ...prev, [selectedOrder.id]: 0 }))
+      } catch (err) { console.error('Failed to load messages:', err); toast.error('Erreur lors du chargement des messages') }
     }
     loadMessages()
     const sub = subscribeToMessages(selectedOrder.id, (newMsg) => {
-      setMessages(prev => [...prev, newMsg])
+      try {
+        setMessages(prev => [...prev, newMsg])
+        // Auto-mark as read since user is viewing this order
+        if (newMsg.sender_id !== user.id) {
+          markMessagesRead(selectedOrder.id, user.id).catch(() => {})
+        }
+      } catch (err) {
+        console.error('Error in subscribeToMessages callback:', err)
+      }
     })
     return () => sub?.unsubscribe?.()
   }, [selectedOrder, user.id])
@@ -582,7 +796,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
       try {
         const data = await getDocuments(selectedOrder.id)
         setDocuments(data || [])
-      } catch (err) { console.error('Failed to load documents:', err) }
+      } catch (err) { console.error('Failed to load documents:', err); toast.error('Erreur lors du chargement des documents') }
     }
     loadDocs()
   }, [selectedOrder])
@@ -591,14 +805,23 @@ export default function Dashboard({ user, profile, onSignOut }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.product.toLowerCase().includes(searchQuery.toLowerCase())
+  // Scroll to top on mount (page refresh)
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  const filteredOrders = useMemo(() => orders.filter(order => {
+    const matchesSearch = (order.product || '').toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = filterStatus === 'all' ||
       (filterStatus === 'delivered' ? (order.status === 6 || order.status === 'delivered') :
        filterStatus === 'in-progress' ? (order.status !== 6 && order.status !== 'delivered') :
        order.status === filterStatus)
     return matchesSearch && matchesStatus
-  })
+  }), [orders, searchQuery, filterStatus])
+
+  const searchTimerRef = useRef(null)
+  const handleSearchChange = (value) => {
+    clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => setSearchQuery(value), 250)
+  }
 
   const lastMsgTime = useRef(0)
   const handleSendMessage = async (e) => {
@@ -632,6 +855,38 @@ export default function Dashboard({ user, profile, onSignOut }) {
     finally { setCreatingOrder(false) }
   }
 
+  const handleEcomOrder = async (formData) => {
+    if (submittingEcom) return
+    setSubmittingEcom(true)
+    try {
+      const result = await createEcomOrder({ clientId: user.id, ...formData })
+      // Refresh ecom services list
+      const updated = await getEcomServices(user.id)
+      setEcomServices(updated)
+      setIsEcomOrderOpen(false)
+
+      if (formData.paymentMethod === 'virement' && result.virement_reference) {
+        setEcomVirementInfo({
+          reference: result.virement_reference,
+          amount: formData.price,
+          pack: ECOM_PACKS.find(p => p.key === formData.pack)?.label || formData.pack,
+        })
+      } else if (formData.paymentMethod === 'stripe') {
+        // TODO: redirect to Stripe checkout when keys are configured
+        toast.success('Commande enregistrée ! Vous serez redirigé vers le paiement sous peu.')
+      }
+
+      if (formData.paymentMethod === 'virement' && result.virement_reference) {
+        toast.success('Commande créée ! Référence : ' + result.virement_reference)
+      }
+    } catch (err) {
+      console.error('createEcomOrder failed:', err)
+      toast.error('Erreur : ' + (err?.message || 'impossible de créer la commande'))
+    } finally {
+      setSubmittingEcom(false)
+    }
+  }
+
   const handleUploadClick = () => uploadInputRef.current?.click()
 
   const handleFileUpload = async (e) => {
@@ -654,6 +909,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
     try {
       const url = await getDocumentUrl(doc.storage_path || doc.file_path)
       if (url) window.open(url, '_blank')
+      else toast.error('Lien de téléchargement indisponible')
     } catch (err) { toast.error('Téléchargement impossible.') }
   }
 
@@ -666,6 +922,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
     }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 oklch(55% 0.22 25 / 0) } 50% { box-shadow: 0 0 12px 2px oklch(55% 0.22 25 / 0.15) } }
         @keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
         @keyframes fadeSlideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         @keyframes cardReveal { from { opacity:0; transform:translateY(12px) scale(0.98) } to { opacity:1; transform:translateY(0) scale(1) } }
@@ -685,6 +942,13 @@ export default function Dashboard({ user, profile, onSignOut }) {
           .dash-catalog-grid { grid-template-columns: 1fr !important; }
           .header-center-tabs { display: none !important; }
           .order-metadata { grid-template-columns: repeat(2, 1fr) !important; }
+          .header-label-client { display: none !important; }
+          .header-tier-badge { display: none !important; }
+          .header-divider { display: none !important; }
+          .header-settings-btn { display: none !important; }
+          .header-logout-btn { display: none !important; }
+          .header-demande-label { display: none !important; }
+          .mobile-view-toggle { display: flex !important; }
         }
         @media (max-width: 480px) {
           .dash-content { padding: 8px !important; }
@@ -714,14 +978,14 @@ export default function Dashboard({ user, profile, onSignOut }) {
           }}>
             CARAXE<span style={{ color: c.red }}>S</span>
           </span>
-          <div style={{
+          <div className="header-divider" style={{
             width: '1px', height: 20, background: c.border, margin: `0 ${sp[1]}`,
           }} />
-          <span style={{
+          <span className="header-label-client" style={{
             fontSize: '9px', fontFamily: f.mono, letterSpacing: '0.1em',
             textTransform: 'uppercase', fontWeight: 700, color: c.gold,
           }}>Espace Client</span>
-          <span style={{
+          <span className="header-tier-badge" style={{
             padding: '2px 8px', background: tier.colorSoft,
             border: `1px solid ${tier.color}33`, color: tier.color,
             fontSize: '9px', fontFamily: f.mono, fontWeight: 700,
@@ -746,6 +1010,8 @@ export default function Dashboard({ user, profile, onSignOut }) {
           if (services.includes('stock') || services.includes('boutique')) {
             tabs.push({ key: 'stock', label: 'Stock', activeColor: c.purple, icon: '⬡' })
           }
+          // Boutique tab always visible — clients can order e-com services from here
+          tabs.push({ key: 'boutique', label: 'E-commerce', activeColor: c.gold, icon: '◉' })
           return tabs
         })().map(v => (
             <button key={v.key} onClick={() => setViewMode(v.key)} style={{
@@ -761,22 +1027,84 @@ export default function Dashboard({ user, profile, onSignOut }) {
         {/* Right */}
         <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
           {/* Notification */}
-          <button style={{
-            background: 'none', border: 'none', padding: '8px', cursor: 'pointer',
-            color: c.textSecondary, display: 'flex', position: 'relative',
-            transition: `color 0.2s ${ease.smooth}`,
-          }}
-            onMouseOver={(e) => e.currentTarget.style.color = c.gold}
-            onMouseOut={(e) => e.currentTarget.style.color = c.textSecondary}
-          >
-            <Icon d={icons.bell} size={16} color="currentColor" />
-            {Object.values(unreadCounts).some(c => c > 0) && (
-              <div style={{
-                position: 'absolute', top: 6, right: 6, width: 6, height: 6,
-                borderRadius: '50%', background: c.red,
-              }} />
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowNotifPanel(prev => !prev)} style={{
+              background: 'none', border: 'none', padding: '8px', cursor: 'pointer',
+              color: c.textSecondary, display: 'flex', position: 'relative',
+              transition: `color 0.2s ${ease.smooth}`,
+            }}
+              onMouseOver={(e) => e.currentTarget.style.color = c.gold}
+              onMouseOut={(e) => e.currentTarget.style.color = c.textSecondary}
+            >
+              <Icon d={icons.bell} size={16} color="currentColor" />
+              {Object.values(unreadCounts).some(v => v > 0) && (
+                <div style={{
+                  position: 'absolute', top: 6, right: 6, width: 6, height: 6,
+                  borderRadius: '50%', background: c.red,
+                }} />
+              )}
+            </button>
+
+            {/* Notification dropdown */}
+            {showNotifPanel && (
+              <>
+                <div onClick={() => setShowNotifPanel(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, zIndex: 100,
+                  width: 320, maxHeight: 380, overflowY: 'auto',
+                  background: c.bgSurface, border: `1px solid ${c.border}`,
+                  boxShadow: shadow.lg || '0 8px 32px rgba(0,0,0,0.3)',
+                }}>
+                  <div style={{
+                    padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <span style={{ fontFamily: f.display, fontSize: size.sm, fontWeight: 700, color: c.text }}>
+                      Notifications
+                    </span>
+                    <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary }}>
+                      {Object.values(unreadCounts).reduce((a, b) => a + b, 0)} non lus
+                    </span>
+                  </div>
+
+                  {orders.filter(o => (unreadCounts[o.id] || 0) > 0).length === 0 ? (
+                    <div style={{ padding: sp[4], textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', opacity: 0.3, marginBottom: sp[1] }}>🔔</div>
+                      <p style={{ fontSize: size.sm, color: c.textTertiary, margin: 0 }}>Aucune notification</p>
+                    </div>
+                  ) : (
+                    orders.filter(o => (unreadCounts[o.id] || 0) > 0).map(order => (
+                      <div key={order.id} onClick={() => {
+                        setSelectedOrder(order)
+                        setViewMode('orders')
+                        setMobileShowSidebar(false)
+                        setShowNotifPanel(false)
+                      }} style={{
+                        padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: sp[2],
+                        transition: `background 0.15s ${ease.smooth}`,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = c.bgElevated}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <div style={{
+                          width: 8, height: 8, borderRadius: '50%', background: c.red, flexShrink: 0,
+                        }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: size.sm, fontWeight: 600, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {order.product || `Commande #${order.id?.slice(0, 6)}`}
+                          </div>
+                          <div style={{ fontSize: '10px', color: c.textTertiary, fontFamily: f.mono }}>
+                            {unreadCounts[order.id]} message{unreadCounts[order.id] > 1 ? 's' : ''} non lu{unreadCounts[order.id] > 1 ? 's' : ''}
+                          </div>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.textTertiary} strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
             )}
-          </button>
+          </div>
 
           {/* New order */}
           <button onClick={() => setIsNewOrderOpen(true)} style={{
@@ -784,18 +1112,17 @@ export default function Dashboard({ user, profile, onSignOut }) {
             border: 'none', color: c.white, fontSize: '10px', fontWeight: 700,
             cursor: 'pointer', fontFamily: f.mono, letterSpacing: '0.06em',
             textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px',
-            transition: `all 0.25s ${ease.luxury}`,
-            boxShadow: `0 2px 8px oklch(55% 0.22 25 / 0.20)`,
+            transition: `background 0.2s ${ease.smooth}`,
           }}
-            onMouseOver={(e) => { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = `0 4px 16px oklch(55% 0.22 25 / 0.30)`; e.currentTarget.style.transform = 'translateY(-1px)' }}
-            onMouseOut={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.boxShadow = `0 2px 8px oklch(55% 0.22 25 / 0.20)`; e.currentTarget.style.transform = 'translateY(0)' }}
+            onMouseOver={(e) => { e.currentTarget.style.background = c.redDeep }}
+            onMouseOut={(e) => { e.currentTarget.style.background = c.red }}
           >
             <Icon d={icons.plus} size={12} color="currentColor" />
-            Demande
+            <span className="header-demande-label">Demande</span>
           </button>
 
           {/* Settings */}
-          <button onClick={() => navigate('/settings')} style={{
+          <button className="header-settings-btn" onClick={() => navigate('/settings')} style={{
             background: 'none', border: 'none', padding: '8px', cursor: 'pointer',
             color: c.textSecondary, display: 'flex',
             transition: `color 0.2s ${ease.smooth}`,
@@ -809,7 +1136,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
           </button>
 
           {/* Sign out */}
-          <button onClick={onSignOut} style={{
+          <button className="header-logout-btn" onClick={onSignOut} style={{
             background: 'none', border: 'none', padding: '8px', cursor: 'pointer',
             color: c.textSecondary, display: 'flex',
             transition: `color 0.2s ${ease.smooth}`,
@@ -821,6 +1148,39 @@ export default function Dashboard({ user, profile, onSignOut }) {
           </button>
         </div>
       </header>
+
+      {/* ── MOBILE VIEW TOGGLE ── */}
+      <div className="mobile-view-toggle" style={{
+        display: 'none', overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+        background: c.bgSurface, borderBottom: `1px solid ${c.border}`,
+        padding: '0 8px', gap: '1px', flexShrink: 0, scrollbarWidth: 'none',
+      }}>
+        {(() => {
+          const services = profile?.services_enabled || ['sourcing']
+          const tabs = [
+            { key: 'orders', label: 'Commandes', activeColor: c.red, icon: '◆' },
+            { key: 'catalogue', label: 'Catalogue', activeColor: c.gold, icon: '◈' },
+          ]
+          if (services.includes('logistics') || services.includes('expedition')) {
+            tabs.push({ key: 'expedition', label: 'Expédition', activeColor: c.teal, icon: '▸' })
+          }
+          if (services.includes('stock') || services.includes('boutique')) {
+            tabs.push({ key: 'stock', label: 'Stock', activeColor: c.purple, icon: '⬡' })
+          }
+          // Boutique tab always visible — clients can order e-com services from here
+          tabs.push({ key: 'boutique', label: 'E-commerce', activeColor: c.gold, icon: '◉' })
+          return tabs.map(v => (
+            <button key={v.key} onClick={() => setViewMode(v.key)} style={{
+              padding: '10px 14px', background: 'none', whiteSpace: 'nowrap',
+              border: 'none', borderBottom: viewMode === v.key ? `2px solid ${v.activeColor}` : '2px solid transparent',
+              color: viewMode === v.key ? v.activeColor : c.textSecondary,
+              fontSize: '10px', fontFamily: f.mono, fontWeight: 600, cursor: 'pointer',
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+            }}>{v.icon} {v.label}</button>
+          ))
+        })()}
+      </div>
 
       {/* ── CONTENT ── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -891,10 +1251,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     {dynamicProducts.map((prod, i) => (
                       <div key={prod.id} style={{
                         background: c.bgElevated, border: `1px solid ${c.border}`, overflow: 'hidden',
-                        transition: `all 0.25s ${ease.smooth}`, cursor: 'pointer',
+                        transition: `border-color 0.2s ${ease.smooth}`, cursor: 'pointer',
                       }}
-                      onMouseOver={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.transform = 'translateY(-3px)' }}
-                      onMouseOut={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.transform = 'translateY(0)' }}>
+                      onMouseOver={(e) => { e.currentTarget.style.borderColor = c.gold }}
+                      onMouseOut={(e) => { e.currentTarget.style.borderColor = c.border }}>
                         <div style={{ height: 180, background: c.bgSurface, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                           {prod.image_urls?.[0] ? (
                             <img src={prod.image_urls[0]} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -936,20 +1296,15 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   return (
                     <div key={cat.id} onClick={() => setSelectedCatalogItem(cat)} style={{
                       background: c.bgElevated, border: `1px solid ${c.border}`,
-                      padding: 0, transition: `all 0.25s ${ease.smooth}`,
-                      animation: `cardReveal 0.4s ${ease.out} ${catIdx * 50}ms both`,
+                      padding: 0, transition: `border-color 0.2s ${ease.smooth}`,
                       position: 'relative', overflow: 'hidden',
                       display: 'flex', flexDirection: 'column', cursor: 'pointer',
                     }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.borderColor = tier.color
-                        e.currentTarget.style.transform = 'translateY(-3px)'
-                        e.currentTarget.style.boxShadow = `0 8px 32px ${tier.color}12`
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.borderColor = c.border
-                        e.currentTarget.style.transform = 'translateY(0)'
-                        e.currentTarget.style.boxShadow = 'none'
                       }}>
 
                       {/* Accent bar */}
@@ -1071,7 +1426,6 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       background: c.bgElevated, border: `1px solid ${c.border}`,
                       maxWidth: 560, width: '100%', maxHeight: '85vh', overflowY: 'auto',
                       position: 'relative', boxShadow: shadow.xl,
-                      animation: `cardReveal 0.35s ${ease.out}`,
                     }}>
                       {/* Accent bar */}
                       <div style={{ height: 4, background: `linear-gradient(90deg, ${tier.color}, ${tier.color}44)` }} />
@@ -1417,7 +1771,6 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     return (
                       <div key={ship.id || i} style={{
                         background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[3],
-                        animation: `fadeSlideIn 0.3s ease-out ${i * 80}ms both`,
                       }}>
                         {/* Shipment header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[3] }}>
@@ -1500,7 +1853,6 @@ export default function Dashboard({ user, profile, onSignOut }) {
                 ].map((stat, i) => (
                   <div key={i} style={{
                     padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
-                    animation: `fadeSlideIn 0.3s ease-out ${i * 60}ms both`,
                   }}>
                     <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>{stat.label}</div>
                     <div style={{ fontSize: size.xl, fontWeight: 700, fontFamily: f.display, color: stat.color }}>{stat.value}</div>
@@ -1541,7 +1893,6 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       <div key={item.id || i} style={{
                         display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px',
                         padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`,
-                        animation: `fadeSlideIn 0.2s ease-out ${i * 40}ms both`,
                         transition: `background 0.2s ${ease.smooth}`,
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.background = c.bgElevated}
@@ -1580,6 +1931,244 @@ export default function Dashboard({ user, profile, onSignOut }) {
               </div>
             </div>
           </div>
+        ) : viewMode === 'boutique' ? (
+          /* ─── BOUTIQUE E-COMMERCE VIEW ─── */
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto' }} className="admin-scroll">
+            <div style={{ padding: sp[4], maxWidth: 960, margin: '0 auto', width: '100%' }}>
+              {/* Header + CTA */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[4], flexWrap: 'wrap', gap: sp[2] }}>
+                <div>
+                  <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>
+                    Ma boutique en ligne
+                  </h2>
+                  <div style={{ width: 40, height: 1, background: c.gold, opacity: 0.3, margin: `${sp[1]} 0` }} />
+                  <p style={{ fontSize: size.sm, color: c.textSecondary, margin: 0, marginTop: sp[1], lineHeight: 1.6 }}>
+                    Commandez, gérez et suivez vos services e-commerce CARAXES.
+                  </p>
+                </div>
+                <button onClick={() => setIsEcomOrderOpen(true)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: `10px ${sp[3]}`, fontSize: size.sm, fontWeight: 700, fontFamily: f.body,
+                  color: c.black, background: c.gold, border: 'none',
+                  cursor: 'pointer', transition: `opacity 0.2s ${ease.smooth}`, letterSpacing: '0.02em',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.opacity = '0.85'}
+                onMouseOut={(e) => e.currentTarget.style.opacity = '1'}>
+                  <Icon d={icons.plus} size={14} color={c.black} /> Commander un service
+                </button>
+              </div>
+
+              {/* Virement info banner */}
+              {ecomVirementInfo && (
+                <div style={{ padding: sp[3], background: 'oklch(22% 0.02 85)', border: `1px solid ${c.gold}33`, marginBottom: sp[4], position: 'relative' }}>
+                  <button onClick={() => setEcomVirementInfo(null)} style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: c.textTertiary, padding: 4 }}>
+                    <Icon d={icons.close} size={14} />
+                  </button>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.gold, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[2], fontWeight: 700 }}>Informations virement</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2], fontSize: size.sm }}>
+                    <div>
+                      <div style={{ color: c.textTertiary, fontSize: '10px', fontFamily: f.mono, marginBottom: '2px' }}>RÉFÉRENCE</div>
+                      <div style={{ color: c.gold, fontWeight: 700, fontFamily: f.mono }}>{ecomVirementInfo.reference}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: c.textTertiary, fontSize: '10px', fontFamily: f.mono, marginBottom: '2px' }}>MONTANT</div>
+                      <div style={{ color: c.text, fontWeight: 700 }}>{ecomVirementInfo.amount?.toLocaleString('fr-FR')} EUR</div>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div style={{ color: c.textTertiary, fontSize: '10px', fontFamily: f.mono, marginBottom: '2px' }}>COORDONNÉES BANCAIRES</div>
+                      <div style={{ color: c.text, fontSize: size.xs, lineHeight: 1.6 }}>
+                        CARAXES TRADING — IBAN : FR76 XXXX XXXX XXXX XXXX XXXX XXX<br/>
+                        BIC : XXXXXXXX — Banque : CIC<br/>
+                        Indiquez la référence <span style={{ color: c.gold, fontWeight: 700 }}>{ecomVirementInfo.reference}</span> dans le motif du virement.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ecom services / orders list */}
+              {ecomServices.length > 0 && (
+                <div style={{ marginBottom: sp[4] }}>
+                  <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[2], fontWeight: 600 }}>
+                    Mes commandes e-commerce ({ecomServices.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
+                    {ecomServices.map(svc => {
+                      const payColors = {
+                        pending: { bg: c.bgSurface, color: c.textSecondary, label: 'En attente' },
+                        paid: { bg: c.greenSoft, color: c.green, label: 'Payé' },
+                        failed: { bg: c.redSoft, color: c.red, label: 'Échoué' },
+                      }
+                      const statusColors = {
+                        pending: { bg: c.bgSurface, color: c.textSecondary, label: 'En attente' },
+                        in_progress: { bg: 'oklch(90% 0.08 85)', color: c.gold, label: 'En cours' },
+                        delivered: { bg: c.greenSoft, color: c.green, label: 'Livré' },
+                        cancelled: { bg: c.redSoft, color: c.red, label: 'Annulé' },
+                      }
+                      const pay = payColors[svc.payment_status] || payColors.pending
+                      const st = statusColors[svc.status] || statusColors.pending
+                      const packLabel = ECOM_PACKS.find(p => p.key === svc.service_type)?.label || svc.service_type
+                      const platformLabel = PLATFORMS.find(p => p.key === svc.platform)?.label || svc.platform
+
+                      return (
+                        <div key={svc.id} style={{
+                          padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
+                          position: 'relative', overflow: 'hidden',
+                        }}>
+                          <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 2, background: st.color }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: sp[2], flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: 200 }}>
+                              <div style={{ fontFamily: f.display, fontSize: size.base, fontWeight: 700, color: c.text, marginBottom: '4px' }}>
+                                {packLabel}
+                              </div>
+                              <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, letterSpacing: '0.04em' }}>
+                                {platformLabel}{svc.shop_name ? ` — ${svc.shop_name}` : ''} — {new Date(svc.created_at).toLocaleDateString('fr-FR')}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: sp[1], flexShrink: 0 }}>
+                              <span style={{ padding: '2px 8px', fontSize: '9px', fontFamily: f.mono, fontWeight: 700, background: pay.bg, color: pay.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{pay.label}</span>
+                              <span style={{ padding: '2px 8px', fontSize: '9px', fontFamily: f.mono, fontWeight: 700, background: st.bg, color: st.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{st.label}</span>
+                            </div>
+                          </div>
+                          {svc.payment_method === 'virement' && svc.payment_status === 'pending' && svc.virement_reference && (
+                            <div style={{ marginTop: sp[2], padding: `${sp[1]} ${sp[2]}`, background: c.bg, border: `1px solid ${c.borderSubtle}`, fontSize: '10px', color: c.textSecondary, fontFamily: f.mono }}>
+                              Ref virement : <span style={{ color: c.gold, fontWeight: 700 }}>{svc.virement_reference}</span> — {svc.price?.toLocaleString('fr-FR')} EUR
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Existing shops */}
+              {shops.length === 0 && ecomServices.length === 0 ? (
+                <div style={{ padding: `${sp[5]} ${sp[4]}`, background: c.bgSurface, border: `1px solid ${c.border}`, textAlign: 'center' }}>
+                  <div style={{ fontSize: '40px', opacity: 0.12, marginBottom: sp[2] }}>🛒</div>
+                  <div style={{ fontFamily: f.display, fontSize: size.lg, color: c.text, marginBottom: sp[1] }}>
+                    Pas encore de boutique
+                  </div>
+                  <p style={{ fontSize: size.sm, color: c.textSecondary, margin: 0, maxWidth: '45ch', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
+                    Commandez une création de boutique ou un service de gestion pour démarrer votre e-commerce avec CARAXES.
+                  </p>
+                  <button onClick={() => setIsEcomOrderOpen(true)} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: sp[3],
+                    padding: `10px ${sp[3]}`, fontSize: size.sm, fontWeight: 700, fontFamily: f.body,
+                    color: c.black, background: c.gold, border: 'none',
+                    cursor: 'pointer', transition: `opacity 0.2s ${ease.smooth}`,
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.opacity = '0.85'}
+                  onMouseOut={(e) => e.currentTarget.style.opacity = '1'}>
+                    Commander un service e-commerce
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
+                  {shops.map(shop => {
+                    const statusColors = {
+                      draft: { bg: c.bgSurface, color: c.textSecondary, label: 'Brouillon' },
+                      building: { bg: c.goldSoft || 'oklch(90% 0.08 85)', color: c.gold, label: 'En construction' },
+                      review: { bg: c.purpleSoft || 'oklch(90% 0.08 300)', color: c.purple, label: 'En révision' },
+                      active: { bg: c.greenSoft, color: c.green, label: 'Active' },
+                      paused: { bg: c.redSoft, color: c.red, label: 'En pause' },
+                      archived: { bg: c.bgSurface, color: c.textTertiary, label: 'Archivée' },
+                    }
+                    const st = statusColors[shop.status] || statusColors.draft
+                    const platformLabels = { shopify: 'Shopify', woocommerce: 'WooCommerce', prestashop: 'PrestaShop', custom: 'Custom' }
+
+                    return (
+                      <div key={shop.id} style={{
+                        background: c.bgSurface, border: `1px solid ${c.border}`,
+                        padding: sp[4], position: 'relative', overflow: 'hidden',
+                      }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: st.color, opacity: 0.5 }} />
+
+                        {/* Shop header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[3] }}>
+                          <div>
+                            <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.text, marginBottom: '4px' }}>
+                              {shop.name}
+                            </div>
+                            <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                              {platformLabels[shop.platform] || shop.platform} — Template {shop.template || 'classic'}
+                            </div>
+                          </div>
+                          <span style={{
+                            padding: '3px 10px', fontSize: '9px', fontFamily: f.mono, fontWeight: 700,
+                            background: st.bg, color: st.color,
+                            letterSpacing: '0.06em', textTransform: 'uppercase',
+                          }}>{st.label}</span>
+                        </div>
+
+                        {/* Domain */}
+                        {shop.domain && (
+                          <div style={{ marginBottom: sp[3], display: 'flex', alignItems: 'center', gap: sp[1] }}>
+                            <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase' }}>URL</span>
+                            <a href={shop.domain.startsWith('http') ? shop.domain : `https://${shop.domain}`} target="_blank" rel="noopener noreferrer"
+                              style={{ fontFamily: f.mono, fontSize: size.sm, color: c.gold, textDecoration: 'none', borderBottom: `1px solid ${c.gold}33` }}>
+                              {shop.domain}
+                            </a>
+                          </div>
+                        )}
+
+                        {/* Setup progress for non-active shops */}
+                        {shop.status !== 'active' && shop.status !== 'paused' && shop.status !== 'archived' && (() => {
+                          const steps = ['draft', 'building', 'review', 'active']
+                          const currentStep = steps.indexOf(shop.status)
+                          const progress = currentStep >= 0 ? ((currentStep + 1) / steps.length) * 100 : 0
+                          const stepLabels = { draft: 'Création', building: 'Construction', review: 'Revue', active: 'En ligne' }
+                          return (
+                            <div style={{ marginBottom: sp[3], padding: `${sp[2]} ${sp[3]}`, background: c.bg, border: `1px solid ${c.borderSubtle}` }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[1] }}>
+                                <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Progression</span>
+                                <span style={{ fontFamily: f.mono, fontSize: '9px', color: st.color, fontWeight: 700 }}>{Math.round(progress)}%</span>
+                              </div>
+                              <div style={{ height: 4, background: c.borderSubtle, overflow: 'hidden', marginBottom: sp[1] }}>
+                                <div style={{ height: '100%', width: `${progress}%`, background: st.color, transition: 'width 0.5s ease' }} />
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                {steps.map((s, i) => (
+                                  <span key={s} style={{ fontSize: '8px', fontFamily: f.mono, color: i <= currentStep ? st.color : c.textTertiary, fontWeight: i === currentStep ? 700 : 400 }}>
+                                    {stepLabels[s]}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })()}
+
+                        {/* Stats row */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: sp[2] }}>
+                          <div style={{ padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}` }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>Produits</div>
+                            <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.text }}>{shop.products_synced || 0}</div>
+                          </div>
+                          <div style={{ padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}` }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>Commandes/mois</div>
+                            <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.text }}>{shop.monthly_orders || 0}</div>
+                          </div>
+                          <div style={{ padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}` }}>
+                            <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>Revenu/mois</div>
+                            <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.gold }}>
+                              {(shop.monthly_revenue || 0).toLocaleString('fr-FR')}€
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Notes */}
+                        {shop.notes && (
+                          <div style={{ marginTop: sp[3], padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}`, fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6 }}>
+                            {shop.notes}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           <>
             {/* ── SIDEBAR ── */}
@@ -1598,7 +2187,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     <Icon d={icons.search} size={14} color={c.textTertiary} />
                   </div>
                   <input type="text" placeholder="Rechercher..."
-                    value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchQuery} onChange={(e) => handleSearchChange(e.target.value)}
                     style={{
                       width: '100%', padding: `10px 12px 10px 34px`,
                       background: c.bgSurface, border: `1px solid ${c.border}`,
@@ -1764,10 +2353,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
                               background: 'none', border: `1px solid ${c.teal}33`, padding: '2px 8px',
                               fontFamily: f.mono, fontSize: '8px', color: c.teal, cursor: 'pointer',
                               letterSpacing: '0.04em', textTransform: 'uppercase',
-                              transition: `all 0.2s ${ease.smooth}`,
+                              transition: `opacity 0.2s ${ease.smooth}`,
                             }}
-                              onMouseOver={e => { e.currentTarget.style.background = `${c.teal}15`; e.currentTarget.style.borderColor = `${c.teal}66` }}
-                              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = `${c.teal}33` }}
+                              onMouseOver={e => { e.currentTarget.style.opacity = '0.7' }}
+                              onMouseOut={e => { e.currentTarget.style.opacity = '1' }}
                             >Voir expéditions →</button>
                           </div>
                           {linked.length > 0 ? linked.map((ship, si) => {
@@ -1843,10 +2432,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
                               background: 'none', border: `1px solid ${c.purple}33`, padding: '2px 8px',
                               fontFamily: f.mono, fontSize: '8px', color: c.purple, cursor: 'pointer',
                               letterSpacing: '0.04em', textTransform: 'uppercase',
-                              transition: `all 0.2s ${ease.smooth}`,
+                              transition: `opacity 0.2s ${ease.smooth}`,
                             }}
-                              onMouseOver={e => { e.currentTarget.style.background = `${c.purple}15`; e.currentTarget.style.borderColor = `${c.purple}66` }}
-                              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = `${c.purple}33` }}
+                              onMouseOver={e => { e.currentTarget.style.opacity = '0.7' }}
+                              onMouseOut={e => { e.currentTarget.style.opacity = '1' }}
                             >Voir stock →</button>
                           </div>
                           {matchedStock.map((item, ii) => {
@@ -2098,6 +2687,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
       </div>
 
       <NewOrderModal isOpen={isNewOrderOpen} onClose={() => { setIsNewOrderOpen(false); setPrefilledProduct('') }} onSubmit={handleCreateOrder} initialProduct={prefilledProduct} />
+      <EcomOrderModal isOpen={isEcomOrderOpen} onClose={() => setIsEcomOrderOpen(false)} onSubmit={handleEcomOrder} submitting={submittingEcom} />
     </div>
   )
 }

@@ -102,6 +102,8 @@ export async function getProfile(userId) {
 
 // ─── ORDERS ───
 export async function getOrders(clientId = null) {
+  // SECURITY: Always filter by clientId if provided. RLS policies should prevent unauthorized access,
+  // but this app-level safeguard ensures clients never accidentally see other users' orders.
   let query = supabase
     .from('orders')
     .select('*')
@@ -177,6 +179,18 @@ export async function sendMessage({ orderId, senderId, senderRole, content, atta
   return data
 }
 
+export async function getUnreadCounts(userId) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('order_id')
+    .neq('sender_id', userId)
+    .eq('read', false)
+  if (error) throw error
+  const counts = {}
+  ;(data || []).forEach(m => { counts[m.order_id] = (counts[m.order_id] || 0) + 1 })
+  return counts
+}
+
 export async function markMessagesRead(orderId, userId) {
   const { error } = await supabase
     .from('messages')
@@ -221,9 +235,10 @@ export async function uploadDocument(orderId, file, uploaderId) {
 }
 
 export async function getDocumentUrl(storagePath) {
-  const { data } = await supabase.storage
+  const { data, error } = await supabase.storage
     .from('documents')
     .createSignedUrl(storagePath, 3600) // 1h
+  if (error) throw error
   return data?.signedUrl
 }
 
@@ -453,6 +468,95 @@ export async function updateCategory(id, updates) {
 export async function deleteCategory(id) {
   const { error } = await supabase.from('categories').delete().eq('id', id)
   if (error) throw error
+}
+
+// ─── SHOPS (E-COMMERCE) ───
+export async function getShops(clientId) {
+  let query = supabase.from('shops').select('*').order('created_at', { ascending: false })
+  if (clientId) query = query.eq('client_id', clientId)
+  const { data, error } = await query
+  if (error) throw error
+  return data || []
+}
+
+export async function createShop(shop) {
+  const { data, error } = await supabase.from('shops').insert(shop).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateShop(id, updates) {
+  const { data, error } = await supabase.from('shops').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteShop(id) {
+  const { error } = await supabase.from('shops').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── ECOM SERVICES ───
+export async function getEcomServices(clientId = null) {
+  let query = supabase.from('ecom_services').select('*').order('created_at', { ascending: false })
+  if (clientId) query = query.eq('client_id', clientId)
+  const { data, error } = await query
+  if (error) { console.warn('ecom_services table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function createEcomService(service) {
+  const { data, error } = await supabase.from('ecom_services').insert(service).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateEcomService(id, updates) {
+  const { data, error } = await supabase.from('ecom_services').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteEcomService(id) {
+  const { error } = await supabase.from('ecom_services').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── ECOM ORDER (Commander un service e-com) ───
+export async function createEcomOrder({
+  clientId, serviceType, pack, platform, shopName, productCategory,
+  estimatedProducts, hasBranding, notes, paymentMethod, price, isRecurring, discountPct,
+}) {
+  // Generate virement reference if needed
+  const virementRef = paymentMethod === 'virement'
+    ? 'CRX-ECOM-' + String(Date.now()).slice(-6) + String(Math.floor(Math.random() * 100)).padStart(2, '0')
+    : null
+
+  const { data, error } = await supabase
+    .from('ecom_services')
+    .insert({
+      client_id: clientId,
+      service_type: serviceType,
+      pack: pack || 'custom',
+      platform: platform || 'undecided',
+      shop_name: shopName || null,
+      product_category: productCategory || null,
+      estimated_products: estimatedProducts ? parseInt(estimatedProducts) : null,
+      has_branding: hasBranding || false,
+      notes: notes || null,
+      payment_method: paymentMethod,
+      payment_status: 'pending',
+      price: price || 0,
+      currency: 'EUR',
+      is_recurring: isRecurring || false,
+      discount_pct: discountPct || 0,
+      virement_reference: virementRef,
+      status: 'pending',
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
 // ─── WELCOME MESSAGE ───
