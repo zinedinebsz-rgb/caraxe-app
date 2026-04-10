@@ -1577,7 +1577,7 @@ h3 { font-size: var(--text-xl); }
         <div class="price-amount">0&thinsp;&euro;</div>
         <div class="price-period">Gratuit, sans engagement</div>
         <ul class="price-features">
-          <li>3 fournisseurs compar&eacute;s</li>
+          <li>2 fournisseurs compar&eacute;s</li>
           <li>Rapport basique</li>
           <li>Support email 48h</li>
           <li>Id&eacute;al pour tester le service</li>
@@ -1912,7 +1912,7 @@ h3 { font-size: var(--text-xl); }
           Je peux commencer par un test avant de m&rsquo;engager ?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <div class="faq-a"><p>Absolument. Le comparatif fournisseurs est gratuit, sans engagement. On vous envoie un rapport avec 3 fournisseurs compar&eacute;s. Si &ccedil;a vous convient, on passe au sourcing. Sinon, z&eacute;ro frais.</p></div>
+        <div class="faq-a"><p>Absolument. Le comparatif fournisseurs est gratuit, sans engagement. On vous envoie un rapport avec 2 fournisseurs compar&eacute;s. Si &ccedil;a vous convient, on passe au sourcing. Sinon, z&eacute;ro frais.</p></div>
       </div>
 
     </div>
@@ -1955,7 +1955,7 @@ h3 { font-size: var(--text-xl); }
     <button class="form-modal-close" onclick="closeForm('formComparatif')">&times;</button>
     <div class="form-modal-tag">Gratuit &middot; Sans engagement</div>
     <h3>Comparatif <em>fournisseurs</em></h3>
-    <p class="form-modal-sub">On vous envoie un rapport avec 3 fournisseurs compar&eacute;s sous 48h. Z&eacute;ro frais.</p>
+    <p class="form-modal-sub">On vous envoie un rapport avec 2 fournisseurs compar&eacute;s sous 48h. Z&eacute;ro frais.</p>
     <form onsubmit="submitForm(event, 'comparatif')">
       <label for="comp-name">Votre nom</label>
       <input type="text" id="comp-name" name="name" placeholder="Pr&eacute;nom et nom" required autocomplete="name">
@@ -2329,12 +2329,16 @@ document.getElementById('ctaForm').addEventListener('submit', function(e) {
     var btn = this.querySelector('button');
     btn.disabled = true;
     btn.textContent = 'Envoi\u2026';
-    // Send to Supabase Edge Function or fallback
-    fetch('https://xbkwcoymcehdbirgdsli.supabase.co/functions/v1/lead-capture', {
+    // Send to Supabase REST API (leads table)
+    fetch('https://nmuqzzedlxilnbpnalsf.supabase.co/rest/v1/leads', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, source: 'landing-cta', timestamp: new Date().toISOString() })
-    }).then(function() {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdXF6emVkbHhpbG5icG5hbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjI3NDIsImV4cCI6MjA5MDg5ODc0Mn0.HvrL1uQxHccBiOwHPj1LWi-o-l-J5N2Ga_beDy2TANs',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email: email, source: 'landing-cta' })
+    }).then(function(r) { if (!r.ok) throw new Error(r.status); }).then(function() {
       btn.textContent = 'Envoy\u00e9 \u2713';
       btn.style.background = 'oklch(55% 0.15 155)';
       input.value = '';
@@ -2474,11 +2478,15 @@ function submitForm(e, formType) {
     sourcing: 'R\u00e9server une consultation sourcing'
   };
 
-  fetch('https://xbkwcoymcehdbirgdsli.supabase.co/functions/v1/lead-capture', {
+  fetch('https://nmuqzzedlxilnbpnalsf.supabase.co/rest/v1/leads', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  }).then(function() {
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdXF6emVkbHhpbG5icG5hbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjI3NDIsImV4cCI6MjA5MDg5ODc0Mn0.HvrL1uQxHccBiOwHPj1LWi-o-l-J5N2Ga_beDy2TANs',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ name: data.name || data.nom, email: data.email, phone: data.phone || data.tel, product: data.product || data.produit, source: data.source, message: data.message || data.notes || '', data: data })
+  }).then(function(r) { if (!r.ok) throw new Error(r.status); }).then(function() {
     // Show success state with Acuity booking CTA
     var modal = form.closest('.form-modal');
     form.style.display = 'none';
