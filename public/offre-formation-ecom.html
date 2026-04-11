@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation E-Commerce Personnalisée — CARAXES</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #141210;
+            color: #e8e0d4;
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        /* Header */
+        header {
+            border-bottom: 1px solid #2a2520;
+            padding: 2rem;
+            background-color: #1e1a16;
+        }
+
+        .header-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: #c8a85c;
+            font-family: Georgia, serif;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: #c0392b;
+        }
+
+        nav a {
+            color: #8a7e6e;
+            text-decoration: none;
+            margin-left: 2rem;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: #c8a85c;
+        }
+
+        /* Main Container */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            border-bottom: 1px solid #2a2520;
+        }
+
+        h1 {
+            font-family: Georgia, serif;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: #e8e0d4;
+            line-height: 1.2;
+        }
+
+        .price-badge {
+            display: inline-block;
+            background-color: #c0392b;
+            color: #e8e0d4;
+            padding: 0.75rem 2rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1.5rem 0;
+            border: 1px solid #c0392b;
+        }
+
+        .hero-description {
+            font-size: 1.05rem;
+            color: #8a7e6e;
+            max-width: 700px;
+            margin: 2rem auto 0;
+            line-height: 1.8;
+        }
+
+        /* What's Included Section */
+        .included {
+            padding: 4rem 0;
+            border-bottom: 1px solid #2a2520;
+        }
+
+        .section-title {
+            font-family: Georgia, serif;
+            font-size: 1.8rem;
+            margin-bottom: 2.5rem;
+            color: #e8e0d4;
+            font-weight: 400;
+        }
+
+        .included-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .included-item {
+            padding: 1.5rem;
+            border-left: 3px solid #c8a85c;
+            background-color: #1e1a16;
+        }
+
+        .included-item h3 {
+            font-family: Georgia, serif;
+            font-size: 1.2rem;
+            color: #c8a85c;
+            margin-bottom: 0.8rem;
+            font-weight: 400;
+        }
+
+        .included-item p {
+            color: #8a7e6e;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Form Section */
+        .form-section {
+            padding: 4rem 0;
+        }
+
+        form {
+            background-color: #1e1a16;
+            padding: 2.5rem;
+            border: 1px solid #2a2520;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.6rem;
+            font-size: 0.95rem;
+            color: #e8e0d4;
+            font-weight: 500;
+        }
+
+        .required::after {
+            content: " *";
+            color: #c0392b;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="file"],
+        input[type="color"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #141210;
+            border: 1px solid #2a2520;
+            color: #e8e0d4;
+            font-family: system-ui, sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: system-ui, sans-serif;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="file"]:focus,
+        input[type="color"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #c8a85c;
+        }
+
+        input[type="color"] {
+            cursor: pointer;
+            height: 44px;
+            padding: 2px;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        option {
+            background-color: #141210;
+            color: #e8e0d4;
+        }
+
+        /* Radio and Checkbox Groups */
+        .form-group-radio,
+        .form-group-checkbox {
+            margin-bottom: 2rem;
+        }
+
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-item,
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            accent-color: #c8a85c;
+        }
+
+        .radio-item label,
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        /* Two Column Layout for Form */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        /* File Upload Note */
+        .upload-note {
+            font-size: 0.85rem;
+            color: #8a7e6e;
+            margin-top: 0.4rem;
+        }
+
+        /* Submit Button */
+        .submit-wrapper {
+            margin-top: 2.5rem;
+            text-align: center;
+        }
+
+        button[type="submit"] {
+            background-color: #c0392b;
+            color: #e8e0d4;
+            padding: 1rem 2.5rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border: 1px solid #c0392b;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: system-ui, sans-serif;
+            letter-spacing: 0.02em;
+        }
+
+        button[type="submit"]:hover {
+            background-color: transparent;
+            color: #c0392b;
+        }
+
+        button[type="submit"]:active {
+            transform: scale(0.98);
+        }
+
+        .form-error {
+            display: none;
+            color: #c0392b;
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+        }
+
+        .form-error.show {
+            display: block;
+        }
+
+        /* Form Section Headings */
+        .form-section-heading {
+            font-family: Georgia, serif;
+            font-size: 1.2rem;
+            color: #c8a85c;
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2520;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background-color: #0f0d0a;
+            border-left: 3px solid #c8a85c;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            color: #8a7e6e;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .disclaimer p {
+            margin: 0;
+        }
+
+        .disclaimer strong {
+            color: #e8e0d4;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid #2a2520;
+            padding: 3rem 2rem;
+            background-color: #1e1a16;
+            text-align: center;
+            margin-top: 4rem;
+            color: #8a7e6e;
+            font-size: 0.9rem;
+        }
+
+        .footer-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-size: 1.3rem;
+            color: #c8a85c;
+            margin-bottom: 1rem;
+            font-family: Georgia, serif;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .footer-logo span {
+            color: #c0392b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .header-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            nav {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav a {
+                margin-left: 0;
+            }
+
+            .hero {
+                padding: 2.5rem 0;
+            }
+
+            .included-grid {
+                grid-template-columns: 1fr;
+            }
+
+            form {
+                padding: 1.5rem;
+            }
+
+            .radio-group,
+            .checkbox-group {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            button[type="submit"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">CARA<span>X</span>ES</div>
+            <nav>
+                <a href="https://caraxes.fr">&larr; Retour au site</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Formation E-Commerce Personnalisée</h1>
+            <div class="price-badge">399€</div>
+            <p class="hero-description">
+                Un guide complet et adapté à votre niche pour lancer ou développer votre boutique en ligne.
+                Nos experts créent un document personnalisé qui reflète votre identité de marque et vos objectifs commerciaux.
+            </p>
+        </section>
+
+        <!-- What's Included Section -->
+        <section class="included">
+            <h2 class="section-title">Contenu de la Formation</h2>
+            <div class="included-grid">
+                <div class="included-item">
+                    <h3>PDF Personnalisé</h3>
+                    <p>Un document complet aux couleurs de votre boutique, conçu spécifiquement pour votre niche e-commerce.</p>
+                </div>
+                <div class="included-item">
+                    <h3>30 à 50 Pages</h3>
+                    <p>Un guide exhaustif couvrant tous les aspects de la gestion d'une boutique en ligne professionnelle.</p>
+                </div>
+                <div class="included-item">
+                    <h3>Adapté à Votre Niche</h3>
+                    <p>Conseils et stratégies spécifiques à votre secteur : Halal, Textile, Cosmétique, Épicerie, etc.</p>
+                </div>
+                <div class="included-item">
+                    <h3>Votre Logo</h3>
+                    <p>Votre identité visuelle intégrée dans le document pour une cohérence de marque maximale.</p>
+                </div>
+                <div class="included-item">
+                    <h3>Stratégies Éprouvées</h3>
+                    <p>Des tactiques marketing et de conversion adaptées aux marchés musulmans et éthiques.</p>
+                </div>
+                <div class="included-item">
+                    <h3>Accompagnement Niveau</h3>
+                    <p>Contenu calibré selon votre niveau : débutant, intermédiaire ou avancé pour une progression optimale.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section class="form-section">
+            <h2 class="section-title">Racontez-Nous Votre Projet</h2>
+            <form id="formationForm">
+                <!-- Infos Personnelles -->
+                <div class="form-section-heading">Vos Informations</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nomComplet" class="required">Nom complet</label>
+                        <input type="text" id="nomComplet" name="nomComplet" placeholder="Votre nom et pr&eacute;nom">
+                        <div class="form-error" data-field="nomComplet"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="required">Email</label>
+                        <input type="email" id="email" name="email" placeholder="votre@email.com">
+                        <div class="form-error" data-field="email"></div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telephone" class="required">T&eacute;l&eacute;phone / WhatsApp</label>
+                        <input type="tel" id="telephone" name="telephone" placeholder="+33 6 12 34 56 78">
+                        <div class="form-error" data-field="telephone"></div>
+                    </div>
+                </div>
+
+                <!-- Infos Boutique -->
+                <div class="form-section-heading">Votre Boutique</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nomBoutique" class="required">Nom de la boutique</label>
+                        <input type="text" id="nomBoutique" name="nomBoutique" placeholder="Ex: La Barakah Cosm&eacute;tique">
+                        <div class="form-error" data-field="nomBoutique"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="urlBoutique">URL de la boutique</label>
+                        <input type="text" id="urlBoutique" name="urlBoutique" placeholder="https://ma-boutique.com">
+                        <div class="upload-note">Optionnel — si elle existe d&eacute;j&agrave;</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plateforme" class="required">Plateforme</label>
+                        <select id="plateforme" name="plateforme">
+                            <option value="">S&eacute;lectionnez une plateforme...</option>
+                            <option value="shopify">Shopify</option>
+                            <option value="woocommerce">WooCommerce</option>
+                            <option value="prestashop">PrestaShop</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                        <div class="form-error" data-field="plateforme"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="niche" class="required">Niche / Secteur</label>
+                        <input type="text" id="niche" name="niche" placeholder="Ex: Mode hijab, cosm&eacute;tique halal, &eacute;picerie...">
+                        <div class="form-error" data-field="niche"></div>
+                    </div>
+                </div>
+
+                <!-- Identit&eacute; Visuelle -->
+                <div class="form-section-heading">Identit&eacute; Visuelle</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="couleurPrimaire" class="required">Couleur principale</label>
+                        <input type="color" id="couleurPrimaire" name="couleurPrimaire" value="#c0392b">
+                        <div class="upload-note">Par d&eacute;faut: Dragon Red (#c0392b)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="couleurSecondaire" class="required">Couleur secondaire</label>
+                        <input type="color" id="couleurSecondaire" name="couleurSecondaire" value="#c8a85c">
+                        <div class="upload-note">Par d&eacute;faut: Art D&eacute;co Gold (#c8a85c)</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="logo">Logo de votre boutique</label>
+                    <input type="file" id="logo" name="logo" accept="image/*">
+                    <div class="upload-note">PNG, JPG ou SVG (optionnel). Stock&eacute; temporairement en base64.</div>
+                </div>
+
+                <!-- Votre Situation -->
+                <div class="form-section-heading">Votre Situation</div>
+                <div class="form-group-radio">
+                    <label class="required">Quel est ton niveau actuel ?</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="debutant" name="niveau" value="debutant">
+                            <label for="debutant">D&eacute;butant complet</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="bases" name="niveau" value="bases">
+                            <label for="bases">J'ai des bases</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="intermediaire" name="niveau" value="intermediaire">
+                            <label for="intermediaire">Interm&eacute;diaire</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="avance" name="niveau" value="avance">
+                            <label for="avance">Avanc&eacute;</label>
+                        </div>
+                    </div>
+                    <div class="form-error" data-field="niveau"></div>
+                </div>
+
+                <div class="form-group-radio">
+                    <label class="required">Quel est ton objectif principal ?</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="lancer" name="objectif" value="lancer">
+                            <label for="lancer">Lancer ma boutique</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="augmenter" name="objectif" value="augmenter">
+                            <label for="augmenter">Augmenter mes ventes</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="automatiser" name="objectif" value="automatiser">
+                            <label for="automatiser">Automatiser</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="optimiser" name="objectif" value="optimiser">
+                            <label for="optimiser">Tout optimiser</label>
+                        </div>
+                    </div>
+                    <div class="form-error" data-field="objectif"></div>
+                </div>
+
+                <!-- Contexte Additionnel -->
+                <div class="form-section-heading">En Savoir Plus Sur Toi</div>
+                <div class="form-group">
+                    <label for="defi">Quel est ton plus gros d&eacute;fi actuellement ?</label>
+                    <textarea id="defi" name="defi" placeholder="Ex: Je ne sais pas par o&ugrave; commencer, j'ai du mal &agrave; vendre, la logistique m'effraie..."></textarea>
+                    <div class="upload-note">Optionnel mais recommand&eacute;</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="budget" class="required">Budget mensuel pub estim&eacute;</label>
+                        <select id="budget" name="budget">
+                            <option value="">S&eacute;lectionnez...</option>
+                            <option value="0">0&euro;</option>
+                            <option value="moins-100">Moins de 100&euro;</option>
+                            <option value="100-500">100&euro; &agrave; 500&euro;</option>
+                            <option value="500-plus">500&euro;+</option>
+                            <option value="ne-sais-pas">Je ne sais pas</option>
+                        </select>
+                        <div class="form-error" data-field="budget"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="produits" class="required">Combien de produits souhaites-tu vendre ?</label>
+                        <select id="produits" name="produits">
+                            <option value="">S&eacute;lectionnez...</option>
+                            <option value="1-10">1 &agrave; 10</option>
+                            <option value="10-30">10 &agrave; 30</option>
+                            <option value="30-60">30 &agrave; 60</option>
+                            <option value="60-plus">60+</option>
+                        </select>
+                        <div class="form-error" data-field="produits"></div>
+                    </div>
+                </div>
+
+                <div class="form-group-radio">
+                    <label class="required">As-tu d&eacute;j&agrave; un fournisseur ?</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="fournisseur-oui" name="fournisseur" value="oui">
+                            <label for="fournisseur-oui">Oui</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="fournisseur-non" name="fournisseur" value="non">
+                            <label for="fournisseur-non">Non</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="fournisseur-cours" name="fournisseur" value="en-cours">
+                            <label for="fournisseur-cours">En cours de recherche</label>
+                        </div>
+                    </div>
+                    <div class="form-error" data-field="fournisseur"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="precision">Message ou pr&eacute;cisions</label>
+                    <textarea id="precision" name="precision" placeholder="Anything else we should know?"></textarea>
+                    <div class="upload-note">Optionnel</div>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="disclaimer">
+                    <p><strong>Important :</strong> Plus vous remplissez de champs, plus votre formation sera personnalis&eacute;e et pertinente. En cas d'informations incompl&egrave;tes ou insuffisantes, le rendu ne pourra pas &ecirc;tre adapt&eacute; &agrave; vos besoins sp&eacute;cifiques et CARAXES ne pourra &ecirc;tre tenu responsable d'un r&eacute;sultat g&eacute;n&eacute;rique.</p>
+                </div>
+
+                <div class="submit-wrapper">
+                    <button type="submit">Passer au paiement &mdash; 399&euro;</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">CARA<span>X</span>ES</div>
+            <p>Accompagnement complet pour votre boutique e-commerce halal et éthique</p>
+            <p style="margin-top: 1rem; font-size: 0.85rem;">© 2026 CARAXES. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script>
+        const form = document.getElementById('formationForm');
+        const requiredFields = {
+            nomComplet: { type: 'text', message: 'Le nom complet est requis' },
+            email: { type: 'email', message: 'Un email valide est requis' },
+            telephone: { type: 'tel', message: 'Un num&eacute;ro de t&eacute;l&eacute;phone est requis' },
+            nomBoutique: { type: 'text', message: 'Le nom de la boutique est requis' },
+            plateforme: { type: 'select', message: 'Veuillez s&eacute;lectionner une plateforme' },
+            niche: { type: 'text', message: 'La niche est requise' },
+            couleurPrimaire: { type: 'color', message: 'La couleur principale est requise' },
+            couleurSecondaire: { type: 'color', message: 'La couleur secondaire est requise' },
+            niveau: { type: 'radio', message: 'Veuillez s&eacute;lectionner un niveau' },
+            objectif: { type: 'radio', message: 'Veuillez s&eacute;lectionner un objectif' },
+            budget: { type: 'select', message: 'Veuillez s&eacute;lectionner un budget' },
+            produits: { type: 'select', message: 'Veuillez s&eacute;lectionner une quantit&eacute; de produits' },
+            fournisseur: { type: 'radio', message: 'Veuillez r&eacute;pondre sur votre fournisseur' }
+        };
+
+        function clearErrors() {
+            document.querySelectorAll('.form-error').forEach(el => {
+                el.classList.remove('show');
+                el.textContent = '';
+            });
+        }
+
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+
+            for (const [fieldName, rules] of Object.entries(requiredFields)) {
+                const field = document.getElementById(fieldName);
+                let fieldValue = '';
+
+                if (rules.type === 'radio') {
+                    fieldValue = document.querySelector(`input[name="${fieldName}"]:checked`) ? 'checked' : '';
+                } else {
+                    fieldValue = field ? field.value.trim() : '';
+                }
+
+                if (!fieldValue) {
+                    const errorEl = document.querySelector(`[data-field="${fieldName}"]`);
+                    if (errorEl) {
+                        errorEl.textContent = rules.message;
+                        errorEl.classList.add('show');
+                    }
+                    isValid = false;
+                }
+
+                // Email validation
+                if (fieldName === 'email' && fieldValue) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(fieldValue)) {
+                        const errorEl = document.querySelector(`[data-field="${fieldName}"]`);
+                        if (errorEl) {
+                            errorEl.textContent = 'Email invalide';
+                            errorEl.classList.add('show');
+                        }
+                        isValid = false;
+                    }
+                }
+
+                // Phone validation (basic)
+                if (fieldName === 'telephone' && fieldValue) {
+                    const phoneRegex = /^[\d\s\+\-\(\)]{8,}$/;
+                    if (!phoneRegex.test(fieldValue)) {
+                        const errorEl = document.querySelector(`[data-field="${fieldName}"]`);
+                        if (errorEl) {
+                            errorEl.textContent = 'Num&eacute;ro de t&eacute;l&eacute;phone invalide';
+                            errorEl.classList.add('show');
+                        }
+                        isValid = false;
+                    }
+                }
+            }
+
+            return isValid;
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            // Collect form data
+            const formData = new FormData(form);
+            const logoFile = formData.get('logo');
+            const logoData = null;
+
+            // Handle logo file
+            if (logoFile && logoFile.size > 0) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const logoBase64 = event.target.result;
+                    submitFormData(formData, logoBase64);
+                };
+                reader.readAsDataURL(logoFile);
+            } else {
+                submitFormData(formData, logoData);
+            }
+        });
+
+        async function submitFormData(formData, logoBase64) {
+            const data = {
+                offre: 'formation_ecom',
+                client_nom: formData.get('nomComplet'),
+                client_email: formData.get('email'),
+                client_tel: formData.get('telephone'),
+                nom_boutique: formData.get('nomBoutique'),
+                url_boutique: formData.get('urlBoutique') || '',
+                plateforme: formData.get('plateforme'),
+                niche: formData.get('niche'),
+                couleur_primaire: formData.get('couleurPrimaire'),
+                couleur_secondaire: formData.get('couleurSecondaire'),
+                logo_url: logoBase64 || '',
+                niveau: formData.get('niveau'),
+                objectif: formData.get('objectif'),
+                defi: formData.get('defi') || '',
+                budget: formData.get('budget'),
+                produits: formData.get('produits'),
+                fournisseur: formData.get('fournisseur'),
+                precision: formData.get('precision') || ''
+            };
+
+            // Disable submit button and show loading
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Redirection vers le paiement...';
+            submitBtn.style.opacity = '0.7';
+            submitBtn.style.cursor = 'not-allowed';
+
+            try {
+                const response = await fetch('https://caraxes13.app.n8n.cloud/webhook/caraxe-checkout-ecom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.url) {
+                    window.location.href = result.url;
+                } else {
+                    throw new Error(result.error || 'Erreur lors de la création du paiement');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+                alert('Une erreur est survenue. Veuillez r&eacute;essayer ou contacter contact@caraxes.fr');
+            }
+        }
+    </script>
+</body>
+</html>
