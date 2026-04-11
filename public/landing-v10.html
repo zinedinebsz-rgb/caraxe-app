@@ -1424,30 +1424,40 @@ h3 { font-size: var(--text-xl); }
 <script>
 /* ═══════════════════════════════════════
    CARAXES V10 — Scripts
+   Scoped to #caraxes-v10-root when loaded
+   via Squarespace injection, falls back
+   to document when loaded standalone.
    ═══════════════════════════════════════ */
 
-// (Canvas removed — replaced with CSS ambient gradients)
+// Scope: use v10-root if inside Squarespace, otherwise use document
+var V10 = document.getElementById('caraxes-v10-root') || document;
 
 // ── Hero entrance (class-based, no animation keyframes) ──
 requestAnimationFrame(function() {
-  var hero = document.querySelector('.hero');
+  var hero = V10.querySelector('.hero');
   if (hero) hero.classList.add('loaded');
 });
 
 // ── Nav scroll ──
-var nav = document.getElementById('nav');
-window.addEventListener('scroll', function() {
-  nav.classList.toggle('scrolled', window.scrollY > 60);
-}, { passive: true });
+var nav = V10.querySelector('#nav');
+if (nav) {
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+}
 
 // ── Mobile menu ──
-document.getElementById('navToggle').addEventListener('click', function() {
-  document.getElementById('navLinks').classList.toggle('open');
-});
+var navToggle = V10.querySelector('#navToggle');
+var navLinks = V10.querySelector('#navLinks');
+if (navToggle && navLinks) {
+  navToggle.addEventListener('click', function() {
+    navLinks.classList.toggle('open');
+  });
+}
 
 // ── Showreel video play/pause ──
-var playBtn = document.getElementById('playVideo');
-var showreelVideo = document.getElementById('showreelVideo');
+var playBtn = V10.querySelector('#playVideo');
+var showreelVideo = V10.querySelector('#showreelVideo');
 if (playBtn && showreelVideo) {
   playBtn.style.cursor = 'pointer';
   var isPlaying = false;
@@ -1474,7 +1484,7 @@ if (playBtn && showreelVideo) {
 // ── Scroll reveal (IntersectionObserver) ──
 // Strategy: elements are visible by default (CSS). JS adds .hide first,
 // then IntersectionObserver adds .vis to animate in. If JS fails, content stays visible.
-var rvEls = document.querySelectorAll('.rv, .rv-left, .rv-scale');
+var rvEls = V10.querySelectorAll('.rv, .rv-left, .rv-scale');
 rvEls.forEach(function(el) { el.classList.add('hide'); });
 
 // Force reflow so .hide transition takes effect before observer fires
@@ -1493,7 +1503,7 @@ rvEls.forEach(function(el) { revealObs.observe(el); });
 
 // Safety net: if observer doesn't fire within 3s, show everything
 setTimeout(function() {
-  document.querySelectorAll('.rv.hide, .rv-left.hide, .rv-scale.hide').forEach(function(el) {
+  V10.querySelectorAll('.rv.hide, .rv-left.hide, .rv-scale.hide').forEach(function(el) {
     el.classList.remove('hide');
     el.classList.add('vis');
   });
@@ -1501,7 +1511,7 @@ setTimeout(function() {
 
 // ── Counter animation ──
 function animateCounters() {
-  document.querySelectorAll('[data-target]').forEach(function(el) {
+  V10.querySelectorAll('[data-target]').forEach(function(el) {
     var target = parseInt(el.dataset.target);
     var suffix = el.dataset.suffix || '';
     var duration = 1200;
@@ -1524,23 +1534,23 @@ var statsObs = new IntersectionObserver(function(entries) {
     if (e.isIntersecting) { animateCounters(); statsObs.unobserve(e.target); }
   });
 }, { threshold: 0.5 });
-var heroStats = document.querySelector('.hero-stats');
+var heroStats = V10.querySelector('.hero-stats');
 if (heroStats) statsObs.observe(heroStats);
 
-// ── Smooth scroll (robust — works inside Squarespace injection) ──
-document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+// ── Smooth scroll (scoped to V10 root — avoids Squarespace ID conflicts) ──
+V10.querySelectorAll('a[href^="#"]').forEach(function(a) {
   a.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
     var href = a.getAttribute('href');
     if (href && href.length > 1) {
-      var target = document.getElementById(href.substring(1));
+      // Search within V10 root first, then fallback to document
+      var target = V10.querySelector(href);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
     // Close mobile menu
-    var navLinks = document.getElementById('navLinks');
     if (navLinks) navLinks.classList.remove('open');
     return false;
   }, true); // useCapture to beat Squarespace handlers
@@ -1549,14 +1559,15 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
 // ── Parallax effect on hero glows ──
 window.addEventListener('scroll', function() {
   var scrolled = window.scrollY;
-  var hero = document.querySelector('.hero');
+  var hero = V10.querySelector('.hero');
   if (hero && scrolled < window.innerHeight * 1.5) {
     hero.style.setProperty('--parallax', scrolled * 0.3 + 'px');
   }
 }, { passive: true });
 
 // ── CTA form handler ──
-document.getElementById('ctaForm').addEventListener('submit', function(e) {
+var ctaForm = V10.querySelector('#ctaForm');
+if (ctaForm) ctaForm.addEventListener('submit', function(e) {
   e.preventDefault();
   var input = this.querySelector('input');
   var email = input.value;
