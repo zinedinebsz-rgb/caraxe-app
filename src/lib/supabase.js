@@ -46,6 +46,15 @@ export async function resendConfirmationEmail(email) {
   })
 }
 
+// ─── OAUTH (Google / Apple) ───
+export async function signInWithGoogle() {
+  return supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  })
+}
+
+
 export async function signOut() {
   return supabase.auth.signOut()
 }
@@ -266,6 +275,73 @@ export function subscribeToOrders(callback) {
     .subscribe()
 }
 
+export function subscribeToProducts(callback) {
+  return supabase
+    .channel('products-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'products',
+    }, (payload) => callback(payload))
+    .subscribe()
+}
+
+export function subscribeToShipments(callback) {
+  return supabase
+    .channel('shipments-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'shipments',
+    }, (payload) => callback(payload))
+    .subscribe()
+}
+
+export function subscribeToInventory(callback) {
+  return supabase
+    .channel('inventory-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'inventory',
+    }, (payload) => callback(payload))
+    .subscribe()
+}
+
+// ─── NOTIFICATION SUBSCRIPTIONS ───
+export function subscribeToNewClients(callback) {
+  return supabase
+    .channel('new-clients')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'profiles',
+    }, (payload) => callback(payload.new))
+    .subscribe()
+}
+
+export function subscribeToNewOrders(callback) {
+  return supabase
+    .channel('new-orders')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'orders',
+    }, (payload) => callback(payload.new))
+    .subscribe()
+}
+
+export function subscribeToNewEcomServices(callback) {
+  return supabase
+    .channel('new-ecom-services')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'ecom_services',
+    }, (payload) => callback(payload.new))
+    .subscribe()
+}
+
 // ─── UTILS ───
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' o'
@@ -471,7 +547,7 @@ export async function deleteCategory(id) {
 }
 
 // ─── SHOPS (E-COMMERCE) ───
-export async function getShops(clientId) {
+export async function getShops(clientId = null) {
   let query = supabase.from('shops').select('*').order('created_at', { ascending: false })
   if (clientId) query = query.eq('client_id', clientId)
   const { data, error } = await query
@@ -559,12 +635,68 @@ export async function createEcomOrder({
   return data
 }
 
+// ─── LEADS (Pipeline) ───
+export async function getLeads() {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) { console.warn('leads table may not exist yet:', error.message); return [] }
+  return data || []
+}
+
+export async function createLead(lead) {
+  const { data, error } = await supabase.from('leads').insert(lead).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateLead(id, updates) {
+  const { data, error } = await supabase.from('leads').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteLead(id) {
+  const { error } = await supabase.from('leads').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function getLeadByEmail(email) {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .eq('email', email)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) return null
+  return data
+}
+
+export async function getLeadByStripeSession(sessionId) {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .eq('stripe_session_id', sessionId)
+    .maybeSingle()
+  if (error) return null
+  return data
+}
+
+export function subscribeToNewLeads(callback) {
+  return supabase
+    .channel('new-leads')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'leads',
+    }, (payload) => callback(payload))
+    .subscribe()
+}
+
 // ─── WELCOME MESSAGE ───
-// Note: messages are tied to order_id (per-order chat), so a welcome message
-// without an order cannot be inserted. This function is a no-op until a
-// notifications table or global messages system is implemented.
 export async function sendWelcomeMessage(userId) {
-  // Intentionally no-op — the messages table requires order_id.
-  // Welcome info is shown in the onboarding UI instead.
+  // No-op — welcome info is shown in the onboarding UI.
   return
 }

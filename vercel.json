@@ -8,6 +8,13 @@
       ]
     },
     {
+      "source": "/landing-v10.html",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=60" }
+      ]
+    },
+    {
       "source": "/offre-formation-ecom.html",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
@@ -45,26 +52,16 @@
       "has": [{ "type": "host", "value": "caraxes.fr" }],
       "destination": "/vehicules.html"
     },
-    {
-      "source": "/offre-formation-ecom.html",
-      "destination": "/offre-formation-ecom.html"
-    },
-    {
-      "source": "/offre-creation-boutique.html",
-      "destination": "/offre-creation-boutique.html"
-    },
-    {
-      "source": "/merci.html",
-      "destination": "/merci.html"
-    },
-    {
-      "source": "/rendez-vous.html",
-      "destination": "/rendez-vous.html"
-    },
-    {
-      "source": "/landing.html",
-      "destination": "/landing.html"
-    },
+    { "source": "/offre-formation-ecom.html", "destination": "/offre-formation-ecom.html" },
+    { "source": "/offre-creation-boutique.html", "destination": "/offre-creation-boutique.html" },
+    { "source": "/merci.html", "destination": "/merci.html" },
+    { "source": "/rendez-vous.html", "destination": "/rendez-vous.html" },
+    { "source": "/landing.html", "destination": "/landing.html" },
+    { "source": "/landing-v10.html", "destination": "/landing-v10.html" },
+    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/robots.txt" },
+    { "source": "/formation/:path*", "destination": "/formation/:path*" },
+    { "source": "/programme-formation-caraxes.pdf", "destination": "/programme-formation-caraxes.pdf" },
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "caraxes.fr" }],

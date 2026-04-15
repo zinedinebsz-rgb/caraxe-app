@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARAXES — Tableau de Bord KPI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0F0D0B;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #C9A96E;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #C9A96E;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .date-selector {
+            background-color: #1A1815;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .date-selector label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #C9A96E;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .date-selector select,
+        .date-selector input {
+            padding: 10px 12px;
+            background-color: #0F0D0B;
+            border: 1px solid #333;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .date-selector select:focus,
+        .date-selector input:focus {
+            outline: none;
+            border-color: #C9A96E;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background-color: #1A1815;
+            padding: 25px;
+            border-left: 4px solid #C9A96E;
+            position: relative;
+        }
+
+        .kpi-card.primary {
+            border-left-color: #C9A96E;
+        }
+
+        .kpi-card.success {
+            border-left-color: #4CAF50;
+        }
+
+        .kpi-card.warning {
+            border-left-color: #FF9800;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .kpi-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            color: #C9A96E;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .kpi-trend {
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+            min-width: 30px;
+            text-align: right;
+            transition: transform 0.3s;
+        }
+
+        .kpi-trend:hover {
+            transform: scale(1.1);
+        }
+
+        .kpi-trend.up {
+            color: #4CAF50;
+        }
+
+        .kpi-trend.down {
+            color: #C43A2F;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            color: #EDE6DA;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .kpi-unit {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .kpi-input-group {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #333;
+        }
+
+        .kpi-input-group label {
+            display: block;
+            font-size: 11px;
+            color: #C9A96E;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .kpi-input {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: #0F0D0B;
+            border: 1px solid #333;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .kpi-input:focus {
+            outline: none;
+            border-color: #C9A96E;
+        }
+
+        .kpi-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: #999;
+        }
+
+        .comparison-item {
+            padding: 8px;
+            background-color: #0F0D0B;
+            border-left: 2px solid #C9A96E;
+            padding-left: 10px;
+        }
+
+        .comparison-label {
+            color: #999;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .comparison-value {
+            color: #EDE6DA;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .learnings-section {
+            background-color: #1A1815;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #C9A96E;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .learnings-input {
+            width: 100%;
+            padding: 15px;
+            background-color: #0F0D0B;
+            border: 1px solid #333;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .learnings-input:focus {
+            outline: none;
+            border-color: #C9A96E;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        button {
+            padding: 12px 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #C9A96E;
+            color: #0F0D0B;
+        }
+
+        .btn-primary:hover {
+            background-color: #E8C89C;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            color: #EDE6DA;
+            border: 1px solid #C9A96E;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1A1815;
+        }
+
+        .insights-box {
+            background-color: rgba(201, 169, 110, 0.1);
+            border-left: 3px solid #C9A96E;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #EDE6DA;
+        }
+
+        .insights-title {
+            color: #C9A96E;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #333;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .footer a {
+            color: #C9A96E;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                grid-template-columns: 1fr;
+            }
+
+            .date-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background-color: white;
+            }
+
+            .kpi-card,
+            .learnings-section {
+                background-color: white;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+
+            .footer,
+            .actions {
+                display: none;
+            }
+
+            .kpi-input,
+            .learnings-input {
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CARAXES</h1>
+            <p>Tableau de Bord KPI Mensuel</p>
+        </div>
+
+        <div class="date-selector">
+            <div>
+                <label for="month-select">Mois</label>
+                <select id="month-select" onchange="updateDateDisplay()">
+                    <option value="1">Janvier</option>
+                    <option value="2">Février</option>
+                    <option value="3">Mars</option>
+                    <option value="4" selected>Avril</option>
+                    <option value="5">Mai</option>
+                    <option value="6">Juin</option>
+                    <option value="7">Juillet</option>
+                    <option value="8">Août</option>
+                    <option value="9">Septembre</option>
+                    <option value="10">Octobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Décembre</option>
+                </select>
+            </div>
+            <div>
+                <label for="year-select">Année</label>
+                <select id="year-select" onchange="updateDateDisplay()">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+            <div style="flex: 1; text-align: right;">
+                <span style="color: #C9A96E; font-size: 13px; font-weight: 600;" id="date-display">Avril 2026</span>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <!-- KPI 1: Revenue -->
+            <div class="kpi-card primary">
+                <div class="kpi-header">
+                    <div class="kpi-title">Chiffre d'Affaires</div>
+                    <div class="kpi-trend" data-kpi="revenue" onclick="toggleTrend(this)">→</div>
+                </div>
+                <div class="kpi-value" id="revenue-display">0</div>
+                <div class="kpi-unit">EUR</div>
+                <div class="kpi-input-group">
+                    <label>Saisir le CA</label>
+                    <input type="number" class="kpi-input" id="revenue-input" placeholder="0.00" step="0.01" min="0" onchange="updateKPI('revenue')">
+                </div>
+                <div class="kpi-comparison">
+                    <div class="comparison-item">
+                        <span class="comparison-label">Mois dernier</span>
+                        <span class="comparison-value" id="revenue-prev">0 EUR</span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Évolution</span>
+                        <span class="comparison-value" id="revenue-change">+0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 2: Orders -->
+            <div class="kpi-card primary">
+                <div class="kpi-header">
+                    <div class="kpi-title">Nombre de Commandes</div>
+                    <div class="kpi-trend" data-kpi="orders" onclick="toggleTrend(this)">→</div>
+                </div>
+                <div class="kpi-value" id="orders-display">0</div>
+                <div class="kpi-unit">commandes</div>
+                <div class="kpi-input-group">
+                    <label>Nombre de commandes</label>
+                    <input type="number" class="kpi-input" id="orders-input" placeholder="0" step="1" min="0" onchange="updateKPI('orders')">
+                </div>
+                <div class="kpi-comparison">
+                    <div class="comparison-item">
+                        <span class="comparison-label">Mois dernier</span>
+                        <span class="comparison-value" id="orders-prev">0</span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Évolution</span>
+                        <span class="comparison-value" id="orders-change">+0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 3: Average Order -->
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <div class="kpi-title">Panier Moyen</div>
+                    <div class="kpi-trend" data-kpi="aov" onclick="toggleTrend(this)">→</div>
+                </div>
+                <div class="kpi-value" id="aov-display">0</div>
+                <div class="kpi-unit">EUR</div>
+                <div class="kpi-input-group">
+                    <label>Panier moyen</label>
+                    <input type="number" class="kpi-input" id="aov-input" placeholder="0.00" step="0.01" min="0" onchange="updateKPI('aov')">
+                </div>
+                <div class="insights-box">
+                    <div class="insights-title">💡 Objectif</div>
+                    Augmenter le panier moyen par upsell et cross-sell
+                </div>
+            </div>
+
+            <!-- KPI 4: Conversion Rate -->
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <div class="kpi-title">Taux de Conversion</div>
+                    <div class="kpi-trend" data-kpi="conversion" onclick="toggleTrend(this)">→</div>
+                </div>
+                <div class="kpi-value" id="conversion-display">0</div>
+                <div class="kpi-unit">%</div>
+                <div class="kpi-input-group">
+                    <label>Taux de conversion (%)</label>
+                    <input type="number" class="kpi-input" id="conversion-input" placeholder="0.00" step="0.01" min="0" max="100" onchange="updateKPI('conversion')">
+                </div>
+                <div class="insights-box">
+                    <div class="insights-title">📊 Benchmark</div>
+                    Moyen e-commerce: 2-3% | Premium: 5%+
+                </div>
+            </div>
+
+            <!-- KPI 5: CAC -->
+            <div class="kpi-card warning">
+                <div class="kpi-header">
+                    <div class="kpi-title">Coût d'Acquisition Client</div>
+                    <div class="kpi-trend" data-kpi="cac" onclick="toggleTrend(this)">→</div>
+                </div>
+                <div class="kpi-value" id="cac-display">0</div>
+                <div class="kpi-unit">EUR</div>
+                <div class="kpi-input-group">
+                    <label>Budget marketing / Clients</label>
+                    <input type="number" class="kpi-input" id="cac-input" placeholder="0.00" step="0.01" min="0" onchange="updateKPI('cac')">
+                </div>
+                <div class="insights-box">
+                    <div class="insights-title">⚠️ Limite</div>
+                    CAC ne doit pas dépasser 30% du panier moyen
+                </div>
+            </div>
+
+            <!-- KPI 6: Net Margin -->
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <div class="kpi-title">Marge Nette</div>
+                    <div class="kpi-trend" data-kpi="margin" onclick="toggleTrend(this)">→</div>
+                </div>
+                <div class="kpi-value" id="margin-display">0</div>
+                <div class="kpi-unit">%</div>
+                <div class="kpi-input-group">
+                    <label>Marge nette (%)</label>
+                    <input type="number" class="kpi-input" id="margin-input" placeholder="0.00" step="0.01" min="0" max="100" onchange="updateKPI('margin')">
+                </div>
+                <div class="insights-box">
+                    <div class="insights-title">✓ Objectif</div>
+                    Viser 25-35% de marge nette
+                </div>
+            </div>
+        </div>
+
+        <div class="learnings-section">
+            <h2 class="section-title">Notes & Apprentissages</h2>
+            <textarea class="learnings-input" id="learnings" placeholder="Notez vos observations, succès, défis et pistes d'amélioration pour le mois..."></textarea>
+            <div style="margin-top: 15px; color: #999; font-size: 11px;">
+                💡 Tip: Documentez vos expériences, tests et optimisations pour améliorer progressivement votre business
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" onclick="saveData()">💾 Sauvegarder</button>
+            <button class="btn-secondary" onclick="printDashboard()">🖨️ Imprimer</button>
+            <button class="btn-secondary" onclick="resetDashboard()">↻ Réinitialiser</button>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 CARAXES E-Commerce Mastery</p>
+            <a href="/offre-formation-ecom.html">← Retour à la formation</a>
+        </div>
+    </div>
+
+    <script>
+        const kpis = {
+            revenue: { input: 'revenue-input', display: 'revenue-display', prev: 'revenue-prev', change: 'revenue-change', unit: ' EUR' },
+            orders: { input: 'orders-input', display: 'orders-display', prev: 'orders-prev', change: 'orders-change', unit: '' },
+            aov: { input: 'aov-input', display: 'aov-display', unit: ' EUR' },
+            conversion: { input: 'conversion-input', display: 'conversion-display', unit: '%' },
+            cac: { input: 'cac-input', display: 'cac-display', unit: ' EUR' },
+            margin: { input: 'margin-input', display: 'margin-display', unit: '%' }
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            const stored = localStorage.getItem('caraxes-kpi-dashboard');
+            if (stored) {
+                const data = JSON.parse(stored);
+                Object.keys(kpis).forEach(kpi => {
+                    const input = document.getElementById(kpis[kpi].input);
+                    if (data[kpi]) {
+                        input.value = data[kpi];
+                    }
+                });
+                const learnings = document.getElementById('learnings');
+                if (data.learnings) {
+                    learnings.value = data.learnings;
+                }
+            }
+            updateAllKPIs();
+        }
+
+        function updateKPI(kpiName) {
+            const input = document.getElementById(kpis[kpiName].input);
+            const display = document.getElementById(kpis[kpiName].display);
+            const value = parseFloat(input.value) || 0;
+
+            if (kpiName === 'revenue' || kpiName === 'aov' || kpiName === 'cac') {
+                display.textContent = value.toFixed(2);
+            } else {
+                display.textContent = Math.round(value);
+            }
+            updateAllKPIs();
+        }
+
+        function updateAllKPIs() {
+            // Revenue vs previous month comparison (mocked)
+            const revenueInput = parseFloat(document.getElementById('revenue-input').value) || 0;
+            const revenueDisplay = document.getElementById('revenue-display');
+            revenueDisplay.textContent = revenueInput.toFixed(2);
+
+            // Orders
+            const ordersInput = parseFloat(document.getElementById('orders-input').value) || 0;
+            const ordersDisplay = document.getElementById('orders-display');
+            ordersDisplay.textContent = Math.round(ordersInput);
+
+            // AOV
+            const aovInput = parseFloat(document.getElementById('aov-input').value) || 0;
+            const aovDisplay = document.getElementById('aov-display');
+            aovDisplay.textContent = aovInput.toFixed(2);
+
+            // Conversion
+            const conversionInput = parseFloat(document.getElementById('conversion-input').value) || 0;
+            const conversionDisplay = document.getElementById('conversion-display');
+            conversionDisplay.textContent = conversionInput.toFixed(2);
+
+            // CAC
+            const cacInput = parseFloat(document.getElementById('cac-input').value) || 0;
+            const cacDisplay = document.getElementById('cac-display');
+            cacDisplay.textContent = cacInput.toFixed(2);
+
+            // Margin
+            const marginInput = parseFloat(document.getElementById('margin-input').value) || 0;
+            const marginDisplay = document.getElementById('margin-display');
+            marginDisplay.textContent = marginInput.toFixed(2);
+        }
+
+        function toggleTrend(element) {
+            if (element.textContent === '→') {
+                element.textContent = '↑';
+                element.classList.add('up');
+                element.classList.remove('down');
+            } else if (element.textContent === '↑') {
+                element.textContent = '↓';
+                element.classList.add('down');
+                element.classList.remove('up');
+            } else {
+                element.textContent = '→';
+                element.classList.remove('up', 'down');
+            }
+        }
+
+        function updateDateDisplay() {
+            const month = document.getElementById('month-select').value;
+            const year = document.getElementById('year-select').value;
+            const months = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            document.getElementById('date-display').textContent = months[parseInt(month)] + ' ' + year;
+        }
+
+        function saveData() {
+            const data = {
+                revenue: document.getElementById('revenue-input').value,
+                orders: document.getElementById('orders-input').value,
+                aov: document.getElementById('aov-input').value,
+                conversion: document.getElementById('conversion-input').value,
+                cac: document.getElementById('cac-input').value,
+                margin: document.getElementById('margin-input').value,
+                learnings: document.getElementById('learnings').value,
+                month: document.getElementById('month-select').value,
+                year: document.getElementById('year-select').value
+            };
+            localStorage.setItem('caraxes-kpi-dashboard', JSON.stringify(data));
+            alert('Données sauvegardées avec succès !');
+        }
+
+        function printDashboard() {
+            window.print();
+        }
+
+        function resetDashboard() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les données ?')) {
+                document.querySelectorAll('input[type="number"]').forEach(input => {
+                    input.value = '';
+                });
+                document.getElementById('learnings').value = '';
+                document.querySelectorAll('.kpi-trend').forEach(trend => {
+                    trend.textContent = '→';
+                    trend.classList.remove('up', 'down');
+                });
+                updateAllKPIs();
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>

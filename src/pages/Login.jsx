@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { signInWithPassword, signUpWithPassword, resetPassword, signInWithEmail, resendConfirmationEmail } from '../lib/supabase'
+import { signInWithPassword, signUpWithPassword, resetPassword, signInWithEmail, resendConfirmationEmail, signInWithGoogle } from '../lib/supabase'
 import { c, f, size, sp, ease, shadow, transition, radius } from '../lib/theme'
 
 /* ── Dragon mark — refined CARAXES fierce dragon ── */
@@ -199,21 +199,21 @@ export default function Login() {
   const active = email.trim().length > 0
 
   const titles = {
-    login: 'Connexion', signup: 'Creer un compte',
-    forgot: 'Mot de passe oublie', magic: 'Lien magique',
+    login: 'Connexion', signup: 'Créer un compte',
+    forgot: 'Mot de passe oublié', magic: 'Lien magique',
   }
 
   const subtitles = {
-    login: 'Accedez a votre espace de suivi.',
-    signup: 'Rejoignez CARAXES pour gerer vos commandes.',
-    forgot: 'Reinitialisez votre mot de passe par email.',
-    magic: 'Connexion securisee sans mot de passe.',
+    login: 'Accédez à votre espace de suivi.',
+    signup: 'Rejoignez CARAXES pour gérer vos commandes.',
+    forgot: 'Réinitialisez votre mot de passe par email.',
+    magic: 'Connexion sécurisée sans mot de passe.',
   }
 
   const features = [
-    { icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', label: 'Suivi en temps reel de vos commandes' },
+    { icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', label: 'Suivi en temps réel de vos commandes' },
     { icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', label: 'Messagerie directe avec votre agent' },
-    { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', label: 'Documents et factures centralises' },
+    { icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', label: 'Documents et factures centralisés' },
   ]
 
   const linkBtn = (text, onClick, highlight = false) => (
@@ -286,17 +286,17 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Headline — premium typography */}
+        {/* Headline — aligned with landing v10 */}
         <h1 style={{
           fontFamily: f.display, fontSize: size.hero, fontWeight: 400,
           lineHeight: 1.05, color: c.text, maxWidth: '540px',
           letterSpacing: '-0.03em', margin: `0 0 ${sp[3]} 0`,
         }}>
-          Votre sourcing,{' '}
+          Vos produits depuis la Chine —{' '}
           <em style={{
             fontStyle: 'italic', color: c.red,
             textShadow: `0 0 40px oklch(55% 0.22 25 / 0.15)`,
-          }}>simplifie.</em>
+          }}>trouvés, inspectés, livrés.</em>
         </h1>
 
         <p style={{
@@ -304,8 +304,8 @@ export default function Login() {
           maxWidth: '480px', fontFamily: f.body,
           margin: `0 0 ${sp[6]} 0`, fontWeight: 300,
         }}>
-          Suivez vos commandes en temps reel, echangez avec votre agent
-          et recevez vos documents&nbsp;—&nbsp;depuis un seul espace.
+          Suivez vos commandes en temps réel, échangez avec votre agent
+          et recevez vos documents — depuis un seul espace.
         </p>
 
         {/* Features */}
@@ -316,18 +316,38 @@ export default function Login() {
         </div>
 
         {/* Art Deco accent */}
-        <div style={{ marginTop: sp[8] }}>
+        <div style={{ marginTop: sp[6] }}>
           <ArtDecoDivider width={80} />
         </div>
 
+        {/* Social proof stats */}
+        <div style={{ marginTop: sp[3], display: 'flex', gap: sp[6], flexWrap: 'wrap' }}>
+          {[
+            { value: '847', label: 'Produits sourcés' },
+            { value: '96%', label: 'Clients satisfaits' },
+            { value: '−35%', label: 'Coûts d\u2019achat' },
+          ].map((stat, i) => (
+            <div key={i} style={{ animation: `featureReveal 0.6s ${ease.out} ${0.5 + i * 0.1}s both` }}>
+              <div style={{
+                fontFamily: f.display, fontSize: size.xl, fontWeight: 600,
+                color: c.gold, letterSpacing: '-0.02em', lineHeight: 1,
+              }}>{stat.value}</div>
+              <div style={{
+                fontFamily: f.mono, fontSize: '9px', color: c.textTertiary,
+                letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '4px',
+              }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
         {/* Trust line */}
-        <div style={{ marginTop: sp[2], display: 'flex', alignItems: 'center', gap: sp[2] }}>
+        <div style={{ marginTop: sp[4], display: 'flex', alignItems: 'center', gap: sp[2] }}>
           <p style={{
             fontFamily: f.mono, fontSize: '9px',
             color: c.textGhost, letterSpacing: '0.14em', textTransform: 'uppercase',
             margin: 0,
           }}>
-            Yiwu &middot; Guangzhou &middot; Shenzhen
+            Yiwu · Guangzhou · Shenzhen
           </p>
         </div>
       </div>
@@ -375,7 +395,7 @@ export default function Login() {
                 fontFamily: f.display, fontSize: size.lg, fontWeight: 500,
                 marginBottom: sp[1], color: c.text, margin: `0 0 ${sp[1]} 0`,
                 letterSpacing: '-0.01em',
-              }}>Verifiez votre email</h2>
+              }}>Vérifiez votre email</h2>
               <p style={{
                 fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6,
                 margin: `0 0 ${sp[2]} 0`,
@@ -402,10 +422,22 @@ export default function Login() {
               }}
                 onMouseEnter={(e) => { e.target.style.borderColor = c.red; e.target.style.color = c.text }}
                 onMouseLeave={(e) => { e.target.style.borderColor = c.border; e.target.style.color = c.textSecondary }}
-              >Retour a la connexion</button>
+              >Retour à la connexion</button>
             </div>
           ) : (
             <div style={{ animation: `formContentReveal 0.6s ${ease.out} 0.2s both` }}>
+              {/* Mobile-only logo (shows when left panel is hidden) */}
+              <div className="login-mobile-logo" style={{
+                display: 'none', alignItems: 'center', gap: sp[2],
+                marginBottom: sp[4], justifyContent: 'center',
+              }}>
+                <DragonMark s={32} />
+                <span style={{
+                  fontFamily: f.display, fontWeight: 600, fontSize: size.lg,
+                  letterSpacing: '0.10em', color: c.text,
+                }}>CARAXE<span style={{ color: c.red }}>S</span></span>
+              </div>
+
               {/* Mode indicator — refined */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
@@ -416,7 +448,7 @@ export default function Login() {
                   fontFamily: f.mono, fontSize: '9px', color: c.red,
                   letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700,
                 }}>
-                  {mode === 'login' ? 'Connexion' : mode === 'signup' ? 'Inscription' : mode === 'forgot' ? 'Recuperation' : 'Lien magique'}
+                  {mode === 'login' ? 'Connexion' : mode === 'signup' ? 'Inscription' : mode === 'forgot' ? 'Récupération' : 'Lien magique'}
                 </span>
               </div>
 
@@ -537,12 +569,56 @@ export default function Login() {
                     </span>
                   ) : (
                     mode === 'login' ? 'Se connecter' :
-                    mode === 'signup' ? 'Creer mon compte' :
+                    mode === 'signup' ? 'Créer mon compte' :
                     mode === 'forgot' ? 'Envoyer le lien' :
                     'Envoyer le lien magique'
                   )}
                 </button>
               </form>
+
+              {/* ── Social login — Google ── */}
+              {(mode === 'login' || mode === 'signup') && (
+                <>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    margin: `${sp[4]} 0`,
+                  }}>
+                    <div style={{ flex: 1, height: '1px', background: c.border }} />
+                    <span style={{
+                      fontFamily: f.mono, fontSize: '9px', color: c.textTertiary,
+                      letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+                    }}>ou continuer avec</span>
+                    <div style={{ flex: 1, height: '1px', background: c.border }} />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setLoading(true); setError(null)
+                      const { error } = await signInWithGoogle()
+                      if (error) { setError(translateError(error.message)); setLoading(false) }
+                    }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      gap: '10px', padding: '14px 16px',
+                      background: c.bgSurface, border: `1px solid ${c.border}`,
+                      color: c.text, fontSize: size.sm, fontFamily: f.body,
+                      fontWeight: 500, cursor: 'pointer', letterSpacing: '0.01em',
+                      transition: `all 0.25s ${ease.luxury}`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textTertiary; e.currentTarget.style.background = c.bgElevated }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgSurface }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Continuer avec Google
+                  </button>
+                </>
+              )}
 
               {/* ── Mode switchers — refined ── */}
               <div style={{
@@ -553,19 +629,19 @@ export default function Login() {
                 {mode === 'login' && (
                   <>
                     <span>Pas encore de compte ?{' '}</span>
-                    {linkBtn('Creer un compte', () => switchMode('signup'), true)}
+                    {linkBtn('Créer un compte', () => switchMode('signup'), true)}
                     <br />
                     {linkBtn('Connexion sans mot de passe', () => switchMode('magic'))}
                   </>
                 )}
                 {mode === 'signup' && (
                   <>
-                    <span>Deja un compte ?{' '}</span>
+                    <span>Déjà un compte ?{' '}</span>
                     {linkBtn('Se connecter', () => switchMode('login'), true)}
                   </>
                 )}
                 {(mode === 'forgot' || mode === 'magic') && (
-                  linkBtn('Retour a la connexion', () => switchMode('login'), true)
+                  linkBtn('Retour à la connexion', () => switchMode('login'), true)
                 )}
               </div>
             </div>
@@ -612,6 +688,7 @@ export default function Login() {
         @media (max-width: 900px) {
           .login-left { display: none !important; }
           .login-right { width: 100% !important; border-left: none !important; min-height: 100vh; }
+          .login-mobile-logo { display: flex !important; }
         }
         input::placeholder { color: ${c.textTertiary}; opacity: 0.5; }
       `}</style>

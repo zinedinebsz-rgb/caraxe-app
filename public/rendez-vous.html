@@ -123,10 +123,15 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .nav-back:hover { color: var(--text); }
 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* ── Hero ── */
 .hero {
-  padding-top: clamp(8rem, 12vw, 12rem);
-  padding-bottom: clamp(3rem, 5vw, 5rem);
+  padding-top: clamp(6rem, 9vw, 9rem);
+  padding-bottom: clamp(2.5rem, 4vw, 4rem);
   text-align: center;
 }
 .hero h1 {
@@ -430,6 +435,152 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .rv-d1 { transition-delay: 0.08s; }
 .rv-d2 { transition-delay: 0.16s; }
 .rv-d3 { transition-delay: 0.24s; }
+.rv-d4 { transition-delay: 0.32s; }
+
+/* ── Video showreel ── */
+.rv-video {
+  padding-block: clamp(3rem, 5vw, 5rem);
+  background: var(--bg-warm);
+  overflow: hidden;
+}
+.rv-video-frame {
+  aspect-ratio: 16/9;
+  max-width: 820px;
+  margin: 0 auto;
+  position: relative;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.rv-video-frame::before, .rv-video-frame::after {
+  content: ''; position: absolute; width: 40px; height: 40px;
+  border-color: var(--gold); border-style: solid; z-index: 3;
+}
+.rv-video-frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.rv-video-frame::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+.rv-video-overlay {
+  position: absolute; inset: 0; z-index: 2;
+  background: oklch(0% 0 0 / 0.35);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.4s var(--ease);
+}
+.rv-video-overlay:hover { background: oklch(0% 0 0 / 0.2); }
+.rv-video-overlay.playing { background: transparent; pointer-events: none; }
+.rv-play-btn {
+  width: 72px; height: 72px;
+  border: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.4s var(--ease), border-color 0.3s;
+}
+.rv-play-btn:hover { transform: scale(1.08); border-color: var(--red); }
+.rv-play-btn svg { width: 28px; height: 28px; fill: var(--gold); margin-left: 4px; }
+.rv-video-overlay.playing .rv-play-btn { display: none; }
+
+/* ── E-com section ── */
+.ecom {
+  padding-block: clamp(4rem, 7vw, 7rem);
+  border-top: 1px solid var(--border-subtle);
+}
+.ecom h2 {
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s3);
+}
+.ecom h2 em { font-style: italic; color: var(--gold); }
+.ecom-sub {
+  text-align: center;
+  color: var(--text-mid);
+  font-size: var(--text-sm);
+  max-width: 50ch;
+  margin-inline: auto;
+  line-height: 1.7;
+  margin-bottom: var(--s12);
+}
+.ecom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s6);
+}
+@media (max-width: 800px) {
+  .ecom-grid { grid-template-columns: 1fr; }
+}
+.ecom-card {
+  border: 1px solid var(--border);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  position: relative;
+}
+.ecom-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.ecom-card:nth-child(1)::before { background: var(--gold); }
+.ecom-card:nth-child(2)::before { background: oklch(72% 0.12 180); }
+.ecom-card:nth-child(3)::before { background: oklch(68% 0.15 250); }
+
+.ecom-tag {
+  font-family: var(--mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--s4);
+}
+.ecom-card:nth-child(1) .ecom-tag { color: var(--gold); }
+.ecom-card:nth-child(2) .ecom-tag { color: oklch(72% 0.12 180); }
+.ecom-card:nth-child(3) .ecom-tag { color: oklch(68% 0.15 250); }
+
+.ecom-price {
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  margin-bottom: var(--s1);
+}
+.ecom-period {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  margin-bottom: var(--s6);
+}
+.ecom-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-bottom: var(--s6);
+}
+.ecom-features li {
+  font-size: var(--text-sm);
+  color: var(--text-mid);
+  padding-left: 1.2rem;
+  position: relative;
+  line-height: 1.5;
+}
+.ecom-features li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0.55em;
+  width: 5px; height: 1px;
+  background: var(--text-dim);
+}
+.ecom-cta {
+  display: block;
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--s3) var(--s4);
+  color: var(--text);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: all 0.3s var(--ease);
+}
+.ecom-cta:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
 </style>
 </head>
 <body>
@@ -447,11 +598,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 <!-- HERO -->
 <header class="hero w">
-  <span class="label rv rv-d1">Prenez rendez-vous</span>
+  <span class="label" style="animation:fadeUp 0.6s var(--ease) 0.1s both;">Prenez rendez-vous</span>
   <div style="height:var(--s4)"></div>
-  <h1 class="rv rv-d2">Parlons de votre<br><em>projet sourcing</em></h1>
+  <h1 style="animation:fadeUp 0.6s var(--ease) 0.2s both;">Parlons de votre<br><em>projet sourcing</em></h1>
   <div style="height:var(--s4)"></div>
-  <p class="hero-sub rv rv-d3">15 minutes suffisent pour &eacute;valuer votre besoin et vous dire si on peut vous aider. Pas de pitch, pas d'engagement.</p>
+  <p class="hero-sub" style="animation:fadeUp 0.6s var(--ease) 0.35s both;">15 minutes suffisent pour &eacute;valuer votre besoin et vous dire si on peut vous aider. Pas de pitch, pas d'engagement.</p>
 </header>
 
 <!-- OFFERS -->
@@ -494,8 +645,24 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   </div>
 </section>
 
+<!-- VIDEO -->
+<section class="rv-video">
+  <div class="w">
+    <div class="rv-video-frame rv rv-d1">
+      <video id="rvVideo" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;z-index:1;">
+        <source src="caraxes-v2.mp4" type="video/mp4">
+      </video>
+      <div class="rv-video-overlay" id="rvPlayOverlay" role="button" tabindex="0" aria-label="Lancer la vid&eacute;o">
+        <div class="rv-play-btn">
+          <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
-<section class="how w rv">
+<section class="how w">
   <h2>Comment &ccedil;a se passe</h2>
   <div class="steps">
     <div class="step rv rv-d1">
@@ -549,6 +716,58 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   </div>
 </section>
 
+<!-- E-COMMERCE -->
+<section class="ecom w">
+  <span class="label" style="display:block; text-align:center; margin-bottom:var(--s4);">Nouveau</span>
+  <h2>Services E-commerce <em>&agrave; la carte</em></h2>
+  <p class="ecom-sub">Du sourcing &agrave; la vente : on cr&eacute;e, g&egrave;re et forme pour votre boutique en ligne. Chaque service est activable ind&eacute;pendamment.</p>
+  <div class="ecom-grid">
+
+    <div class="ecom-card rv rv-d1">
+      <div class="ecom-tag">01 &mdash; Cr&eacute;ation boutique</div>
+      <div class="ecom-price">1&thinsp;490&thinsp;&euro;</div>
+      <div class="ecom-period">Shopify ou WooCommerce &middot; 5-10 jours</div>
+      <ul class="ecom-features">
+        <li>Branding + design responsive</li>
+        <li>Catalogue 5-60 produits</li>
+        <li>Paiements, livraison, pages l&eacute;gales</li>
+        <li>SEO de base int&eacute;gr&eacute;</li>
+        <li>Formation 2h offerte</li>
+      </ul>
+      <a href="https://caraxes.as.me/?appointmentType=91750360" target="_blank" rel="noopener" class="ecom-cta">En discuter &rarr;</a>
+    </div>
+
+    <div class="ecom-card rv rv-d2">
+      <div class="ecom-tag">02 &mdash; Gestion boutique</div>
+      <div class="ecom-price">249&thinsp;&euro;<span style="font-size:0.55em; font-weight:400; opacity:0.5;">/mois</span></div>
+      <div class="ecom-period">Engagement 3 mois &middot; tout inclus</div>
+      <ul class="ecom-features">
+        <li>Mise &agrave; jour stock &amp; catalogue</li>
+        <li>Traitement commandes &amp; SAV</li>
+        <li>Photos + descriptions SEO</li>
+        <li>Calendrier promos saisonnier</li>
+        <li>Rapport analytics mensuel</li>
+      </ul>
+      <a href="https://caraxes.as.me/?appointmentType=91750360" target="_blank" rel="noopener" class="ecom-cta">En discuter &rarr;</a>
+    </div>
+
+    <div class="ecom-card rv rv-d3">
+      <div class="ecom-tag">03 &mdash; Formation</div>
+      <div class="ecom-price">399&thinsp;&euro;</div>
+      <div class="ecom-period">Session unique &middot; support 1 mois inclus</div>
+      <ul class="ecom-features">
+        <li>Tour complet du dashboard</li>
+        <li>Gestion commandes &amp; catalogue</li>
+        <li>Photos produits &amp; bases SEO</li>
+        <li>Guide SAV &amp; retours</li>
+        <li>Vid&eacute;os replay + documentation</li>
+      </ul>
+      <a href="https://caraxes.as.me/?appointmentType=91750360" target="_blank" rel="noopener" class="ecom-cta">En discuter &rarr;</a>
+    </div>
+
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer class="footer w">
   <p>CARAXES &middot; Agent de Sourcing Chine &middot; Yiwu &amp; Guangzhou<br>
@@ -567,10 +786,27 @@ window.addEventListener('scroll', function() {
 // Scroll reveal
 var obs = new IntersectionObserver(function(entries) {
   entries.forEach(function(e) {
-    if (e.isIntersecting) { e.target.classList.add('vis'); }
+    if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
   });
-}, { threshold: 0.12 });
+}, { threshold: 0.01, rootMargin: '0px 0px 80px 0px' });
 document.querySelectorAll('.rv').forEach(function(el) { obs.observe(el); });
+
+// Video play/pause
+var rvOverlay = document.getElementById('rvPlayOverlay');
+var rvVideo = document.getElementById('rvVideo');
+if (rvOverlay && rvVideo) {
+  rvOverlay.addEventListener('click', function() {
+    rvOverlay.classList.add('playing');
+    rvVideo.play();
+  });
+  rvVideo.addEventListener('click', function() {
+    if (!rvVideo.paused) {
+      rvVideo.pause();
+      rvOverlay.classList.remove('playing');
+    }
+  });
+  rvVideo.style.cursor = 'pointer';
+}
 </script>
 
 </body>

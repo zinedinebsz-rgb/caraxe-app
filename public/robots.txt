@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /offre-creation-boutique.html
+Allow: /offre-formation-ecom.html
+Allow: /rendez-vous.html
+Allow: /sitemap.xml
+Disallow: /login
+Disallow: /admin
+Disallow: /settings
+Disallow: /reset-password
+
+Sitemap: https://app.caraxes.fr/sitemap.xml

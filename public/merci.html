@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merci — CARAXES</title>
+    <!-- Google Analytics 4 — Replace G-XXXXXXXXXX with your Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');gtag('event','purchase',{currency:'EUR',transaction_id:new URLSearchParams(window.location.search).get('session_id')||'unknown'});</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -57,30 +60,51 @@
             line-height: 1.8;
             margin-bottom: 1rem;
         }
-        .highlight {
-            color: #e8e0d4;
-            font-weight: 600;
+        .highlight { color: #e8e0d4; font-weight: 600; }
+        .steps {
+            max-width: 500px;
+            margin: 2rem 0;
+            text-align: left;
         }
+        .step {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: #1e1a16;
+            border: 1px solid #2a2520;
+            margin-bottom: 0.5rem;
+            align-items: flex-start;
+        }
+        .step:first-child { border-left: 3px solid #27ae60; }
+        .step:nth-child(2) { border-left: 3px solid #c8a85c; }
+        .step:nth-child(3) { border-left: 3px solid #c0392b; }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            font-family: Georgia, serif;
+        }
+        .step:first-child .step-num { background: #27ae6020; color: #27ae60; }
+        .step:nth-child(2) .step-num { background: #c8a85c20; color: #c8a85c; }
+        .step:nth-child(3) .step-num { background: #c0392b20; color: #c0392b; }
+        .step-text { font-size: 0.95rem; color: #a09888; line-height: 1.5; }
+        .step-text strong { color: #e8e0d4; }
         .info-box {
             background: #1e1a16;
             border: 1px solid #2a2520;
             border-left: 3px solid #c8a85c;
             padding: 1.5rem 2rem;
-            margin: 2rem 0;
+            margin: 1.5rem 0;
             text-align: left;
             max-width: 500px;
         }
         .info-box p { margin-bottom: 0.5rem; font-size: 0.95rem; }
-        .back-link {
-            display: inline-block;
-            margin-top: 2rem;
-            color: #c8a85c;
-            text-decoration: none;
-            font-size: 0.95rem;
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.2s;
-        }
-        .back-link:hover { border-bottom-color: #c8a85c; }
         .spinner {
             display: inline-block;
             width: 12px;
@@ -93,6 +117,35 @@
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .cta-btn {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.9rem 2rem;
+            background: #c0392b;
+            color: #e8e0d4;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.04em;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .cta-btn:hover { background: #a93226; transform: translateY(-1px); }
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #8a7e6e;
+            text-decoration: none;
+            font-size: 0.85rem;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .back-link:hover { border-bottom-color: #c8a85c; color: #c8a85c; }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            body { padding: 1.5rem; }
+            .step { padding: 0.75rem 1rem; }
+            .info-box { padding: 1rem 1.25rem; }
+        }
     </style>
 </head>
 <body>
@@ -106,12 +159,28 @@
 
     <p>Votre paiement a bien ete recu. <span class="highlight">Notre equipe se met au travail immediatement.</span></p>
 
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>Paiement confirme</strong> — Vous recevrez un recu par email dans les prochaines minutes.</div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>Acces a votre espace</strong> — Un email avec vos identifiants de connexion va vous etre envoye. Vous pourrez suivre l'avancement de votre projet en temps reel.</div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text"><strong>Demarrage sous 24h</strong> — Votre chef de projet vous contacte pour valider les details et lancer la production.</div>
+        </div>
+    </div>
+
     <div class="info-box">
-        <p><span class="spinner"></span> <span class="highlight">En cours de traitement...</span></p>
-        <p>Vous recevrez un email de confirmation dans les prochaines minutes a l'adresse fournie.</p>
+        <p><span class="spinner"></span> <span class="highlight">Preparation en cours...</span></p>
+        <p>Verifiez votre boite mail (et vos spams) dans les 15 prochaines minutes.</p>
         <p>Pour toute question : <span class="highlight">contact@caraxes.fr</span></p>
     </div>
 
+    <a href="https://app.caraxes.fr" class="cta-btn">Acceder a mon espace client</a>
     <a href="https://caraxes.fr" class="back-link">Retour au site CARAXES</a>
 </body>
 </html>

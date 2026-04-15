@@ -12,6 +12,7 @@ const Admin = lazy(() => import('./pages/Admin'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Settings = lazy(() => import('./pages/Settings'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const Catalogue = lazy(() => import('./pages/Catalogue'))
 
 /* ── SCROLL TO TOP ON ROUTE CHANGE ── */
 function ScrollToTop() {
@@ -144,6 +145,7 @@ export default function App() {
       if (event === 'PASSWORD_RECOVERY') {
         setSession(session)
         setLoading(false)
+        window.location.replace('/reset-password')
         return
       }
       setSession(session)
@@ -188,6 +190,10 @@ export default function App() {
 
         <Route path="/reset-password" element={
           <Suspense fallback={<Loader />}><ResetPassword /></Suspense>
+        } />
+
+        <Route path="/catalogue" element={
+          <Suspense fallback={<Loader />}><Catalogue /></Suspense>
         } />
 
         <Route path="/settings" element={

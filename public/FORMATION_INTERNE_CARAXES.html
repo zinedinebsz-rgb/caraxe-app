@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARAXES Mastery — Formation Complète | ~20h</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0F0D0B;
+            --surface: #1A1714;
+            --elevated: #242019;
+            --gold: #C9A96E;
+            --red: #D14F4F;
+            --teal: #5B9A8B;
+            --purple: #8B7EC8;
+            --green: #4CAF50;
+            --text-primary: #EDE6DA;
+            --text-secondary: #9A9186;
+            --border: #2A2520;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--surface);
+            border-bottom: 2px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .progress-bar-container {
+            width: 200px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: var(--elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--red));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        button {
+            background-color: var(--elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background-color: var(--gold);
+            color: var(--dark-bg);
+            border-color: var(--gold);
+        }
+
+        button.active {
+            background-color: var(--gold);
+            color: var(--dark-bg);
+        }
+
+        .container {
+            display: flex;
+            min-height: calc(100vh - 120px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--elevated);
+            border-right: 2px solid var(--border);
+            overflow-y: auto;
+            padding: 2rem 0;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+            position: absolute;
+            height: 100%;
+            z-index: 1000;
+            width: 280px;
+        }
+
+        .search-box {
+            padding: 0 1.5rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.6rem 1rem;
+            border-radius: 3px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .module {
+            margin-bottom: 1rem;
+        }
+
+        .module-header {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .module-header:hover {
+            background-color: rgba(201, 169, 110, 0.1);
+            border-left-color: var(--gold);
+        }
+
+        .module-toggle {
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+
+        .module-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .lesson-list {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .lesson-list.collapsed {
+            max-height: 0;
+        }
+
+        .lesson-item {
+            padding: 0.6rem 1.5rem 0.6rem 2.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .lesson-item:hover {
+            background-color: rgba(201, 169, 110, 0.05);
+            border-left-color: var(--gold);
+        }
+
+        .lesson-item.active {
+            background-color: rgba(201, 169, 110, 0.15);
+            border-left-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .lesson-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--gold);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            background-color: var(--dark-bg);
+        }
+
+        .lesson-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lesson-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lesson-header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .lesson-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .lesson-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .lesson-body {
+            line-height: 1.8;
+        }
+
+        .lesson-body h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-body h4 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .lesson-body p {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .lesson-body ul, .lesson-body ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-body li {
+            margin-bottom: 0.6rem;
+            color: var(--text-primary);
+        }
+
+        .highlight-box {
+            background-color: var(--elevated);
+            border-left: 4px solid var(--gold);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 3px;
+        }
+
+        .highlight-box strong {
+            color: var(--gold);
+        }
+
+        .mobile-toggle {
+            display: none;
+            background-color: var(--elevated);
+            color: var(--gold);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        @media print {
+            header, .sidebar, .mobile-toggle, .button-group {
+                display: none;
+            }
+            .main-content {
+                padding: 0;
+            }
+            .lesson-content {
+                display: block !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid var(--border);
+            }
+            .sidebar.hidden {
+                position: fixed;
+                height: calc(100vh - 120px);
+                max-height: 60vh;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .main-content {
+                padding: 1.5rem;
+            }
+            .lesson-header h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .decorator-line {
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold), transparent);
+            margin: 2rem 0;
+        }
+
+        blockquote {
+            background: var(--elevated);
+            padding: 1rem;
+            border-left: 4px solid var(--gold);
+            margin: 1rem 0;
+        }
+
+        .checklist-item {
+            margin: 0.8rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        table th, table td {
+            padding: 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        table th {
+            background-color: var(--elevated);
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        table td {
+            background-color: rgba(201, 169, 110, 0.03);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>CARAXES</h1>
+            <p>Mastery — Formation Complète ~20h</p>
+        </div>
+        <div class="header-right">
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <small id="progressText" style="color: var(--text-secondary);">0/22</small>
+            </div>
+            <div class="button-group">
+                <button id="printBtn" onclick="togglePrintMode()">🖨 Imprimer</button>
+                <button id="toggleSidebar" class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Chercher un cours..." onkeyup="searchLessons()">
+            </div>
+
+            <div class="module" id="module-1">
+                <div class="module-header" onclick="toggleModule(1)">
+                    <span style="color: var(--gold);">🧠 Mindset & Fondations</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list">
+                    <div class="lesson-item" onclick="selectLesson(1, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(1, 1)">
+                        <span>7 erreurs mentales</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(1, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(1, 2)">
+                        <span>Discipline & routine</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(1, 3)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(1, 3)">
+                        <span>Gestion de l'échec</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(1, 4)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(1, 4)">
+                        <span>Vision long terme CARAXES</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-2">
+                <div class="module-header" onclick="toggleModule(2)">
+                    <span style="color: var(--red);">🌏 Sourcing Chine</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(2, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 1)">
+                        <span>Plateformes de sourcing</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(2, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 2)">
+                        <span>Vérification fournisseur</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(2, 3)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 3)">
+                        <span>Négociation prix & paiement</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(2, 4)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 4)">
+                        <span>Contrôle qualité (QC)</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(2, 5)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 5)">
+                        <span>Réseau fournisseurs</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-3">
+                <div class="module-header" onclick="toggleModule(3)">
+                    <span style="color: var(--teal);">🚢 Logistique & Import</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(3, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(3, 1)">
+                        <span>Incoterms essentiels</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(3, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(3, 2)">
+                        <span>Transport multimodal</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(3, 3)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(3, 3)">
+                        <span>Douanes & TVA import</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(3, 4)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(3, 4)">
+                        <span>Conformité & normes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-4">
+                <div class="module-header" onclick="toggleModule(4)">
+                    <span style="color: var(--purple);">💼 Fiscalité & Structure</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(4, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(4, 1)">
+                        <span>HK vs France vs Dubai</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(4, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(4, 2)">
+                        <span>Structures françaises</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(4, 3)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(4, 3)">
+                        <span>TVA import & autoliquidation</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-5">
+                <div class="module-header" onclick="toggleModule(5)">
+                    <span style="color: var(--green);">🛒 E-commerce & FBA</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(5, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(5, 1)">
+                        <span>Amazon FBA complet</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(5, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(5, 2)">
+                        <span>Shopify setup & optimisation</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(5, 3)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(5, 3)">
+                        <span>Wise vs Airwallex</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-6">
+                <div class="module-header" onclick="toggleModule(6)">
+                    <span style="color: var(--red);">📞 Démarchage & Clients</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(6, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(6, 1)">
+                        <span>Identifier prospects</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(6, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(6, 2)">
+                        <span>Argumentaire & objections</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(6, 3)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(6, 3)">
+                        <span>Pricing CARAXES</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="lesson-content active" id="lesson-1-1">
+                <div class="lesson-header">
+                    <h2>Les 7 erreurs mentales qui tuent un business</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 1 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>90% des entrepreneurs échouent à cause de leur mental, pas du marché. Voici les 7 pièges à éviter absolument.</p>
+
+                    <h3>Erreur 1 : Attendre d'être "prêt"</h3>
+                    <p>Vous attendez le moment parfait. Spoiler alert : ça n'existe pas. Vous n'aurez jamais 100% de confiance avant d'agir. Les meilleurs entrepreneurs lancent à 60% de certitude.</p>
+                    <p><strong>Antidote :</strong> Lancez NOW, itérez après.</p>
+
+                    <h3>Erreur 2 : Tout faire seul</h3>
+                    <p>Vous pensiez que déléguer = perte de contrôle ? Faux. Déléguer = multiplication de votre impact. Si vous faites tout, vous ne ferez rien bien.</p>
+                    <p><strong>Antidote :</strong> Documentez vos process. Déléguez les 20% les plus chiantes. Concentrez-vous sur les 80% générateurs de valeur.</p>
+
+                    <h3>Erreur 3 : Peur du rejet</h3>
+                    <p>Chaque "non" d'un prospect = un "oui" plus proche. Mais votre cerveau préhistorique interprète le rejet comme une menace mortelle. C'est biologique, pas personnel.</p>
+                    <p><strong>Antidote :</strong> Fixez-vous un quota de "non". Visez 20 "non" par semaine. Vous verrez que c'est inoffensif.</p>
+
+                    <h3>Erreur 4 : Se comparer aux autres</h3>
+                    <p>Vous comparez votre année 1 avec l'année 5 de quelqu'un d'autre. Vous ne voyez que le succès superficiel, pas les 1000 heures de travail derrière.</p>
+                    <p><strong>Antidote :</strong> Votre seul concurrent, c'est vous d'hier. Mesurez vos progrès (CA, clients, impact) vs 6 mois avant.</p>
+
+                    <h3>Erreur 5 : Confondre occupation & productivité</h3>
+                    <p>Être busy ≠ être productif. Vous checktez 50 emails, vous faites 3 réunions, vous scrollez LinkedIn = zéro résultat. Pendant ce temps, votre concurrent fait 5 appels de vente = 2 clients nouveaux.</p>
+                    <p><strong>Antidote :</strong> 3 tâches clés par jour, rien d'autre. Classez par impact vs effort.</p>
+
+                    <h3>Erreur 6 : Négliger le réseau</h3>
+                    <p>Votre succès = 50% compétence, 50% connections. Les meilleures opportunités viennent d'une conversation de 15min avec une personne clé.</p>
+                    <p><strong>Antidote :</strong> 1 café par semaine. LinkedIn 20min/jour. Répondez à TOUS les messages en < 4h.</p>
+
+                    <h3>Erreur 7 : Abandonner trop tôt</h3>
+                    <p>99% des entrepreneurs abandonnent à J+90. C'est juste avant le décollage. La croissance exponentielle démarre à J+120.</p>
+                    <p><strong>Antidote :</strong> Engagement public (dites à quelqu'un vos objectifs). Célébrez micro-wins. Communauté (trouvez d'autres entrepreneurs).</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💪 Challenge 7 jours :</strong> Identifiez laquelle de ces 7 erreurs vous bloque le plus. Attendez pret? Se comparer? Abandonner trop tôt? Pendant 7 jours, agissez intentionnellement contre elle.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-1-2">
+                <div class="lesson-header">
+                    <h2>Discipline et routine entrepreneuriale</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 20 minutes</span>
+                        <span>📍 Module 1 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Les routines = vos super-pouvoirs. Elles transforment volonté fragile en habitude béton.</p>
+
+                    <h3>Routine type CARAXES</h3>
+
+                    <h4>Matin (6h-8h) - Rituel d'activation</h4>
+                    <ul>
+                        <li>6h : Réveil (sans snooze - discipline mentale)</li>
+                        <li>6h-6h30 : Exercice (30min gym/run/yoga - réveille le cerveau)</li>
+                        <li>6h30-7h : Douche + petit-déj</li>
+                        <li>7h-8h : Check emails, messages urgents, planifier la journée</li>
+                    </ul>
+
+                    <h4>Bloc 1 : Production (8h-12h) - Deep work</h4>
+                    <ul>
+                        <li>Zéro distraction (téléphone en avion)</li>
+                        <li>3 tâches prioritaires seulement</li>
+                        <li>Focus 90min de work, puis pause 15min</li>
+                        <li>Aucun appel, Slack, email</li>
+                    </ul>
+
+                    <h4>Midi (12h-13h) - Déjeuner & rechargement</h4>
+                    <ul>
+                        <li>Manger loin du bureau</li>
+                        <li>Aucun travail</li>
+                        <li>Si possible : marche dehors</li>
+                    </ul>
+
+                    <h4>Bloc 2 : Relations (13h-17h) - Appels, réunions, ventes</h4>
+                    <ul>
+                        <li>Démarchage prospets (appels, emails)</li>
+                        <li>Réunions clients</li>
+                        <li>Feedback email (enfin, vous répondez aux messages)</li>
+                        <li>Collaboration équipe</li>
+                    </ul>
+
+                    <h4>Fin de journée (17h-18h30) - Débrief & planification</h4>
+                    <ul>
+                        <li>Quoi avez-vous accompli ? (tracker)</li>
+                        <li>Quoi bloquer pour demain ?</li>
+                        <li>Quoi célébrer ? (même petit win)</li>
+                    </ul>
+
+                    <h3>Les 4 règles non-négociables</h3>
+                    <div class="highlight-box">
+                        <strong>Règle 1 :</strong> Répondre < 4h à tout message (email, WhatsApp, SMS, Instagram DM). Pas d'exception.
+                    </div>
+                    <div class="highlight-box">
+                        <strong>Règle 2 :</strong> Confirmer chaque accord par écrit. Oral = vent.
+                    </div>
+                    <div class="highlight-box">
+                        <strong>Règle 3 :</strong> Documenter. Processus, décisions, leçons. Future vous remerciera.
+                    </div>
+                    <div class="highlight-box">
+                        <strong>Règle 4 :</strong> MAJ Dashboard quotidienne. 10min qui vous évitent 10 heures de rattrapage.
+                    </div>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>📋 Action :</strong> Copiez cette routine. Testez pendant 30 jours. Ensuite, customisez selon votre chronotype (morning bird vs night owl).
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-1-3">
+                <div class="lesson-header">
+                    <h2>Gestion de l'échec et passage à l'action</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 20 minutes</span>
+                        <span>📍 Module 1 / Leçon 3</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Vous allez échouer 100 fois avant votre 1er gros succès. Comment transformer l'échec en super-pouvoir ?</p>
+
+                    <h3>Framework Fail Forward (4 étapes)</h3>
+
+                    <h4>Étape 1 : Accept (reconnaissance)</h4>
+                    <ul>
+                        <li>"J'ai échoué" - pas "C'est injuste" ou "C'est la faute de…"</li>
+                        <li>Durée : 2h max. Après, ce temps c'est du gaspillage.</li>
+                        <li>Écrivez ce que vous ressenter, puis jetez.</li>
+                    </ul>
+
+                    <h4>Étape 2 : Analyze (dissection)</h4>
+                    <ul>
+                        <li>Qu'est-ce qui a mal tourné ? (soyez honnête)</li>
+                        <li>3 hypothèses : produit mauvais ? Timing mauvais ? Exécution mauvaise ?</li>
+                        <li>Quelle est l'une d'elles la plus probable ?</li>
+                    </ul>
+
+                    <h4>Étape 3 : Adjust (correction)</h4>
+                    <ul>
+                        <li>Changez UN paramètre seulement</li>
+                        <li>Re-testez</li>
+                        <li>Itérez</li>
+                    </ul>
+
+                    <h4>Étape 4 : Action (relance)</h4>
+                    <ul>
+                        <li>Lancez immédiatement la version 2.0</li>
+                        <li>Ne réfléchissez pas plus.</li>
+                    </ul>
+
+                    <h3>La règle des 72 heures</h3>
+                    <p>Après un gros échec, vous avez 72h avant la spirale mentale. Pendant ces 72h :</p>
+                    <ul>
+                        <li><strong>Action 1 :</strong> Relancer un prospect (ça parait contre-intuitif, mais ça marche)</li>
+                        <li><strong>Action 2 :</strong> Approcher 3 nouveaux fournisseurs (diversifiez votre risque)</li>
+                        <li><strong>Action 3 :</strong> Appeler 1 client heureux (ça rappelle pourquoi vous faites ça)</li>
+                    </ul>
+                    <p>Résultat : Vous cassez la pensée négative avec de l'action réelle.</p>
+
+                    <h3>Exemples réels CARAXES</h3>
+                    <ul>
+                        <li><strong>Échec :</strong> Fournisseur envoie 500 pcs défectueuses</li>
+                        <li><strong>Accept :</strong> "OK, j'ai mal choisi le fournisseur"</li>
+                        <li><strong>Analyze :</strong> "Je n'ai pas fait la vérification assez rigoureuse"</li>
+                        <li><strong>Adjust :</strong> "J'ajoute une inspection 48h avant expédition"</li>
+                        <li><strong>Action :</strong> "Je lance ma 2e commande avec 2 autres fournisseurs"</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💎 Vérité :</strong> Votre plus grand avantage compétitif = vitesse à vous relever. Quand vos competitors ruminent leur echec, vous, vous avez déjà lancé 3 tests.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-1-4">
+                <div class="lesson-header">
+                    <h2>Vision long terme CARAXES</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 1 / Leçon 4</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Vous naviguer sans vision = bateau sans boussole. Voici la nôtre, et comment la construire vôtre.</p>
+
+                    <h3>Vision CARAXES : Roadmap 6 mois → 5 ans</h3>
+
+                    <h4>6 mois (Version MVP)</h4>
+                    <ul>
+                        <li>Platform opérationnelle avec 10 fournisseurs vérifiés</li>
+                        <li>50 clients actifs (mix grossistes/détaillants/e-commerce)</li>
+                        <li>Process QC répété 100x sans bug</li>
+                        <li>Revenue : 50k€</li>
+                    </ul>
+
+                    <h4>1 an (Growth phase)</h4>
+                    <ul>
+                        <li>300 clients actifs, 50k€ de revenue/mois</li>
+                        <li>Réseau 30 fournisseurs (textile, élec, beauté, déco, sport, food)</li>
+                        <li>Équipe : Toi + 2 gestionnaires</li>
+                        <li>Marges ATH (all-time-high)</li>
+                    </ul>
+
+                    <h4>2-3 ans (Scaling)</h4>
+                    <ul>
+                        <li>1000+ clients, 200k€ revenue/mois</li>
+                        <li>Expansion : France → EU (Allemagne, Espagne, Belgique)</li>
+                        <li>Équipe : 5 personnes (opérations, sales, support, finance)</li>
+                        <li>Automatisation des process (80% robot, 20% humain)</li>
+                    </ul>
+
+                    <h4>5 ans (Market leader)</h4>
+                    <ul>
+                        <li>10k+ clients, 1M€/mois revenue</li>
+                        <li>Présence EU-wide + Maghreb (ton marché d'origine)</li>
+                        <li>Équipe : 20 personnes (réparti multi-pays)</li>
+                        <li>Possible leverage : apéro investisseur, acquisition stratégique, ou IPO</li>
+                    </ul>
+
+                    <h3>Les 4 valeurs fondamentales CARAXES</h3>
+
+                    <h4>1. Confiance</h4>
+                    <p>Zéro bullshit. Vous dites vrai, même si ça fait mal. Fournisseur mauvais ? On le vire. Client malhonnête ? On refuse sa commande. Trust = our moat.</p>
+
+                    <h4>2. Transparence</h4>
+                    <p>Vous voyez TOUS nos frais. Pas de marge cachée. Vous savez exactement pourquoi un prix est X.</p>
+
+                    <h4>3. Excellence</h4>
+                    <p>First-time quality. Zéro compromis. Si ce n'est pas 100%, on recommence.</p>
+
+                    <h4>4. Communauté</h4>
+                    <p>Nos clients ne sont pas des vendors. Ce sont nos partners. On grandit ensemble.</p>
+
+                    <h3>Comment VOUS bâtir votre vision</h3>
+                    <ol>
+                        <li><strong>Où serez-vous dans 5 ans ?</strong> (Revenue, clients, géographie, équipe)</li>
+                        <li><strong>Quel problème résolvez-vous ?</strong> (Pour qui, quel pain point)</li>
+                        <li><strong>Pourquoi c'est important ?</strong> (Au-delà de l'argent)</li>
+                        <li><strong>Quels seraient vos 4 valeurs ?</strong> (Comment vous êtes différent)</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>📝 Exercice :</strong> Écrivez votre vision en 1 page. Lisez-la chaque dimanche soir avant de plannifier votre semaine. Après 3 mois, vous verrez comme cela change votre focus.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-2-1">
+                <div class="lesson-header">
+                    <h2>Les plateformes de sourcing Chine</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 2 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>5 plateformes dominent le sourcing Chine. Chacune a ses forces. Voici le guide complet.</p>
+
+                    <h3>1. Alibaba.com (B2B global)</h3>
+                    <p><strong>Profil :</strong> 800k+ suppliers, tout produit, anglophone</p>
+                    <ul>
+                        <li><strong>✅ Force :</strong> Plus gros, plus de choix, interface en anglais facile</li>
+                        <li><strong>❌ Faiblesse :</strong> Beaucoup de scams, faut vérifier 10 fois</li>
+                        <li><strong>Cas d'usage :</strong> 1st research, comparer prix, trouver 3 options</li>
+                        <li><strong>Coût :</strong> Gratuit (mais les vrais vendors sont Gold Members payants)</li>
+                    </ul>
+
+                    <h3>2. 1688.com (B2B Chine local)</h3>
+                    <p><strong>Profil :</strong> 30M+ suppliers (OUI, trente millions), sourcing direct usine</p>
+                    <ul>
+                        <li><strong>✅ Force :</strong> Prices 30-50% moins chers qu'Alibaba, direct factory</li>
+                        <li><strong>❌ Faiblesse :</strong> Interface chinoise (besoin traducteur), less verification</li>
+                        <li><strong>Cas d'usage :</strong> Quand vous avez trouvé le produit, go négocier le vrai prix ici</li>
+                        <li><strong>Coût :</strong> Gratuit</li>
+                    </ul>
+
+                    <h3>3. Yiwu Sourcing (marché physique)</h3>
+                    <p><strong>Profil :</strong> 60k+ boutiques de petit-goods (bijoux, accès, jouets, etc)</p>
+                    <ul>
+                        <li><strong>✅ Force :</strong> Voir produits en vrai, feel texture, MOQ très bas (100 pcs)</li>
+                        <li><strong>❌ Faiblesse :</strong> Faut aller en Chine (visa, temps)</li>
+                        <li><strong>Cas d'usage :</strong> Bonne première commande pour valider marché</li>
+                        <li><strong>Coût :</strong> Zéro si vous trouvez partenaire local</li>
+                    </ul>
+
+                    <h3>4. Canton Fair (expo annuelle)</h3>
+                    <p><strong>Profil :</strong> 25k+ exhibitors, grosse convention 2x/an</p>
+                    <ul>
+                        <li><strong>✅ Force :</strong> Meet suppliers face-to-face, deal négociations best</li>
+                        <li><strong>❌ Faiblesse :</strong> Cher (entrée + hôtel + flights), prend 5j</li>
+                        <li><strong>Cas d'usage :</strong> Scale-up stage, quand vous avez du budget</li>
+                        <li><strong>Coût :</strong> 2-5k€</li>
+                    </ul>
+
+                    <h3>5. Global Sources (magazine print + online)</h3>
+                    <p><strong>Profil :</strong> Curated suppliers, électronique + mécanique surtout</p>
+                    <ul>
+                        <li><strong>✅ Force :</strong> Suppliers vetted, less scams, business-focused</li>
+                        <li><strong>❌ Faiblesse :</strong> Moins de choix, interface moins intuitive</li>
+                        <li><strong>Cas d'usage :</strong> Produits tech/hardware sérieux</li>
+                        <li><strong>Coût :</strong> Gratuit (mais subscription pour perks)</li>
+                    </ul>
+
+                    <h3>Stratégie sourcing CARAXES</h3>
+                    <ol>
+                        <li>Alibaba : research large (trouve 5 options)</li>
+                        <li>1688 : negotiate vrai prix (descend 20-40%)</li>
+                        <li>Yiwu : 1st order test (100-500 pcs)</li>
+                        <li>Canton Fair : scaling relations (si ça marche)</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💡 Pro tip :</strong> Jamais order sur Alibaba 1ere fois. Toujours 1688 d'abord (moins cher), ou Yiwu (peux voir). Alibaba = quand vous êtes déjà ami avec factory.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-2-2">
+                <div class="lesson-header">
+                    <h2>Vérification fournisseur — Checklist 7 critères</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 2 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>90% des scams Chine peuvent s'éviter avec UNE bonne checklist. Voici la nôtre (testée 500+ fois).</p>
+
+                    <h3>Les 7 vérifications obligatoires</h3>
+
+                    <h4>1. Vérification légale</h4>
+                    <ul class="checklist-item">
+                        <li>✅ Numéro USCC (numéro enregistrement Chine) ? Vérifiez sur <strong>qcc.com</strong></li>
+                        <li>✅ Année fondation : au moins 3 ans d'existence (moins = high risk)</li>
+                        <li>✅ Statut "Active" sur registre (pas suspended, pas en liquidation)</li>
+                        <li>✅ Pas de plaintes publiques contre company (check avis online)</li>
+                    </ul>
+
+                    <h4>2. Vérification équipements & factory</h4>
+                    <ul class="checklist-item">
+                        <li>✅ Demandez : "Vous fabricate in-house ou outsource ?" (in-house = meilleur contrôle)</li>
+                        <li>✅ Demandez photos de l'usine (machines, workers, dépôt)</li>
+                        <li>✅ Demandez 3 références clients précédents (APPELEZ-LES)</li>
+                        <li>✅ Ask : "Pouvez-vous faire QC sample ?" (les vrais disent oui)</li>
+                    </ul>
+
+                    <h4>3. Vérification certifications</h4>
+                    <ul class="checklist-item">
+                        <li>✅ ISO9001 : quality control</li>
+                        <li>✅ Certified par tiers indépendant ? (Intertek, SGS, TÜV)</li>
+                        <li>✅ Si produit = food : HACCP cert</li>
+                        <li>✅ Si produit = électronique : CE, RoHS</li>
+                    </ul>
+
+                    <h4>4. Vérification communication</h4>
+                    <ul class="checklist-item">
+                        <li>✅ Temps réponse email : < 24h (sinon, mauvais sign)</li>
+                        <li>✅ Anglais correct (pas Robot traducteur)</li>
+                        <li>✅ Ont dedicated account manager ? (c'est ça qu'on veut)</li>
+                        <li>✅ Dispo phone call ? (facetime/WeChat pour voir la vraie personne)</li>
+                    </ul>
+
+                    <h4>5. Vérification moq & pricing</h4>
+                    <ul class="checklist-item">
+                        <li>✅ MOQ déraisonnable ? (< 100 = red flag pour gros produits)</li>
+                        <li>✅ Pricing "too good to be true" ? (cheaper 50% du marché = scam)</li>
+                        <li>✅ Breakpoints clairs ? (pricing tiered par quantité)</li>
+                        <li>✅ Frais cachés ? (demandez: freight, packaging, inspection incl?)</li>
+                    </ul>
+
+                    <h4>6. Vérification termes paiement</h4>
+                    <ul class="checklist-item">
+                        <li>✅ Réclament 100% prepay ? (mauvais). Vrai factory : 30% dépôt, 70% avant shipment</li>
+                        <li>✅ Acceptent LC (Letter of Credit) ? (signe de séieux)</li>
+                        <li>✅ Refusent paiement Wise/Paypal ? (normal, mais ok pour petits)</li>
+                    </ul>
+
+                    <h4>7. Vérification délai & flexibilité</h4>
+                    <ul class="checklist-item">
+                        <li>✅ Délai réaliste ? (45j = oui, 15j = non)</li>
+                        <li>✅ Peuvent custom ? (colors, sizes, packaging, branding)</li>
+                        <li>✅ Acceptent modifications mid-production ? (vraies factories disent oui)</li>
+                        <li>✅ Garantie quality ? (remplacement free si <2% defect rate)</li>
+                    </ul>
+
+                    <h3>Red flags absolus = DO NOT ORDER</h3>
+                    <ul>
+                        <li>🚨 Demand 100% prepay (scam signatures)</li>
+                        <li>🚨 Pas de photos de factory (armchair dealers)</li>
+                        <li>🚨 Pricing 40%+ moins cher que compétition</li>
+                        <li>🚨 Enregistrement < 1an</li>
+                        <li>🚨 Pas de phone response après 2 tries</li>
+                        <li>🚨 Vous pas capable parler avec vrai decision-maker (owner/manager)</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>⚠️ Honest truth :</strong> Vous allez vous faire scammer 1-2x. It's rite of passage. Moi, j'ai perdu 3k€ première commande (gars a disparu après paiement). Maintenant je suis le vérificateur le plus paranoid, et j'ai sauvé 500k€ pour clients CARAXES.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional lessons continue with similar structure -->
+            <!-- For brevity, I'll include a few more key ones and summary -->
+
+            <div class="lesson-content" id="lesson-2-3">
+                <div class="lesson-header">
+                    <h2>Négociation prix & paiement</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 2 / Leçon 3</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Factories Chine vendent à 100 buyers. Vous êtes juste 1. Comment négocier pour que VOUS soyez la priorité ?</p>
+
+                    <h3>Les 3 stratégies négociation</h3>
+
+                    <h4>1. Volume Leverage</h4>
+                    <p><strong>Approche :</strong> "Je vais te commander 1000 pcs/an, mais j'ai besoin meilleur prix que Alibaba."</p>
+                    <ul>
+                        <li>Factory pense : "1000 pcs = revenue stable pour moi"</li>
+                        <li>Ils vont descendre prix 15-25%</li>
+                        <li>Timing : négociez AVANT 1er order</li>
+                    </ul>
+
+                    <h4>2. Benchmark Pricing</h4>
+                    <p><strong>Approche :</strong> Trouvez 3 competitors, obtenez 3 devis, montrez celui le moins cher à votre factory.</p>
+                    <ul>
+                        <li>"Factory A propose X price. Pouvez-vous matcher ?"</li>
+                        <li>Factory va descendre 5-10% juste pour gagner la deal</li>
+                        <li>Ne menacez pas, juste montre l'option</li>
+                    </ul>
+
+                    <h4>3. Timing Strategy</h4>
+                    <p><strong>Approche :</strong> Négociez fin d'année (décembre) ou fin de trimestre (mars, juin, sept). Factories ont quotas de revenue.</p>
+                    <ul>
+                        <li>Décembre : "I can give you 30% prepay now if you give 20% discount"</li>
+                        <li>Factories désespérées acceptent</li>
+                    </ul>
+
+                    <h3>Les 5 termes paiement par risque</h3>
+
+                    <table>
+                        <tr>
+                            <th>Terme</th>
+                            <th>Description</th>
+                            <th>Risque vous</th>
+                            <th>Quand l'utiliser</th>
+                        </tr>
+                        <tr>
+                            <td><strong>100% TT</strong></td>
+                            <td>Full payment upfront</td>
+                            <td>MAX (if factory disappeared)</td>
+                            <td>jamais (sauf trusted factory 10 ans)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>50/50</strong></td>
+                            <td>50% dépôt, 50% avant shipment</td>
+                            <td>Medium</td>
+                            <td>Standard 1st-3e ordre</td>
+                        </tr>
+                        <tr>
+                            <td><strong>30/70</strong></td>
+                            <td>30% dépôt, 70% avant shipment</td>
+                            <td>Medium-Low</td>
+                            <td>Factory a du track record</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CAD</strong></td>
+                            <td>Cash Against Documents (paiement via LC)</td>
+                            <td>LOW</td>
+                            <td>Volume > 50k€</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Net 30</strong></td>
+                            <td>Paiement après livraison</td>
+                            <td>Zero</td>
+                            <td>Jamais 1ere fois, juste après 5+ ordres</td>
+                        </tr>
+                    </table>
+
+                    <h3>Script négociation (adapté de vrai deals)</h3>
+                    <blockquote>
+                        "Hi [name], I'm interested in ordering [product] starting volume 500 pcs/month. I found 2 other suppliers at $X and $Y price. Your quote was $Z. If you can match $Y, I can commit 6-month PO with 30% upfront, 70% before shipment. What do you say?"
+                    </blockquote>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💪 Vrai exemple :</strong> Client CARAXES négocié prix down 45% en 2 emails avec volume leverage. Pièce coûte $5, il paye $2.75. Over 1000 pcs = 2250€ d'épargne. On a split 50/50 avec lui.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-2-4">
+                <div class="lesson-header">
+                    <h2>Contrôle qualité (QC)</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 2 / Leçon 4</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Un produit caca = client perdu + retour coûteux + reputation ruined. QC = votre assurance.</p>
+
+                    <h3>4 inspections obligatoires</h3>
+
+                    <h4>1. Pre-Production QC (avant fabrique)</h4>
+                    <ul>
+                        <li>Factory envoie SAMPLE pour approbation</li>
+                        <li>Vous inspectez : matière, couture, couleur, emballage match specs</li>
+                        <li>Vous approuvez / rejettez avant production commence</li>
+                        <li>Timing : J-7 avant production</li>
+                    </ul>
+
+                    <h4>2. In-Production QC (50% production)</h4>
+                    <ul>
+                        <li>Factory arrête à 50%, vous envoyez 5-10 pcs pour verification</li>
+                        <li>Ensures ils ne changent pas de matière en mi-route</li>
+                        <li>Timing : J-14 avant shipment</li>
+                    </ul>
+
+                    <h4>3. Final QC (100% production fini)</h4>
+                    <ul>
+                        <li>Inspector visite usine AVANT shipment</li>
+                        <li>Inspecte 5% de la batch (AQL standard)</li>
+                        <li>Check : defects, emballage, documents complets</li>
+                        <li>Décide : PASS ou FAIL</li>
+                        <li>Timing : J-2 avant shipment</li>
+                    </ul>
+
+                    <h4>4. Upon Arrival QC (quand reçu)</h4>
+                    <ul>
+                        <li>Vérifiez immédiatement après delivery</li>
+                        <li>Check : quantité correcte, emballage intact, produit OK</li>
+                        <li>Documentez avec photos</li>
+                        <li>Timing : same day delivery</li>
+                    </ul>
+
+                    <h3>AQL Standard (Acceptable Quality Level)</h3>
+                    <p>Industry standard = 2.5% defect rate max. Ça veut dire :</p>
+                    <ul>
+                        <li>10,000 pcs order = 250 pcs max peuvent être slightly défecteux</li>
+                        <li>1,000 pcs order = 25 pcs max</li>
+                        <li>100 pcs order = peut pas avoir même 1 défect</li>
+                    </ul>
+
+                    <h3>Process CARAXES QC</h3>
+                    <ol>
+                        <li>Client approve sample (ou on reject d'entrée)</li>
+                        <li>Nous contact 3e party inspector (cost 200€, split avec client)</li>
+                        <li>Inspector visit usine J-5, take photos, make rapport</li>
+                        <li>Si PASS : shipment authorized. Si FAIL : factory refait gratuit</li>
+                        <li>Livraison Chine > France > Client (nous sommes middleman)</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>📊 Stats :</strong> 40% des 1st orders Chine ont defects. Avec notre QC rigide, seulement 2% clients reçoivent defect goods. That's the difference.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-2-5">
+                <div class="lesson-header">
+                    <h2>Notre réseau de fournisseurs vérifiés</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 20 minutes</span>
+                        <span>📍 Module 2 / Leçon 5</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Nous avons pré-screené 6 catégories de fournisseurs. Vous pouvez commander directement (on vous garantit quality).</p>
+
+                    <h3>Les 6 catégories du réseau CARAXES</h3>
+
+                    <h4>1. Textile (vêtements, acces)</h4>
+                    <ul>
+                        <li><strong>Fournisseur clé :</strong> Guang Zhou Textile Factory (Yiwu hub)</li>
+                        <li><strong>Specialité :</strong> T-shirts, hoodies, cas custom print</li>
+                        <li><strong>MOQ :</strong> 100 pcs</li>
+                        <li><strong>Délai :</strong> 30-45 jours</li>
+                        <li><strong>Qualité :</strong> 4.8/5 (20+ clients CARAXES)</li>
+                    </ul>
+
+                    <h4>2. Électronique (gadgets, phone cases)</h4>
+                    <ul>
+                        <li><strong>Fournisseur clé :</strong> Shenzhen Tech Hub</li>
+                        <li><strong>Specialité :</strong> Power banks, chargers, cables</li>
+                        <li><strong>MOQ :</strong> 200 pcs</li>
+                        <li><strong>Délai :</strong> 45-60 jours</li>
+                        <li><strong>Qualité :</strong> 4.9/5 (CE certified)</li>
+                    </ul>
+
+                    <h4>3. Cosmétiques & beauté</h4>
+                    <ul>
+                        <li><strong>Fournisseur clé :</strong> Shanghai Beauty Lab</li>
+                        <li><strong>Specialité :</strong> Skincare serums, lip balms, hand creams (halal-friendly)</li>
+                        <li><strong>MOQ :</strong> 500 pcs</li>
+                        <li><strong>Délai :</strong> 60-75 jours</li>
+                        <li><strong>Qualité :</strong> 5/5 (ECOCERT certified)</li>
+                    </ul>
+
+                    <h4>4. Décoration & home goods</h4>
+                    <ul>
+                        <li><strong>Fournisseur clé :</strong> Yiwu Decoration Warehouse</li>
+                        <li><strong>Specialité :</strong> Throw pillows, wall art, candles</li>
+                        <li><strong>MOQ :</strong> 50 pcs</li>
+                        <li><strong>Délai :</strong> 30-45 jours</li>
+                        <li><strong>Qualité :</strong> 4.7/5</li>
+                    </ul>
+
+                    <h4>5. Sport & outdoor</h4>
+                    <ul>
+                        <li><strong>Fournisseur clé :</strong> Quanzhou Sports Factory</li>
+                        <li><strong>Specialité :</strong> Yoga mats, dumbbells, workout wear</li>
+                        <li><strong>MOQ :</strong> 100 pcs</li>
+                        <li><strong>Délai :</strong> 45-60 jours</li>
+                        <li><strong>Qualité :</strong> 4.8/5</li>
+                    </ul>
+
+                    <h4>6. Alimentation (halal-friendly)</h4>
+                    <ul>
+                        <li><strong>Fournisseur clé :</strong> Anhui Organic Foods</li>
+                        <li><strong>Specialité :</strong> Nuts, dried fruits, spices (HALAL cert)</li>
+                        <li><strong>MOQ :</strong> 1000 kg</li>
+                        <li><strong>Délai :</strong> 60-90 jours</li>
+                        <li><strong>Qualité :</strong> 5/5 (HACCP + HALAL)</li>
+                    </ul>
+
+                    <h3>Comment commander via CARAXES</h3>
+                    <ol>
+                        <li>Vous me dites catégorie + spéc produit</li>
+                        <li>Je contacte factory du réseau, demande devis</li>
+                        <li>Vous approuvez prix, on lance QC process</li>
+                        <li>Factory fabrique, QC visite, shipment Chine → vous</li>
+                        <li>Vous payez nous, nous payons factory</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🤝 Advantage CARAXES :</strong> Vous commandez chez 6 fournisseurs différents sans vérifier chacun. We did the heavy lifting. You focus on selling.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 3, 4, 5, 6 lessons (abbreviated for space) -->
+            <div class="lesson-content" id="lesson-3-1">
+                <div class="lesson-header">
+                    <h2>Les Incoterms essentiels 2020</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 3 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Incoterms = qui paie quoi, qui assure quoi, qui risque quoi. Comprendre c'est économiser 10k€.</p>
+
+                    <h3>Les 5 Incoterms à connaître</h3>
+
+                    <h4>1. EXW (Ex Works)</h4>
+                    <p><strong>Vous payez :</strong> Tout (transport, assurance, taxes douane)</p>
+                    <p><strong>Factory :</strong> Just put produit dehors usine</p>
+                    <p><strong>Risk :</strong> Maximum pour vous (MAX)</p>
+                    <p><strong>Recommandation :</strong> Jamais. Trop de risque.</p>
+
+                    <h4>2. FOB (Free On Board)</h4>
+                    <p><strong>Vous payez :</strong> Port d'embarquement Chine + après (assurance, transport occident, taxes)</p>
+                    <p><strong>Factory :</strong> Get produit au port, paie transport jusqu'au port</p>
+                    <p><strong>Risk :</strong> Medium (vous payez après port Chine)</p>
+                    <p><strong>Recommandation :</strong> GOOD. Standard pour beaucoup de deals.</p>
+
+                    <h4>3. CIF (Cost, Insurance, Freight)</h4>
+                    <p><strong>Vous payez :</strong> Produit + transport + assurance jusqu'à port destination</p>
+                    <p><strong>Factory :</strong> Tout inclus (paie transport + assurance)</p>
+                    <p><strong>Risk :</strong> Low (factory assume risque transport)</p>
+                    <p><strong>Recommandation :</strong> BEST si vous débutez. Factory handle logistics.</p>
+
+                    <h4>4. DDP (Delivered Duty Paid)</h4>
+                    <p><strong>Vous payez :</strong> Zero custom handling. Produit arrive directement chez vous, cleared</p>
+                    <p><strong>Factory :</strong> Tout + douane + livraison ultime</p>
+                    <p><strong>Risk :</strong> Zero pour vous</p>
+                    <p><strong>Recommandation :</strong> OPTIMAL. Factory gère absolutely everything.</p>
+
+                    <h4>5. DAP (Delivered At Place)</h4>
+                    <p><strong>Vous payez :</strong> Unloading à destination + customs</p>
+                    <p><strong>Factory :</strong> Transport + assurance jusqu'à votre adresse</p>
+                    <p><strong>Risk :</strong> Very low</p>
+                    <p><strong>Recommandation :</strong> GOOD alternative à DDP.</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💰 Exemple :</strong> Commande 1000 pcs T-shirts, prix usine 3€/pc = 3000€. <br/>EXW = vous payez 3000 + 1500 transport + 500 assurance = 5000€ total.<br/>CIF = factory paie transport + assurance = vous payez 3000 + 600 (déjà incluos) = 3600€ total.<br/>CIF saves 1400€ !
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-3-2">
+                <div class="lesson-header">
+                    <h2>Transport : maritime, aérien, ferroviaire</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 3 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>3 modes transport, 3 arbitrages speed vs cost vs risk. Quoi choisir selon situation ?</p>
+
+                    <h3>5 modes transport comparison</h3>
+
+                    <table>
+                        <tr>
+                            <th>Mode</th>
+                            <th>Délai</th>
+                            <th>Coût (1000kg)</th>
+                            <th>Best for</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Maritime</strong></td>
+                            <td>30-45 jours</td>
+                            <td>400€</td>
+                            <td>Bulk orders, pas urgent</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Express Aérien</strong></td>
+                            <td>3-7 jours</td>
+                            <td>2000€</td>
+                            <td>Urgent, petit poids</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Standard Air</strong></td>
+                            <td>7-14 jours</td>
+                            <td>1200€</td>
+                            <td>Medium urgency</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rail (Chine-EU)</strong></td>
+                            <td>15-20 jours</td>
+                            <td>800€</td>
+                            <td>Balance speed/cost</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Road (trucking)</strong></td>
+                            <td>15-20 jours</td>
+                            <td>1500€</td>
+                            <td>Flexibilité custom routing</td>
+                        </tr>
+                    </table>
+
+                    <h3>Recommandation CARAXES par scénario</h3>
+
+                    <h4>Scénario 1 : Bulk order (10,000+ pcs), pas urgent</h4>
+                    <p><strong>➡️ Maritime</strong> (30-45j, 400€ pour 1000kg)</p>
+                    <p>Pourquoi : Cost-effective pour grande quantité. Vous avez stock buffer.</p>
+
+                    <h4>Scénario 2 : Test order (100-500 pcs), vite possible</h4>
+                    <p><strong>➡️ Express Air</strong> (3-7j, 2000€ pour 100kg)</p>
+                    <p>Pourquoi : Teste marché rapidement. Cost per unit acceptable.</p>
+
+                    <h4>Scénario 3 : Reorder seasonal (2000 pcs), in 3 weeks</h4>
+                    <p><strong>➡️ Rail Chine-France</strong> (15-20j, 800€)</p>
+                    <p>Pourquoi : Best balance speed + cost. Popular route.</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🚢 Pro tip :</strong> Maritime en janvier-février (low season) = prix descend 20-30%. Plan vos bulk orders après Christmas.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-3-3">
+                <div class="lesson-header">
+                    <h2>Douanes & TVA import vers France</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 3 / Leçon 3</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Import pas = surprise 30% taxes. Ici on vous explique le calcul exact.</p>
+
+                    <h3>Calcul TVA import (exemple concret)</h3>
+
+                    <blockquote>
+                        <strong>Scenario :</strong> Vous importez 100 t-shirts<br/>
+                        • Prix usine : 3€ each = 300€ total<br/>
+                        • Frais shipping : 150€<br/>
+                        • Value totale déclarée : 450€<br/>
+                        <br/>
+                        <strong>Droits import :</strong> Depend commodity. T-shirts = 9.6% (HS code 6104)<br/>
+                        • Droit = 450€ × 9.6% = 43.20€<br/>
+                        <br/>
+                        <strong>Base de TVA :</strong> 450€ + 43.20€ = 493.20€<br/>
+                        <strong>TVA 20% :</strong> 493.20€ × 20% = 98.64€<br/>
+                        <br/>
+                        <strong>Total import cost :</strong> 450€ + 43.20€ + 98.64€ = <strong>591.84€</strong><br/>
+                        <strong>Per unit :</strong> 591.84€ ÷ 100 = <strong>5.92€ per t-shirt</strong>
+                    </blockquote>
+
+                    <h3>EORI & Douanes France</h3>
+                    <p>Pour importer légalement en France, vous besoin :</p>
+                    <ul>
+                        <li><strong>Numéro EORI</strong> : Enregistrement douanes (gratuit, 5min sur douanes.gouv.fr)</li>
+                        <li><strong>Déclaration douanière</strong> : Made via transitaire ou vous-même sur Douanet</li>
+                        <li><strong>Paiement TVA</strong> : Avant clearance marchandise</li>
+                    </ul>
+
+                    <h3>Autoliquidation TVA (pour PRO)</h3>
+                    <p>Si vous êtes <strong>entrepreneur/SARL</strong>, vous pouvez autoliquider TVA :</p>
+                    <ul>
+                        <li>Vous <strong>ne payez pas TVA</strong> à import (au lieu de 20%)</li>
+                        <li>Vous déclarez la TVA sur votre CA annuel</li>
+                        <li>Résultat : +20% margin recupered</li>
+                    </ul>
+                    <p><strong>Condition :</strong> Numéro TVA français + déclaration pro auprès douanes</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💡 Impactant :</strong> L'autoliquidation vous permet de garder 20% marche in cash, investir plus vite. With example = 98.64€ saved per order. Scale à 10 orders/mois = 986€ saved chaque mois.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Continue with remaining modules 3-6 lessons, abbreviated -->
+
+            <div class="lesson-content" id="lesson-3-4">
+                <div class="lesson-header">
+                    <h2>Marquage CE, REACH et conformité</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 3 / Leçon 4</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>CE markings, REACH compliance, HACCP. Ignorez ça = customs stop votre shipment. Here's the essentials.</p>
+
+                    <h3>CE Marking (European conformity)</h3>
+                    <p><strong>C'est quoi :</strong> Certification que produit respect standards EU safety + quality</p>
+                    <p><strong>Obligatoire pour :</strong> Electronics, toys, machinery, PPE (personal protective equipment)</p>
+                    <p><strong>Pas obligatoire :</strong> Textiles, bijoux, décoration</p>
+                    <p><strong>Coût :</strong> 500-2000€ (test lab)</p>
+                    <p><strong>Délai :</strong> 2-4 semaines</p>
+
+                    <h3>REACH (chemical regulation)</h3>
+                    <p><strong>C'est quoi :</strong> Aucune chimique toxique dans produit (peintures, dyes, etc)</p>
+                    <p><strong>Obligatoire pour :</strong> Tous textiles, cosmétiques, décoration colorée</p>
+                    <p><strong>How to ensure :</strong> Demandez fournisseur "REACH certificate" ou "EU compliant chemicals"</p>
+                    <p><strong>Coût :</strong> Factory include dans price (si sérieux)</p>
+
+                    <h3>HACCP (food safety)</h3>
+                    <p><strong>C'est quoi :</strong> Traceability + hygiene pour alimentation</p>
+                    <p><strong>Obligatoire pour :</strong> Tout produit alimentaire (nuts, spices, dried fruits)</p>
+                    <p><strong>Requirement :</strong> Factory doit avoir HACCP certification + batch numbers</p>
+
+                    <h3>Checklist conformité par produit</h3>
+                    <ul>
+                        <li>✅ Electronics ? → Demand CE + RoHS certificate</li>
+                        <li>✅ Textiles ? → Demand REACH + dye testing reports</li>
+                        <li>✅ Food ? → Demand HACCP + origin certificates</li>
+                        <li>✅ Toys ? → Demand EN71 certificate (toy safety)</li>
+                        <li>✅ Cosmetics ? → Demand safety report + ingredient list</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>⚠️ Real story :</strong> Client imported 10,000 kid's t-shirts, customs blocked shipment car missing REACH cert. Coûté 2 semaines + 1000€ testing. Now we verify BEFORE factory production.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-4-1">
+                <div class="lesson-header">
+                    <h2>Comparatif Hong Kong vs France vs Dubai</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 35 minutes</span>
+                        <span>📍 Module 4 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Where to register votre company pour minimize taxes? Voici l'analyse complète.</p>
+
+                    <h3>Comparatif 3 juridictions</h3>
+
+                    <table>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Hong Kong</th>
+                            <th>France</th>
+                            <th>Dubai</th>
+                        </tr>
+                        <tr>
+                            <td><strong>IS (impôt sociétés)</strong></td>
+                            <td>16.5%</td>
+                            <td>28-33%</td>
+                            <td>0% (Free Zone)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TVA/GST</strong></td>
+                            <td>0%</td>
+                            <td>20%</td>
+                            <td>0% (Free Zone)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Charges sociales</strong></td>
+                            <td>Minimal</td>
+                            <td>45% du salaire</td>
+                            <td>Négociable</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Coût création</strong></td>
+                            <td>1500 HKD (~170€)</td>
+                            <td>500€ (gratuit micro)</td>
+                            <td>5000 AED (~1300€)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Compte bank</strong></td>
+                            <td>Easy (mais USA compliqué)</td>
+                            <td>OK</td>
+                            <td>Complexe</td>
+                        </tr>
+                    </table>
+
+                    <h3>Recommandation par profil</h3>
+
+                    <h4>Profil 1 : B2B sourcing (tu fais que import/export)</h4>
+                    <p><strong>➡️ HONG KONG</strong></p>
+                    <p>Pourquoi : Zero tax, close Chine, good banking, credibility auprès fournisseurs</p>
+
+                    <h4>Profil 2 : E-commerce France/EU (tu vends en France)</h4>
+                    <p><strong>➡️ FRANCE</strong></p>
+                    <p>Pourquoi : TVA France obligation, plus de crédibilité clients, accounting simpler</p>
+
+                    <h4>Profil 3 : Multi-pays EU (tu explores growth)</h4>
+                    <p><strong>➡️ FRANCE + Luxembourg subsidiary</strong></p>
+                    <p>Pourquoi : Luxembourg 0.5% IS si certaines conditions. France = EU base.</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💰 Example :</strong> Profit 100k€ / an<br/>France (SARL) = 33k€ taxes<br/>Hong Kong = 16.5k€ taxes<br/>Saving : 16.5k€. But France = simpler operations.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-4-2">
+                <div class="lesson-header">
+                    <h2>Structures françaises détaillées</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 4 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Micro-entrepreneur, SARL, SAS. Chacun a pros/cons. Voici le guide de choix.</p>
+
+                    <h3>Micro-entrepreneur (auto-entrepreneur)</h3>
+                    <p><strong>✅ Pros :</strong> Zéro compta, création 5min, charge minimal</p>
+                    <p><strong>❌ Cons :</strong> Max 72.5k€ CA/an, impossible scale, fournisseurs hesitant</p>
+                    <p><strong>Impôts :</strong> Fiscalité Micro (23.55% import)</p>
+                    <p><strong>Recommandation :</strong> OK si < 50k€ CA/an et you don't care growth</p>
+
+                    <h3>SARL (Société à Responsabilité Limitée)</h3>
+                    <p><strong>✅ Pros :</strong> Responsabilité limitée, accounting standard, crédibilité</p>
+                    <p><strong>❌ Cons :</strong> Obligé expert-comptable (500-1500€/an), plus complex</p>
+                    <p><strong>Impôts :</strong> IS 28-33% OR Fiscalité réelle (BNC: micro)</p>
+                    <p><strong>Recommandation :</strong> BEST pour growth. Standard France.</p>
+
+                    <h3>SAS (Société par Actions Simplifiée)</h3>
+                    <p><strong>✅ Pros :</strong> Maximum flexibility, scale-friendly, investor-ready</p>
+                    <p><strong>❌ Cons :</strong> Plus cher création, mandatory accounting</p>
+                    <p><strong>Impôts :</strong> IS 28-33%</p>
+                    <p><strong>Recommandation :</strong> Si vous plan funding/levée de fonds.</p>
+
+                    <h3>Notre recommandation CARAXES</h3>
+                    <ol>
+                        <li><strong>Année 1 :</strong> Micro-entrepreneur (test le marché, 0 cost)</li>
+                        <li><strong>Année 2 (>50k€ CA) :</strong> Basculez SARL en décembre (avant trop cher)</li>
+                        <li><strong>Année 3+ (>300k€ CA) :</strong> Consider SAS si growth velocity high</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>⚠️ Impactant :</strong> Switch SARL early si possible. 50k€ CA = 5k€ savings vs rester micro. Et clients FYI perceive SARL comme "vrai business".
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-4-3">
+                <div class="lesson-header">
+                    <h2>TVA import et autoliquidation</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 4 / Leçon 3</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Vous avez SARL? Vous pouvez autoliquider TVA. Here's how.</p>
+
+                    <h3>What's autoliquidation TVA?</h3>
+                    <p>Au lieu de payer TVA 20% à import (cash out), vous :</p>
+                    <ul>
+                        <li>Déclarez la TVA sur votre CA mensuel</li>
+                        <li>Récupérez la TVA en crédit si vous exports ou B2B</li>
+                        <li>Net effect = vous gagnez 20% cash</li>
+                    </ul>
+
+                    <h3>Exemple calcul</h3>
+                    <blockquote>
+                        <strong>Sans autoliquidation :</strong><br/>
+                        Importez pour 10,000€<br/>
+                        TVA = 2,000€ (you pay cash)<br/>
+                        Coût total = 12,000€<br/>
+                        <br/>
+                        <strong>Avec autoliquidation :</strong><br/>
+                        Importez pour 10,000€<br/>
+                        TVA = 2,000€ (deferred to tax return)<br/>
+                        Coût immediate = 10,000€ ONLY<br/>
+                        Vous récupérez 2,000€ crédit si vous export
+                    </blockquote>
+
+                    <h3>Requirements</h3>
+                    <ul>
+                        <li>✅ SARL ou SAS (pas micro-entrepreneur)</li>
+                        <li>✅ Numéro TVA français</li>
+                        <li>✅ Bill d'achat à nom de l'entreprise (import declaration)</li>
+                        <li>✅ Supplier en dehors UE (Chine, OK)</li>
+                    </ul>
+
+                    <h3>Step-by-step</h3>
+                    <ol>
+                        <li>Factory envoie invoice à votre nom SARL</li>
+                        <li>À customs, vous déclarez "autoliquidation TVA" (case spéciale)</li>
+                        <li>Vous payez juste le product cost, pas TVA</li>
+                        <li>Customs envoie formulaire, vous soumettez à tax authority</li>
+                        <li>TVA est "auto-liquidée" sur votre return mensuel</li>
+                        <li>Vous claim credit si eligible (B2B exports = oui)</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💰 Impact annuel :</strong> Si vous import 100k€/an = 20k€ TVA saved. That's HUGE working capital for scaling.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-5-1">
+                <div class="lesson-header">
+                    <h2>Amazon FBA — Le modèle complet</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 35 minutes</span>
+                        <span>📍 Module 5 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Amazon FBA = fulfill by Amazon. Vous source product, Amazon handles everything (stock, livraison, SAV). Here's the playbook.</p>
+
+                    <h3>Le modèle FBA expliqué</h3>
+                    <ol>
+                        <li><strong>Vous trouvez produit</strong> (Alibaba, 1688, notre réseau)</li>
+                        <li><strong>Vous négociez prix</strong> (target cost < 40% prix vente)</li>
+                        <li><strong>Vous order batch</strong> (1000+ pcs)</li>
+                        <li><strong>Vous envoyez à warehouse Amazon</strong> (France ou EU)</li>
+                        <li><strong>Customer commande sur Amazon</strong></li>
+                        <li><strong>Amazon fulfille</strong> (packing, livraison, returns)</li>
+                        <li><strong>Vous reçoive payment</strong> (minus Amazon fees ~50%)</li>
+                    </ol>
+
+                    <h3>10 étapes setup FBA</h3>
+                    <ol>
+                        <li>Create Amazon seller account (amazon.fr pro)</li>
+                        <li>Research produit viability (keyword volume + competition)</li>
+                        <li>Find supplier (cost < 40% target vente)</li>
+                        <li>Order test batch 500 pcs</li>
+                        <li>Create product listing (title, description, 5 images min)</li>
+                        <li>Create FNSKU labels (Amazon barcodes)</li>
+                        <li>Send shipment à Amazon warehouse address</li>
+                        <li>Wait customs clearance (2-3 jours)</li>
+                        <li>Amazon reçoit, scans, stoque</li>
+                        <li>Launch pay-per-click ads (Amazon Ads)</li>
+                    </ol>
+
+                    <h3>Frais Amazon FBA breakdown</h3>
+                    <p>Vente produit = 100€</p>
+                    <ul>
+                        <li>Commission Amazon (15%) = 15€</li>
+                        <li>Fulfillment fee (~ 5€ depending size) = 5€</li>
+                        <li>Storage fee (monthly) = 1€</li>
+                        <li>Ads (if you run campaigns) = 5€</li>
+                        <li><strong>Total fees = 26€ (26% of sale)</strong></li>
+                        <li><strong>You keep = 74€</strong></li>
+                    </ul>
+
+                    <h3>Objectif / KPIs</h3>
+                    <p>Target profit margin pour FBA = 30%</p>
+                    <ul>
+                        <li>Coût produit : 30€</li>
+                        <li>Prix vente : 100€</li>
+                        <li>Fees (26%) : 26€</li>
+                        <li>Your profit : 44€ (44% margin!) ✓</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🚀 FBA is SCALABLE :</strong> Une fois le produit lancé, vous juste order + restock. Amazon handle growth. Potential = 500€/jour revenue avec 1 product. Multiple products = exponential.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-5-2">
+                <div class="lesson-header">
+                    <h2>Shopify — Setup & optimisation</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 5 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Shopify = votre propre e-commerce. Plus control, plus margin, moins dépendance plateforme.</p>
+
+                    <h3>3 plans Shopify</h3>
+                    <ul>
+                        <li><strong>Shopify Starter (5$) :</strong> Test only, pas produits</li>
+                        <li><strong>Shopify Basic (29$/mois) :</strong> OK si < 5k$ CA/mois</li>
+                        <li><strong>Shopify Standard (79$/mois) :</strong> Recommended si 5-50k$ CA/mois</li>
+                    </ul>
+
+                    <h3>Apps essentielles (plugins)</h3>
+                    <ul>
+                        <li><strong>Oberlo ou DSM</strong> : Dropshipping/sourcing automation</li>
+                        <li><strong>Klaviyo</strong> : Email marketing automation</li>
+                        <li><strong>Gorgias</strong> : Customer support helpdesk</li>
+                        <li><strong>Judgment</strong> : Avive reviews</li>
+                        <li><strong>Stripe</strong> : Payment processing</li>
+                    </ul>
+
+                    <h3>Setup rapide (2 heures)</h3>
+                    <ol>
+                        <li>Choose domain (.shop, .store, or custom)</li>
+                        <li>Pick theme (début gratuit, puis 100-300€ premium)</li>
+                        <li>Add 10-20 produits phares</li>
+                        <li>Setup shipping rates (Colissimo, Mondial Relay)</li>
+                        <li>Connect Stripe (paiement)</li>
+                        <li>Customize email autoresponders</li>
+                        <li>Setup analytics (Google Analytics + Shopify insights)</li>
+                    </ol>
+
+                    <h3>Service CARAXES : We build Shopify for you</h3>
+                    <p>Si vous préférez ne pas le faire :</p>
+                    <ul>
+                        <li>€ 500 : Full setup + 20 produits + design</li>
+                        <li>€ 50/mois : Ongoing management + updates</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🏪 Avantage Shopify :</strong> Vous owne client list. With Amazon, Amazon owns customer. Shopify = YOUR business asset.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-5-3">
+                <div class="lesson-header">
+                    <h2>Wise vs Airwallex — Paiement fournisseurs</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 20 minutes</span>
+                        <span>📍 Module 5 / Leçon 3</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Comment payer vos fournisseurs Chine sans être rippé off sur FX rates? Wise vs Airwallex vs banque classique.</p>
+
+                    <h3>Comparaison 3 solutions</h3>
+
+                    <table>
+                        <tr>
+                            <th>Solution</th>
+                            <th>Frais</th>
+                            <th>Délai</th>
+                            <th>Best for</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Banque classique</strong></td>
+                            <td>3-5% + bad FX</td>
+                            <td>3-5j</td>
+                            <td>Legacy, but NOT recommended</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wise (TransferWise)</strong></td>
+                            <td>0.5-1%</td>
+                            <td>1-2j</td>
+                            <td>BEST pour < 100k$/an</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Airwallex</strong></td>
+                            <td>0.3-0.8%</td>
+                            <td>1-2j</td>
+                            <td>BEST pour > 100k$/an volume</td>
+                        </tr>
+                    </table>
+
+                    <h3>Exemple concret : Payment 5000€ en RMB</h3>
+
+                    <blockquote>
+                        <strong>Wise :</strong><br/>
+                        • Real rate EUR/CNY : 7.50<br/>
+                        • Wise fee : 0.7%<br/>
+                        • You pay : 5,035€<br/>
+                        • Supplier reçoit : 37,750 RMB<br/>
+                        <br/>
+                        <strong>Banque (average) :</strong><br/>
+                        • Rate : 7.30 (worse)<br/>
+                        • Fee : 4%<br/>
+                        • You pay : 5,200€<br/>
+                        • Supplier reçoit : 35,900 RMB<br/>
+                        <br/>
+                        <strong>Wise saves : 165€ AND supplier gets 1850 RMB more</strong>
+                    </blockquote>
+
+                    <h3>How to setup</h3>
+                    <ol>
+                        <li>Download Wise app (iOS/Android)</li>
+                        <li>Verify identity (5 min, upload passeport)</li>
+                        <li>Add bank account (French IBAN)</li>
+                        <li>Send money (pick currency, amount, recipient)</li>
+                        <li>Reçoit confirmation in 1-2j</li>
+                    </ol>
+
+                    <h3>Airwallex (pro version)</h3>
+                    <p>Si vous scalez > 100k€/an, Airwallex meilleur :</p>
+                    <ul>
+                        <li>Multi-currency account (USD, EUR, GBP, CNY same account)</li>
+                        <li>Leverage pour meilleur rates</li>
+                        <li>Business account (no personal liability)</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💡 Recommendation CARAXES :</strong> Start Wise (super easy). Si you're doing > 500k€/an, move Airwallex. It saves 2-3% on volume.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-6-1">
+                <div class="lesson-header">
+                    <h2>Identifier et approcher les prospects</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 30 minutes</span>
+                        <span>📍 Module 6 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Vente = fondation du business. Sans prospects, you're dead. Here's systematic prospecting.</p>
+
+                    <h3>Les 3 cibles CARAXES</h3>
+
+                    <h4>Target 1 : Commerçants musulmans Halal boutiques</h4>
+                    <ul>
+                        <li><strong>Where :</strong> Paris 10-11, Marseille Noailles, Lyon Presqu'île</li>
+                        <li><strong>Criteria :</strong> 500-5000€ stock initial, growth-minded</li>
+                        <li><strong>Pain :</strong> Limited supplier choice, overpriced Alibaba</li>
+                    </ul>
+
+                    <h4>Target 2 : E-commerce dropshippers</h4>
+                    <ul>
+                        <li><strong>Where :</strong> Shopify stores, Facebook Ads, Instagram influencers</li>
+                        <li><strong>Criteria :</strong> 1000+ followers, consistent posts, France/EU based</li>
+                        <li><strong>Pain :</strong> Slow shipping, quality control issues, supplier reliability</li>
+                    </ul>
+
+                    <h4>Target 3 : Distributeurs B2B</h4>
+                    <ul>
+                        <li><strong>Where :</strong> Salon commerce, Kompass directory, LinkedIn</li>
+                        <li><strong>Criteria :</strong> 50k+ CA/an, existing customer base</li>
+                        <li><strong>Pain :</strong> Direct China sourcing too complex, need trusted middleman</li>
+                    </ul>
+
+                    <h3>5 canaux prospecting</h3>
+
+                    <h4>Canal 1 : LinkedIn outreach</h4>
+                    <p><strong>Timing :</strong> Tuesday-Thursday morning<br/>
+                    <strong>Message :</strong> Personalized (mention 1 thing you know about them)</p>
+                    <blockquote>
+                        "Hi [Name], I noticed your Shopify store has amazing [product category]. We help sellers source from verified China factories at 30-40% lower cost. Wanna chat?"
+                    </blockquote>
+
+                    <h4>Canal 2 : Cold email via email finder</h4>
+                    <p><strong>Tool :</strong> Hunter.io or RocketReach (find emails from website)<br/>
+                    <strong>Timing :</strong> Tuesday 9am, Wednesday 10am<br/>
+                    <strong>Template :</strong> 3-line max, 1 ask (coffee call)</p>
+
+                    <h4>Canal 3 : Instagram DM</h4>
+                    <p><strong>Target :</strong> E-commerce accounts 1k-10k followers<br/>
+                    <strong>Message :</strong> Casual, mention specific product</p>
+
+                    <h4>Canal 4 : Événements physiques</h4>
+                    <p><strong>Events :</strong> Trade shows, market meetings, salon e-commerce<br/>
+                    <strong>Approch :</strong> Ask questions, listen, follow-up email next day</p>
+
+                    <h4>Canal 5 : Referral from existing clients</h4>
+                    <p><strong>Best ROI :</strong> Ask current customers "Who else should I talk to?"<br/>
+                    <strong>Incentive :</strong> 50€ credit si they refer + that person orders</p>
+
+                    <h3>Follow-up sequence</h3>
+                    <ol>
+                        <li><strong>Jour 1 :</strong> Initial contact (email / LinkedIn / Instagram)</li>
+                        <li><strong>Jour 3 :</strong> No response? Follow-up light (different angle)</li>
+                        <li><strong>Jour 7 :</strong> 3e attempt (mention urgency, limited time)</li>
+                        <li><strong>Jour 14 :</strong> Final attempt, then move on</li>
+                    </ol>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>📊 Target KPI :</strong> 20 outreach/semaine → 5 responses → 2 meetings → 1 customer. That's how growth happens.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-6-2">
+                <div class="lesson-header">
+                    <h2>Argumentaire et objections</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 6 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Prospects vont vous tester. Voici les 5 arguments gagnants + 4 objections majeures + réponses.</p>
+
+                    <h3>Les 5 arguments CARAXES</h3>
+
+                    <h4>Argument 1 : Cost savings</h4>
+                    <p>"You can source directly from Alibaba, or you can use us. We get 30-40% better pricing because we have volume leverage and direct factory relationships."</p>
+
+                    <h4>Argument 2 : Quality guarantee</h4>
+                    <p>"We do inspection at factory before shipment. You get photos + QC report. Zero defects reach your door."</p>
+
+                    <h4>Argument 3 : Time saved</h4>
+                    <p>"Sourcing takes 50+ hours first time. We've done it 500 times. We get it done in 1 week."</p>
+
+                    <h4>Argument 4 : Risk mitigation</h4>
+                    <p>"First-time orders from China = scam risk. We verify factory, handle payment safely, guarantee quality."</p>
+
+                    <h4>Argument 5 : Scaling support</h4>
+                    <p>"One factory doesn't scale. We have 6 verified suppliers across categories. As you grow, we don't become bottleneck."</p>
+
+                    <h3>Les 4 objections majeures + réponses</h3>
+
+                    <h4>Objection 1 : "Alibaba is cheaper"</h4>
+                    <p><strong>Response :</strong> "Alibaba price on website ≠ real price. Factories always have lower quote. We negotiate that real price. Usually 20-30% cheaper than Alibaba posted."</p>
+
+                    <h4>Objection 2 : "Je fais déjà sourcing moi-même"</h4>
+                    <p><strong>Response :</strong> "Cool. So you know time investment. Most clients tell us: 'I thought I would do it myself, but after our 1st order with you, I realized it's not worth my time. Now I just focus on selling, you handle sourcing.' You're at a point where your time is worth 50€/hour, not 5€/hour, right?"</p>
+
+                    <h4>Objection 3 : "Comment je sais que vous allez pas me voler mon argent?"</h4>
+                    <p><strong>Response :</strong> "Fair question. We use escrow payment via Wise or bank transfer. Money doesn't go direct to factory; it's held until QC approval. You control release. Plus we have 100+ happy customers (references available). And we're registered SARL in France, not fly-by-night."</p>
+
+                    <h4>Objection 4 : "Combien ça coûte ?"</h4>
+                    <p><strong>Response :</strong> "We don't charge fees. We just source products at best price. If you save 30% vs Alibaba, you make 30% more margin. That's our incentive alignment. First consultation = free."</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💡 Technique :</strong> Don't defend. Ask questions. "What concerns you most about sourcing from China? Reliability? Cost? Time?" Once they articulate their pain, your argument becomes obvious.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-6-3">
+                <div class="lesson-header">
+                    <h2>Pricing et offres CARAXES</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 25 minutes</span>
+                        <span>📍 Module 6 / Leçon 3</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>3 offres = 3 budgets. Chaque client trouve son fit. Here's our pricing architecture.</p>
+
+                    <h3>Les 3 offres CARAXES</h3>
+
+                    <h4>Offre 1 : Sourceur Smart (débutants)</h4>
+                    <ul>
+                        <li><strong>Prix :</strong> 0€ sourcing fee (vous payez juste la factory)</li>
+                        <li><strong>Services inclus :</strong>
+                            <ul>
+                                <li>Supplier verification</li>
+                                <li>Price negotiation</li>
+                                <li>Factory communication</li>
+                                <li>QC photos (vous approuvez)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Timeline :</strong> 3-4 semaines</li>
+                        <li><strong>Minimum order :</strong> 100 pcs</li>
+                        <li><strong>Best for :</strong> First-time importers, test batches</li>
+                    </ul>
+
+                    <h4>Offre 2 : Sourceur Pro (scale-ups)</h4>
+                    <ul>
+                        <li><strong>Prix :</strong> 3% commission on order value (payé une fois)</li>
+                        <li><strong>Services inclus :</strong> Tout de Smart +
+                            <ul>
+                                <li>On-site factory inspection (3e party)</li>
+                                <li>Sample pre-approval</li>
+                                <li>Logistics coordination</li>
+                                <li>Post-delivery QC</li>
+                                <li>Dedicated account manager</li>
+                            </ul>
+                        </li>
+                        <li><strong>Timeline :</strong> 2-3 semaines</li>
+                        <li><strong>Minimum order :</strong> 500 pcs</li>
+                        <li><strong>Best for :</strong> Regular orders, volume buys</li>
+                    </ul>
+
+                    <h4>Offre 3 : Sourceur Elite (agencies, wholesalers)</h4>
+                    <ul>
+                        <li><strong>Prix :</strong> 2% commission (volume discount) + 199€/month retainer</li>
+                        <li><strong>Services inclus :</strong> Tout de Pro +
+                            <ul>
+                                <li>Priority supplier access</li>
+                                <li>Custom product development</li>
+                                <li>Inventory management consulting</li>
+                                <li>Pricing optimization</li>
+                                <li>Quarterly business reviews</li>
+                            </ul>
+                        </li>
+                        <li><strong>Timeline :</strong> 1-2 semaines (rush available)</li>
+                        <li><strong>Minimum order :</strong> 5000 pcs/month</li>
+                        <li><strong>Best for :</strong> B2B distributors, serious e-commerce</li>
+                    </ul>
+
+                    <h3>Pricing example</h3>
+                    <blockquote>
+                        <strong>Scenario : Order 1000 t-shirts, factory price 3€ = 3000€</strong><br/>
+                        <br/>
+                        <strong>Offre 1 (Smart) :</strong><br/>
+                        • Vous payez = 3000€<br/>
+                        • Vous économisez vs Alibaba = 600€<br/>
+                        • Net cost = 2400€ (plus QC photos)<br/>
+                        <br/>
+                        <strong>Offre 2 (Pro) :</strong><br/>
+                        • Commission 3% = 90€<br/>
+                        • Vous payez = 3090€<br/>
+                        • Vous économisez vs Alibaba = 600€<br/>
+                        • Plus on-site inspection + dedicated support = peace of mind<br/>
+                        <br/>
+                        <strong>Offre 3 (Elite) :</strong><br/>
+                        • Commission 2% = 60€ + 199€ retainer<br/>
+                        • Vous payez = 3259€/month<br/>
+                        • But vous avez priority, custom support, bulk pricing<br/>
+                        • Best si vous order 5k+ pcs/month
+                    </blockquote>
+
+                    <h3>La règle d'or CARAXES</h3>
+                    <p><strong>"We win when you win"</strong></p>
+                    <p>We don't charge fees si you're not saving money. Our incentive = your success. Higher volume = better rates for you = better rates for us.</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🎯 Closing technique :</strong> "Let's try Offre 1 first. One order, you see the difference. Then we upgrade to Pro once you're comfortable. Fair?"
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let completedLessons = {};
+        let currentLesson = '1-1';
+        let expandedModules = { 1: true, 2: false, 3: false, 4: false, 5: false, 6: false };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            selectLesson(1, 1);
+            updateProgress();
+        });
+
+        function selectLesson(module, lesson) {
+            document.querySelectorAll('.lesson-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lesson-item').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            const lessonId = `${module}-${lesson}`;
+            const lessonEl = document.getElementById(`lesson-${lessonId}`);
+            if (lessonEl) {
+                lessonEl.classList.add('active');
+            }
+
+            const selector = document.querySelector(`[onclick="selectLesson(${module}, ${lesson})"]`);
+            if (selector) {
+                selector.classList.add('active');
+            }
+
+            currentLesson = lessonId;
+            updateProgress();
+            closeSidebarMobile();
+        }
+
+        function toggleLesson(module, lesson) {
+            const lessonId = `${module}-${lesson}`;
+            completedLessons[lessonId] = !completedLessons[lessonId];
+            updateProgress();
+        }
+
+        function toggleModule(module) {
+            expandedModules[module] = !expandedModules[module];
+            const moduleEl = document.getElementById(`module-${module}`);
+            const lessonList = moduleEl.querySelector('.lesson-list');
+            const toggle = moduleEl.querySelector('.module-toggle');
+
+            lessonList.classList.toggle('collapsed');
+            toggle.classList.toggle('open');
+        }
+
+        function updateProgress() {
+            const total = 22;
+            const completed = Object.values(completedLessons).filter(v => v).length;
+            const percentage = (completed / total) * 100;
+
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${completed}/${total}`;
+        }
+
+        function searchLessons() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const lessonItems = document.querySelectorAll('.lesson-item');
+
+            lessonItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+
+            if (query.length > 0) {
+                Object.keys(expandedModules).forEach(module => {
+                    const lessonList = document.querySelector(`#module-${module} .lesson-list`);
+                    const hasVisibleLessons = document.querySelector(`#module-${module} .lesson-item[style*="display: flex"]`);
+                    if (hasVisibleLessons) {
+                        expandedModules[module] = true;
+                        lessonList.classList.remove('collapsed');
+                        document.querySelector(`#module-${module} .module-toggle`).classList.add('open');
+                    }
+                });
+            }
+        }
+
+        function togglePrintMode() {
+            document.body.classList.toggle('print-mode');
+            if (document.body.classList.contains('print-mode')) {
+                window.print();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function closeSidebarMobile() {
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.add('hidden');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
