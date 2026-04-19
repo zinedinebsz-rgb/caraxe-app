@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { c, f, size, sp, shadow, ease } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, radius, gradient, transition } from '../lib/theme'
 import { TIERS, getTierByKey, DEFAULT_TIER } from '../lib/clientTiers'
 import { updateProfile, supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
@@ -16,9 +16,9 @@ const keyframes = `
 .set-scroll::-webkit-scrollbar-track { background:transparent }
 .set-scroll::-webkit-scrollbar-thumb { background:oklch(22% 0.008 50) }
 
-.set-input { width:100%; padding:12px 14px; font-size:14px; font-family:'DM Sans',sans-serif; background:oklch(10% 0.006 50); border:1px solid oklch(22% 0.008 50); color:oklch(93% 0.01 70); outline:none; transition:all 0.2s cubic-bezier(0.4,0,0.2,1); letter-spacing:0.01em }
-.set-input:focus { border-color:oklch(75% 0.12 85); box-shadow:0 0 0 2px oklch(75% 0.12 85 / 0.08) }
-.set-input::placeholder { color:oklch(35% 0.01 55) }
+.set-input { width:100%; padding:12px 14px; font-size:14px; font-family:'DM Sans',sans-serif; background:${c.bgInput}; border:none; border-bottom:1.5px solid ${c.border}; border-radius:${radius.xs} ${radius.xs} 0 0; color:${c.text}; outline:none; transition:all 0.25s cubic-bezier(0.22,0.61,0.36,1); letter-spacing:0.01em }
+.set-input:focus { border-bottom-color:${c.gold}; box-shadow:0 1px 0 0 ${c.gold} }
+.set-input::placeholder { color:${c.textTertiary} }
 .set-input:disabled { opacity:0.5; cursor:not-allowed }
 
 .set-tier-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px }
@@ -43,11 +43,15 @@ const Label = ({ children }) => (
 /* ── Section ── */
 const Section = ({ title, subtitle, children, accent = c.gold, delay = 0 }) => (
   <div style={{
-    background:c.bgSurface, border:`1px solid ${c.border}`,
+    background:gradient.card, border:`1px solid ${c.border}`,
+    borderRadius:radius.lg, boxShadow:shadow.card,
     position:'relative', overflow:'hidden', marginBottom:16,
     animation:`slideUp 0.4s ease-out ${delay}ms both`,
-  }}>
-    <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:accent, opacity:0.3 }}/>
+    transition:transition.lift,
+  }}
+    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = shadow.cardHover }}
+    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = shadow.card }}>
+    <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:accent, opacity:0.4 }}/>
     <div style={{ padding:'20px 24px' }}>
       <h3 style={{
         fontFamily:f.display, fontSize:size.base, fontWeight:700,
@@ -126,10 +130,10 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:16 }}>
           <button onClick={onBack} style={{
-            background:'none', border:`1px solid ${c.border}`, cursor:'pointer',
+            background:'none', border:`1px solid ${c.border}`, borderRadius:radius.md, cursor:'pointer',
             color:c.textSecondary, fontFamily:f.body, fontSize:13,
             display:'flex', alignItems:'center', gap:6, padding:'6px 14px',
-            transition:`all 0.2s ${ease.smooth}`,
+            transition:transition.fast,
           }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.color = c.text }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}>
@@ -141,11 +145,11 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
         </div>
 
         <button onClick={handleSave} disabled={saving} style={{
-          padding:'8px 20px',
+          padding:'8px 20px', borderRadius:radius.md,
           background: saved ? c.green : c.red,
           border:'none', color: saved ? c.bg : c.white,
           fontSize:13, fontWeight:700, cursor: saving ? 'wait' : 'pointer',
-          fontFamily:f.body, transition:`all 0.3s ${ease.out}`,
+          fontFamily:f.body, transition:transition.normal,
           letterSpacing:'0.02em',
         }}
           onMouseEnter={(e) => { if (!saved && !saving) { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = shadow.glow } }}
@@ -163,7 +167,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
             <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:20 }}>
               {/* Avatar */}
               <div style={{
-                width:56, height:56, flexShrink:0,
+                width:56, height:56, flexShrink:0, borderRadius:radius.lg,
                 background:c.bgElevated, border:`2px solid ${currentTier.color}`,
                 display:'flex', alignItems:'center', justifyContent:'center',
                 fontFamily:f.display, fontSize:size.lg, fontWeight:700,
@@ -180,7 +184,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
                 </div>
                 <div style={{
                   display:'inline-flex', alignItems:'center', gap:5,
-                  marginTop:6, padding:'3px 10px',
+                  marginTop:6, padding:'3px 10px', borderRadius:radius.sm,
                   background:currentTier.colorSoft, fontSize:10,
                   fontFamily:f.mono, fontWeight:700, color:currentTier.color,
                   letterSpacing:'0.04em', textTransform:'uppercase',
@@ -199,8 +203,8 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
               <div>
                 <Label>Email</Label>
                 <div style={{
-                  padding:'12px 14px', background:c.bg, border:`1px solid ${c.borderSubtle}`,
-                  color:c.textTertiary, fontSize:14, display:'flex', alignItems:'center', gap:8,
+                  padding:'12px 14px', background:c.bgInput, border:`1px solid ${c.borderSubtle}`,
+                  borderRadius:radius.sm, color:c.textTertiary, fontSize:14, display:'flex', alignItems:'center', gap:8,
                 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={c.textTertiary} strokeWidth="1.5" strokeLinecap="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
@@ -257,7 +261,8 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
                     style={{
                       padding:16, background: sel ? c.bgElevated : c.bg,
                       border:`1.5px solid ${sel ? tier.color : c.border}`,
-                      cursor:'pointer', transition:`all 0.25s ${ease.luxury}`,
+                      borderRadius:radius.md, boxShadow: sel ? shadow.sm : 'none',
+                      cursor:'pointer', transition:transition.normal,
                       position:'relative', overflow:'hidden',
                     }}
                     onMouseEnter={(e) => { if (!sel) e.currentTarget.style.borderColor = tier.color + '55' }}
@@ -277,7 +282,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
                       </div>
                       {sel && (
                         <div style={{
-                          width:20, height:20, background:tier.color,
+                          width:20, height:20, background:tier.color, borderRadius:radius.xs,
                           display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
                         }}>
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c.bg} strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -336,10 +341,10 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
                 <div style={{ fontSize:11, color:c.textTertiary, marginTop:2 }}>Vous serez redirige vers la page de connexion.</div>
               </div>
               <button onClick={handleSignOut} style={{
-                padding:'8px 18px', background:'transparent',
+                padding:'8px 18px', background:'transparent', borderRadius:radius.md,
                 border:`1px solid ${c.red}`, color:c.red,
                 fontSize:12, fontWeight:600, cursor:'pointer',
-                fontFamily:f.body, transition:`all 0.2s ${ease.smooth}`,
+                fontFamily:f.body, transition:transition.fast,
               }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = c.redSoft }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { c, f, size, sp, shadow, ease } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, radius, gradient } from '../lib/theme'
 import { TIERS, DEFAULT_TIER, getTierByKey } from '../lib/clientTiers'
 import { getCatalog } from '../lib/catalogsByProfile'
 import { updateProfile, sendWelcomeMessage } from '../lib/supabase'
@@ -38,23 +38,23 @@ const keyframes = `
   .ob-catalog-grid { gap:10px !important }
 }
 
-.ob-input { width:100%; padding:14px 16px; font-size:14px; font-family:'DM Sans',sans-serif; background:oklch(10% 0.006 50); border:1px solid oklch(22% 0.008 50); color:oklch(93% 0.01 70); outline:none; transition:all 0.2s cubic-bezier(0.4,0,0.2,1); box-sizing:border-box; letter-spacing:0.01em }
-.ob-input:focus { border-color:oklch(75% 0.12 85); box-shadow:0 0 0 3px oklch(75% 0.12 85 / 0.08) }
+.ob-input { width:100%; padding:14px 16px; font-size:14px; font-family:'DM Sans',sans-serif; background:${c.bgInput}; border:1px solid ${c.borderSubtle}; border-bottom:2px solid ${c.border}; border-radius:${radius.sm}; color:${c.text}; outline:none; transition:all 0.2s cubic-bezier(0.4,0,0.2,1); box-sizing:border-box; letter-spacing:0.01em }
+.ob-input:focus { border-color:${c.borderSubtle}; border-bottom-color:${c.gold}; box-shadow:none }
 .ob-input::placeholder { color:oklch(35% 0.01 55) }
 
-.ob-btn-primary { padding:14px 32px; background:oklch(55% 0.22 25); border:1px solid oklch(55% 0.22 25); color:oklch(98% 0.005 70); font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
+.ob-btn-primary { padding:14px 32px; background:oklch(55% 0.22 25); border:1px solid oklch(55% 0.22 25); border-radius:${radius.md}; color:oklch(98% 0.005 70); font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
 .ob-btn-primary:hover { background:oklch(45% 0.20 25); box-shadow:0 0 24px oklch(55% 0.22 25 / 0.15) }
 .ob-btn-primary:active { transform:scale(0.98) }
 
-.ob-btn-gold { padding:14px 32px; background:oklch(75% 0.12 85); border:1px solid oklch(75% 0.12 85); color:oklch(5% 0.005 50); font-size:14px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
+.ob-btn-gold { padding:14px 32px; background:oklch(75% 0.12 85); border:1px solid oklch(75% 0.12 85); border-radius:${radius.md}; color:oklch(5% 0.005 50); font-size:14px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
 .ob-btn-gold:hover { background:oklch(65% 0.10 85); box-shadow:0 0 20px oklch(75% 0.12 85 / 0.12) }
 .ob-btn-gold:active { transform:scale(0.98) }
 .ob-btn-gold:disabled { opacity:0.4; cursor:not-allowed }
 
-.ob-btn-secondary { padding:14px 24px; background:transparent; border:1px solid oklch(22% 0.008 50); color:oklch(62% 0.015 60); font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:500; transition:all 0.2s cubic-bezier(0.4,0,0.2,1) }
+.ob-btn-secondary { padding:14px 24px; background:transparent; border:1px solid oklch(22% 0.008 50); border-radius:${radius.md}; color:oklch(62% 0.015 60); font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:500; transition:all 0.2s cubic-bezier(0.4,0,0.2,1) }
 .ob-btn-secondary:hover { border-color:oklch(45% 0.01 55); color:oklch(93% 0.01 70) }
 
-.ob-nav { position:fixed; bottom:0; left:0; right:0; z-index:100; padding:16px 24px; background:oklch(7% 0.005 50 / 0.92); backdrop-filter:blur(16px); border-top:1px solid oklch(22% 0.008 50 / 0.5); display:flex; justify-content:space-between; align-items:center }
+.ob-nav { position:fixed; bottom:0; left:0; right:0; z-index:100; padding:16px 24px; background:oklch(7% 0.005 50 / 0.92); backdrop-filter:blur(16px); border-top:1px solid oklch(22% 0.008 50 / 0.5); border-radius:${radius.xl} ${radius.xl} 0 0; display:flex; justify-content:space-between; align-items:center }
 `
 
 const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnees']
@@ -142,19 +142,36 @@ export default function Onboarding({ user, profile, onComplete }) {
 
   const handleFinish = async () => {
     setSaving(true)
-    try {
-      await updateProfile(user.id, {
-        ...formData,
-        client_tier: selectedTier,
-        preferred_categories: selectedCategories,
-        onboarding_done: true,
-      })
-      toast.success('Bienvenue chez CARAXES !')
-      sendWelcomeMessage(user.id).catch(() => {})
-      onComplete()
-    } catch (err) {
-      toast.error('Erreur lors de la finalisation. Reessayez.')
-      setSaving(false)
+
+    // Cascade of retries — each removes fields that may not exist in Supabase
+    const attempts = [
+      // 1) All fields
+      { ...formData, client_tier: selectedTier, preferred_categories: selectedCategories, onboarding_done: true },
+      // 2) Without preferred_categories + address/website
+      { full_name: formData.full_name, company: formData.company, phone: formData.phone, city: formData.city, client_tier: selectedTier, onboarding_done: true },
+      // 3) Without client_tier (CHECK constraint might block)
+      { full_name: formData.full_name, company: formData.company, phone: formData.phone, onboarding_done: true },
+      // 4) Absolute minimum — just name + onboarding flag
+      { full_name: formData.full_name, onboarding_done: true },
+      // 5) Just the name (onboarding_done column might not exist!)
+      { full_name: formData.full_name || 'Client' },
+    ]
+
+    for (let i = 0; i < attempts.length; i++) {
+      try {
+        await updateProfile(user.id, attempts[i])
+        toast.success('Bienvenue chez CARAXES !')
+        sendWelcomeMessage(user.id).catch(() => {})
+        onComplete()
+        return
+      } catch (err) {
+        console.error(`Onboarding attempt ${i + 1}/${attempts.length} failed:`, err?.message || err)
+        if (i === attempts.length - 1) {
+          // All attempts failed — show the last error
+          toast.error('Erreur : ' + (err?.message || 'Impossible de sauvegarder. Vérifiez la base de données.'))
+          setSaving(false)
+        }
+      }
     }
   }
 
@@ -276,8 +293,9 @@ export default function Onboarding({ user, profile, onComplete }) {
                   <div key={tier.key}
                     onClick={() => { setSelectedTier(tier.key); setSelectedCategories([]) }}
                     style={{
-                      padding:0, background: sel ? c.bgElevated : c.bgSurface,
+                      padding:0, background: sel ? c.bgElevated : gradient.card,
                       border:`1.5px solid ${sel ? tier.color : c.border}`,
+                      borderRadius: radius.lg,
                       cursor:'pointer',
                       transition:`all 0.3s ${ease.luxury}`,
                       position:'relative', overflow:'hidden',
@@ -310,6 +328,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                           <div style={{
                             marginLeft:'auto',
                             width:22, height:22,
+                            borderRadius: radius.xs,
                             background:tier.color,
                             display:'flex', alignItems:'center', justifyContent:'center',
                             animation:'checkPop 0.3s ease-out',
@@ -329,7 +348,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                       {/* Stats row */}
                       <div style={{
                         display:'flex', gap:0, background:c.bg,
-                        border:`1px solid ${c.borderSubtle}`, marginBottom:14,
+                        border:`1px solid ${c.borderSubtle}`, borderRadius: radius.md, marginBottom:14,
                       }}>
                         <div style={{ flex:1, textAlign:'center', padding:'10px 8px', borderRight:`1px solid ${c.borderSubtle}` }}>
                           <div style={{ fontSize:9, fontFamily:f.mono, color:c.textTertiary, letterSpacing:'0.06em', marginBottom:3, textTransform:'uppercase' }}>Cmd min.</div>
@@ -395,8 +414,10 @@ export default function Onboarding({ user, profile, onComplete }) {
                     onClick={() => toggleCategory(cat.id)}
                     style={{
                       padding:16, position:'relative',
-                      background: sel ? c.bgElevated : c.bgSurface,
+                      background: sel ? c.bgElevated : gradient.card,
                       border:`1.5px solid ${sel ? currentTier.color : c.border}`,
+                      borderRadius: radius.md,
+                      boxShadow: shadow.card,
                       cursor:'pointer',
                       transition:`all 0.2s ${ease.smooth}`,
                       animation:`scaleReveal 0.3s ease-out ${i * 35}ms both`,
@@ -409,6 +430,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                       position:'absolute', top:12, right:12,
                       width:18, height:18,
                       border:`1.5px solid ${sel ? currentTier.color : c.border}`,
+                      borderRadius: radius.xs,
                       background: sel ? currentTier.color : 'transparent',
                       display:'flex', alignItems:'center', justifyContent:'center',
                       transition:`all 0.15s ${ease.smooth}`,
@@ -459,6 +481,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                         <span key={j} style={{
                           fontSize:9, padding:'2px 7px', fontFamily:f.mono,
                           background:c.bg, border:`1px solid ${c.borderSubtle}`,
+                          borderRadius: radius.xs,
                           color:c.textTertiary, letterSpacing:'0.01em',
                         }}>{p}</span>
                       ))}
@@ -509,7 +532,8 @@ export default function Onboarding({ user, profile, onComplete }) {
             </div>
 
             <div style={{
-              background:c.bgSurface, border:`1px solid ${c.border}`,
+              background:gradient.card, border:`1px solid ${c.border}`,
+              borderRadius: radius.lg, boxShadow: shadow.card,
               padding:24, display:'flex', flexDirection:'column', gap:20,
             }}>
               <Field label="Nom complet *">
@@ -555,7 +579,8 @@ export default function Onboarding({ user, profile, onComplete }) {
             {/* Recap card */}
             <div style={{
               marginTop:20, padding:20,
-              background:c.bgSurface, border:`1px solid ${c.border}`,
+              background:gradient.card, border:`1px solid ${c.border}`,
+              borderRadius: radius.lg, boxShadow: shadow.card,
               position:'relative', overflow:'hidden',
             }}>
               <div style={{

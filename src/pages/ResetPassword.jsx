@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { updateUserPassword, supabase } from '../lib/supabase'
-import { c, f, size, sp, ease, shadow, transition } from '../lib/theme'
+import { c, f, size, sp, ease, shadow, transition, gradient, radius } from '../lib/theme'
 
 /* Dragon Mark */
 const DragonMark = ({ s = 44 }) => (
@@ -81,7 +81,8 @@ export default function ResetPassword() {
 
   const inputStyle = {
     width: '100%', padding: '15px 18px',
-    background: c.bgSurface, border: `1px solid ${c.border}`,
+    background: c.bgInput, border: `1px solid ${c.border}`,
+    borderRadius: radius.md,
     color: c.text, fontSize: size.sm, fontFamily: f.body,
     outline: 'none', boxSizing: 'border-box',
     transition: `border-color 0.3s ${ease.luxury || ease.out}, box-shadow 0.3s ${ease.luxury || ease.out}, background 0.3s ${ease.luxury || ease.out}`,
@@ -94,8 +95,9 @@ export default function ResetPassword() {
       background: c.bg, fontFamily: f.body, color: c.text, padding: sp[4],
     }}>
       <div style={{
-        width: '100%', maxWidth: 420, background: c.bgSurface,
-        border: `1px solid ${c.border}`, padding: sp[5],
+        width: '100%', maxWidth: 420, background: gradient.card,
+        border: `1px solid ${c.border}`, borderRadius: radius.lg, padding: sp[5],
+        boxShadow: shadow.card,
         animation: 'fadeSlideIn 0.5s ease-out',
       }}>
         {/* Header */}
@@ -140,6 +142,7 @@ export default function ResetPassword() {
             <button onClick={() => navigate('/login')} style={{
               marginTop: sp[3], padding: `12px ${sp[4]}`,
               background: c.red, color: c.text, border: 'none',
+              borderRadius: radius.md,
               fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
               cursor: 'pointer', width: '100%',
             }}>
@@ -184,7 +187,7 @@ export default function ResetPassword() {
                   onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)}
                   style={{
                     ...inputStyle,
-                    background: focused === 'pw' ? c.bgElevated : c.bgSurface,
+                    background: focused === 'pw' ? c.bgElevated : c.bgInput,
                     borderColor: focused === 'pw' ? c.red : c.border,
                     boxShadow: focused === 'pw' ? `0 0 0 3px ${c.redSoft}` : 'none',
                   }}
@@ -211,7 +214,7 @@ export default function ResetPassword() {
                   onFocus={() => setFocused('pw2')} onBlur={() => setFocused(null)}
                   style={{
                     ...inputStyle,
-                    background: focused === 'pw2' ? c.bgElevated : c.bgSurface,
+                    background: focused === 'pw2' ? c.bgElevated : c.bgInput,
                     borderColor: focused === 'pw2' ? c.red : c.border,
                     boxShadow: focused === 'pw2' ? `0 0 0 3px ${c.redSoft}` : 'none',
                   }}
@@ -240,7 +243,8 @@ export default function ResetPassword() {
             {error && (
               <div style={{
                 padding: `${sp[2]} ${sp[3]}`, background: c.redSoft,
-                border: `1px solid ${c.redGlow}`, fontSize: size.xs,
+                border: `1px solid ${c.redGlow}`, borderRadius: radius.md,
+                fontSize: size.xs,
                 color: c.red, marginBottom: sp[3], lineHeight: 1.5,
               }}>
                 {error}
@@ -249,7 +253,7 @@ export default function ResetPassword() {
 
             <button type="submit" disabled={loading} style={{
               width: '100%', padding: '16px', background: c.red, color: c.text,
-              border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
+              border: 'none', borderRadius: radius.md, fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
               cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1,
               transition: `all 0.3s ${ease.out}`, letterSpacing: '0.04em',
               textTransform: 'uppercase',

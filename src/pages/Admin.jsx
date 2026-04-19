@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { c, f, size, sp, shadow, ease, transition, STATUSES } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, transition, radius, STATUSES } from '../lib/theme'
 import {
   getOrders, updateOrder, deleteOrder, getMessages, sendMessage,
   getDocuments, uploadDocument, getDocumentUrl, getAllClients, getAllProfiles, createOrder,
@@ -17,54 +17,53 @@ import { TIERS, getTierByKey, DEFAULT_TIER, getTierPrice, getTierMOQ } from '../
 import StatusPill, { ProgressBar, PipelineStepper } from '../components/StatusPill'
 import { useToast, ConfirmDialog } from '../components/Toast'
 import { exportFullBackupJSON, exportBackupCSVs } from '../lib/backup'
+import { scoreCohort, SCORE_BAND_COLOR } from '../lib/clientScoring'
+import LocaleAndPwaControls from '../components/LocaleAndPwaControls.jsx'
+import { useI18n } from '../lib/i18n.jsx'
+import { sendPushToUser } from '../lib/push'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
+const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://caraxes13.app.n8n.cloud/webhook'
 
 /* ── CINEMATIC NOIR COMPONENTS ── */
 const DragonMark = ({ s = 28 }) => (
-  <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{ filter: `drop-shadow(0 0 8px oklch(55% 0.22 25 / 0.3))` }}>
+  <svg width={s} height={s} viewBox="0 0 44 44" fill="none">
     <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill={c.red} opacity="0.85"/>
-    <path d="M13 12L7 5M31 12L37 5" stroke={c.gold} strokeWidth="1.2" opacity="0.5"/>
+    <path d="M13 12L7 5M31 12L37 5" stroke={c.gold} strokeWidth="1" opacity="0.4"/>
     <circle cx="17.5" cy="21" r="2" fill={c.gold} opacity="0.9"/>
     <circle cx="26.5" cy="21" r="2" fill={c.gold} opacity="0.9"/>
   </svg>
 )
 
-const FilmGrain = ({ id = 'adminGrain' }) => (
-  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: 0.04, mixBlendMode: 'overlay' }}>
-    <filter id={id}><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" stitchTiles="stitch"/></filter>
-    <rect width="100%" height="100%" filter={`url(#${id})`}/>
-  </svg>
-)
+const FilmGrain = () => null
 
 const ArtDecoDivider = ({ width = 100, color = c.gold }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.3, margin: `${sp[2]} 0` }}>
-    <div style={{ width: 5, height: 5, background: color, transform: 'rotate(45deg)' }} />
-    <div style={{ width, height: '1px', background: `linear-gradient(90deg, ${color}, transparent)` }} />
-  </div>
+  <div style={{ width, height: '1px', background: color, opacity: 0.12, margin: `${sp[2]} 0` }} />
 )
 
-/* ── KEYFRAMES — premium ── */
+/* ── KEYFRAMES — minimal ── */
 const keyframes = `
-@keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
-@keyframes fadeSlideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+@keyframes fadeSlideIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+@keyframes fadeSlideUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
 @keyframes spin { to { transform:rotate(360deg) } }
-@keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 oklch(55% 0.22 25 / 0) } 50% { box-shadow: 0 0 12px 2px oklch(55% 0.22 25 / 0.15) } }
+@keyframes pulseGlow { 0%,100% { opacity:0.7 } 50% { opacity:1 } }
 @keyframes barReveal { from { transform: scaleX(0) } to { transform: scaleX(1) } }
-@keyframes cardReveal { from { opacity:0; transform:translateY(12px) scale(0.98) } to { opacity:1; transform:translateY(0) scale(1) } }
+@keyframes cardReveal { from { opacity:0; transform:translateY(8px) scale(0.99) } to { opacity:1; transform:translateY(0) scale(1) } }
 @keyframes skeletonPulse { 0% { opacity:0.04 } 50% { opacity:0.08 } 100% { opacity:0.04 } }
-@keyframes tooltipIn { from { opacity:0; transform:translateX(-4px) } to { opacity:1; transform:translateX(0) } }
-@keyframes trackingPulse { 0%,100% { box-shadow: 0 0 0 0 oklch(75% 0.12 85 / 0) } 50% { box-shadow: 0 0 8px 2px oklch(75% 0.12 85 / 0.25) } }
-@keyframes staggerFadeIn { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
+@keyframes tooltipIn { from { opacity:0; transform:translateX(-3px) } to { opacity:1; transform:translateX(0) } }
+@keyframes trackingPulse { 0%,100% { opacity:0.7 } 50% { opacity:1 } }
+@keyframes staggerFadeIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
 @keyframes diamondSpin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-@keyframes borderGlow { 0%,100% { border-color: oklch(75% 0.12 85 / 0.15) } 50% { border-color: oklch(75% 0.12 85 / 0.4) } }
+@keyframes borderGlow { 0%,100% { border-color: oklch(75% 0.12 85 / 0.12) } 50% { border-color: oklch(75% 0.12 85 / 0.20) } }
 `
 
 const scrollbarCSS = `
 .admin-scroll::-webkit-scrollbar { width:5px }
 .admin-scroll::-webkit-scrollbar-track { background:transparent }
-.admin-scroll::-webkit-scrollbar-thumb { background:oklch(22% 0.008 50); border-radius:0 }
-.admin-scroll::-webkit-scrollbar-thumb:hover { background:oklch(30% 0.008 50) }
+.admin-scroll::-webkit-scrollbar-thumb { background:${c.borderSubtle}; border-radius:${radius.pill} }
+.admin-scroll::-webkit-scrollbar-thumb:hover { background:${c.borderLight} }
+* { transition: border-color 0.2s ${ease.luxury}, box-shadow 0.2s ${ease.luxury}; }
+button, a, input, select, textarea { transition: all 0.25s ${ease.luxury}; }
 `
 
 /* ── SVG ICONS ── */
@@ -103,33 +102,21 @@ const icons = {
 }
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+const fmtMoney = (v, decimals = 0) => {
+  if (v == null || v === '' || v === 'À définir') return v || '–'
+  if (typeof v === 'string' && /[€$¥£]|^\d+\s*[-–]\s*\d+/.test(v)) return v
+  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/\s/g, '').replace(',', '.'))
+  if (isNaN(n)) return v
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + '\u00A0€'
+}
+const parseBudget = (b) => { if (typeof b === 'number') return b; if (!b) return 0; const n = parseFloat(String(b).replace(/[^\d.,-]/g, '').replace(',', '.')); return isNaN(n) ? 0 : n }
 
-const DecoPattern = ({ color = c.gold, opacity: op = 0.06 }) => (
-  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: op }} viewBox="0 0 200 200" preserveAspectRatio="none">
-    <defs>
-      <pattern id="admin-deco-grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-        <path d="M20 0L40 20L20 40L0 20Z" fill="none" stroke={color} strokeWidth="0.5" opacity="0.4"/>
-        <circle cx="20" cy="20" r="1.5" fill={color} opacity="0.3"/>
-      </pattern>
-    </defs>
-    <rect width="200" height="200" fill="url(#admin-deco-grid)"/>
-  </svg>
-)
+const DecoPattern = () => null
 
 const DragonEmptyState = ({ title, subtitle, action, actionLabel }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: sp[6], gap: sp[3], textAlign: 'center', animation: 'fadeSlideUp 0.6s ease', minHeight: 280 }}>
-    {/* Art Deco geometric illustration */}
-    <div style={{ position: 'relative', width: 100, height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg width="100" height="100" viewBox="0 0 100 100" fill="none" style={{ position: 'absolute' }}>
-        <path d="M10 50 L50 10 L90 50 L50 90 Z" stroke={c.goldMuted} strokeWidth="0.5" opacity="0.4" />
-        <path d="M20 50 L50 20 L80 50 L50 80 Z" stroke={c.gold} strokeWidth="1" opacity="0.6" />
-        <path d="M30 50 L50 30 L70 50 L50 70 Z" stroke={c.gold} strokeWidth="0.5" opacity="0.3" />
-        <line x1="50" y1="0" x2="50" y2="100" stroke={c.goldMuted} strokeWidth="0.3" opacity="0.2" />
-        <line x1="0" y1="50" x2="100" y2="50" stroke={c.goldMuted} strokeWidth="0.3" opacity="0.2" />
-      </svg>
-      <DragonMark s={32} />
-    </div>
-    <h4 style={{ fontFamily: f.display, fontSize: size.lg, marginBottom: 0, fontWeight: 600, color: c.gold, letterSpacing: '0.06em' }}>{title}</h4>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: sp[6], gap: sp[2], textAlign: 'center', animation: 'cardReveal 0.4s ease', minHeight: 220 }}>
+    <DragonMark s={28} />
+    <h4 style={{ fontFamily: f.display, fontSize: size.base, marginBottom: 0, fontWeight: 600, color: c.text, letterSpacing: '0.04em' }}>{title}</h4>
     {subtitle && <p style={{ fontFamily: f.body, fontSize: size.xs, color: c.textTertiary, margin: 0, letterSpacing: '0.01em', maxWidth: '30ch', lineHeight: 1.5 }}>{subtitle}</p>}
     {action && (
       <button onClick={action} style={{
@@ -148,7 +135,7 @@ const DragonEmptyState = ({ title, subtitle, action, actionLabel }) => (
 
 /* ── SKELETON LOADER ── */
 const SkeletonCard = ({ lines = 3 }) => (
-  <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, position: 'relative', overflow: 'hidden' }}>
+  <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, position: 'relative', overflow: 'hidden' }}>
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `${c.gold}15` }} />
     <div style={{ width: 60, height: 8, background: `${c.gold}10`, marginBottom: sp[2], animation: 'skeletonPulse 1.5s ease infinite' }} />
     <div style={{ width: 80, height: 24, background: `${c.text}05`, marginBottom: sp[1.5], animation: 'skeletonPulse 1.5s ease infinite 0.2s' }} />
@@ -206,8 +193,8 @@ const SidebarTooltip = ({ label, visible }) => {
   if (!visible) return null
   return (
     <div style={{
-      position: 'absolute', left: '100%', top: '50%', transform: 'translateY(-50%)',
-      marginLeft: 8, padding: '4px 10px', background: c.bgElevated, border: `1px solid ${c.borderGold}`,
+      position: 'absolute', insetInlineStart: '100%', top: '50%', transform: 'translateY(-50%)',
+      marginInlineStart: 8, padding: '4px 10px', background: c.bgElevated, border: `1px solid ${c.borderGold}`,
       fontFamily: f.mono, fontSize: '10px', letterSpacing: '0.04em', color: c.gold,
       whiteSpace: 'nowrap', zIndex: 100, pointerEvents: 'none',
       animation: 'tooltipIn 0.15s ease', fontWeight: 600,
@@ -243,6 +230,13 @@ const ChatBubble = ({ msg, isAdmin }) => (
 
 export default function Admin({ user, profile, onSignOut }) {
   const toast = useToast()
+  const { t, isRtl } = useI18n()
+  
+  // Helper to interpolate toast messages
+  const tToast = (key, vars = {}) => {
+    const msg = t(`toast.${key}`)
+    return Object.entries(vars).reduce((str, [k, v]) => str.replace(`{${k}}`, v), msg)
+  }
   const [orders, setOrders] = useState([])
   const [clients, setClients] = useState([])
   const [allProfiles, setAllProfiles] = useState([])
@@ -257,6 +251,13 @@ export default function Admin({ user, profile, onSignOut }) {
   const [editMode, setEditMode] = useState(false)
   const [editData, setEditData] = useState({})
   const [mainTab, setMainTab] = useState('overview')
+  // Kanban drag-and-drop state (order-id + original status-index).
+  const [kanbanDrag, setKanbanDrag] = useState(null) // { orderId, fromIdx }
+  const [kanbanHoverCol, setKanbanHoverCol] = useState(null) // status key
+  const [kanbanFilterClient, setKanbanFilterClient] = useState('all')
+  const [kanbanFilterTier, setKanbanFilterTier] = useState('all')
+  const [kanbanFilterPeriod, setKanbanFilterPeriod] = useState('all')
+  const [kanbanSearch, setKanbanSearch] = useState('')
   const [showCreateOrder, setShowCreateOrder] = useState(false)
   const [createOrderData, setCreateOrderData] = useState({ clientId: '', product: '', quantity: '', budget: '', deadline: '', notes: '' })
   const [selectedClientTab, setSelectedClientTab] = useState(null)
@@ -387,11 +388,11 @@ export default function Admin({ user, profile, onSignOut }) {
 
   const loadAll = useCallback(async () => {
     try {
-      const [ordersData, clientsData, profilesData, shipmentsData, inventoryData, productsData, categoriesData, shopsData, ecomData, leadsData] = await Promise.all([getOrders(), getAllClients(), getAllProfiles(), getShipments(), getInventory(), getProducts(), getCategories(), getShops().catch(() => []), getEcomServices().catch(() => []), getLeads().catch(() => [])])
+      const [ordersData, clientsData, profilesData, shipmentsData, inventoryData, productsData, categoriesData, shopsData, ecomData, leadsData] = await Promise.all([getOrders().catch(() => []), getAllClients().catch(() => []), getAllProfiles().catch(() => []), getShipments().catch(() => []), getInventory().catch(() => []), getProducts().catch(() => []), getCategories().catch(() => []), getShops().catch(() => []), getEcomServices().catch(() => []), getLeads().catch(() => [])])
       setOrders(ordersData); setClients(clientsData); setAllProfiles(profilesData); setShipments(shipmentsData); setInventory(inventoryData); setProducts(productsData); setCategories(categoriesData); setShops(shopsData); setEcomServices(ecomData); setLeads(leadsData)
     } catch (err) {
       console.error('loadAll error:', err)
-      toast.error('Erreur de chargement des données')
+      toast.error(t('toast.loadDataError'))
     } finally {
       setLoading(false)
     }
@@ -446,7 +447,7 @@ export default function Admin({ user, profile, onSignOut }) {
   useEffect(() => {
     const ch = subscribeToNewClients((newProfile) => {
       const name = newProfile.full_name || newProfile.email || 'Inconnu'
-      toast.success(`Nouveau client : ${name}`)
+      toast.success(tToast('newClientNotif', { name }))
       addNotification('client', 'Nouveau client', name)
       loadAll()
     })
@@ -458,7 +459,7 @@ export default function Admin({ user, profile, onSignOut }) {
     const ch = subscribeToNewOrders((newOrder) => {
       const cl = allProfiles.find(x => x.id === newOrder.client_id)
       const name = cl ? (cl.full_name || cl.email) : 'Client'
-      toast.success(`Nouvelle commande de ${name}`)
+      toast.success(tToast('newOrderNotif', { name }))
       addNotification('order', 'Nouvelle commande', `${newOrder.product || 'Produit'} — ${name}`)
       loadAll()
     })
@@ -471,7 +472,7 @@ export default function Admin({ user, profile, onSignOut }) {
       const cl = allProfiles.find(x => x.id === newService.client_id)
       const name = cl ? (cl.full_name || cl.email) : 'Client'
       const typeLabel = newService.service_type === 'creation' ? 'Création boutique' : newService.service_type === 'formation' ? 'Formation' : newService.service_type
-      toast.success(`Nouvelle demande e-com : ${typeLabel}`)
+      toast.success(tToast('newEcomNotif', { type: typeLabel }))
       addNotification('ecom', 'Nouvelle demande e-com', `${typeLabel} — ${name}`)
       loadAll()
     })
@@ -483,10 +484,10 @@ export default function Admin({ user, profile, onSignOut }) {
     const ch = subscribeToNewLeads((payload) => {
       if (payload.eventType === 'INSERT') {
         const lead = payload.new
-        toast.info(`Nouveau prospect : ${lead.full_name || lead.email}`)
+        toast.info(tToast('newLeadNotif', { name: lead.full_name || lead.email }))
         addNotification('lead', 'Nouveau prospect', `${lead.full_name || lead.email} — ${lead.service_type}`)
       } else if (payload.eventType === 'UPDATE' && payload.new.status === 'paid') {
-        toast.success(`Paiement recu : ${payload.new.full_name || payload.new.email}`)
+        toast.success(tToast('paymentReceivedNotif', { name: payload.new.full_name || payload.new.email }))
         addNotification('lead', 'Paiement confirme', `${payload.new.full_name || payload.new.email} a paye`)
       }
       loadAll()
@@ -569,7 +570,7 @@ export default function Admin({ user, profile, onSignOut }) {
       await sendMessage({ orderId: selectedId, senderId: user.id, senderRole: 'admin', content: text })
     } catch (err) {
       setNewMsg(text)
-      toast.error("Impossible d'envoyer le message.")
+      toast.error(t('toast.messageSendError'))
     } finally { setSendingMsg(false) }
   }
 
@@ -605,14 +606,14 @@ export default function Admin({ user, profile, onSignOut }) {
                     notes: `Auto-créé depuis commande ${order.ref}`,
                     status: 0,
                   })
-                  toast.success('Expédition créée automatiquement')
+                  toast.success(t('toast.shipmentCreatedAuto'))
                 } catch (shipErr) { console.warn('Auto-shipment failed:', shipErr) }
               }
             }
           }
           await loadAll()
-          toast.success(`Statut mis à jour : ${statusLabel}`)
-        } catch (err) { toast.error('Erreur lors du changement de statut.') }
+          toast.success(tToast('statusUpdatedWithLabel', { label: statusLabel }))
+        } catch (err) { toast.error(t('toast.statusChangeError')) }
       },
     })
   }
@@ -632,8 +633,8 @@ export default function Admin({ user, profile, onSignOut }) {
       await updateOrder(selectedId, payload)
       setEditMode(false)
       await loadAll()
-      toast.success('Commande mise à jour')
-    } catch (err) { toast.error('Erreur lors de la sauvegarde.') }
+      toast.success(t('toast.statusUpdated'))
+    } catch (err) { toast.error(t('toast.saveError')) }
     finally { setSavingEdit(false) }
   }
 
@@ -641,7 +642,7 @@ export default function Admin({ user, profile, onSignOut }) {
     const file = e.target.files?.[0]
     if (!file || !selectedId || uploadingFile) return
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('Fichier trop volumineux (max 10 Mo)')
+      toast.error(t('toast.fileTooLarge'))
       fileInputRef.current.value = ''
       return
     }
@@ -650,8 +651,8 @@ export default function Admin({ user, profile, onSignOut }) {
       await uploadDocument(selectedId, file, user.id)
       const docs = await getDocuments(selectedId)
       setDocuments(docs)
-      toast.success('Document ajouté')
-    } catch (err) { toast.error("Erreur lors de l'envoi du fichier.") }
+      toast.success(t('toast.documentAdded'))
+    } catch (err) { toast.error(t('toast.documentUploadError')) }
     finally { setUploadingFile(false); fileInputRef.current.value = '' }
   }
 
@@ -659,7 +660,7 @@ export default function Admin({ user, profile, onSignOut }) {
     try {
       const url = await getDocumentUrl(doc.storage_path)
       if (url) window.open(url, '_blank')
-    } catch (err) { toast.error('Impossible de télécharger le document.') }
+    } catch (err) { toast.error(t('toast.documentDownloadError')) }
   }
 
   const handleCreateOrder = async (e) => {
@@ -678,8 +679,8 @@ export default function Admin({ user, profile, onSignOut }) {
       setCreateOrderData({ clientId: '', product: '', quantity: '', budget: '', deadline: '', notes: '' })
       setShowCreateOrder(false)
       await loadAll()
-      toast.success('Commande créée')
-    } catch (err) { toast.error('Erreur lors de la création de la commande.') }
+      toast.success(t('toast.orderCreated'))
+    } catch (err) { toast.error(t('toast.orderCreationError')) }
   }
 
   const shipStatusToInt = { production: 0, QC: 1, douanes: 2, transit: 3, 'livré': 4 }
@@ -705,8 +706,8 @@ export default function Admin({ user, profile, onSignOut }) {
       setCreateShipmentData({ client_id: '', order_id: '', product_name: '', tracking_number: '', method: 'maritime', destination: '', origin: 'Chine', weight_kg: '', notes: '', status: 'production' })
       setShowCreateShipment(false)
       await loadAll()
-      toast.success('Envoi enregistré')
-    } catch (err) { console.error('Create shipment error:', err); toast.error('Erreur: ' + (err?.message || "création impossible")) }
+      toast.success(t('toast.shipmentRecorded'))
+    } catch (err) { console.error('Create shipment error:', err); toast.error(err?.message ? tToast('genericError', { error: err.message }) : t('toast.shipmentCreationError')) }
   }
 
   const handleCreateInventory = async (e) => {
@@ -727,8 +728,8 @@ export default function Admin({ user, profile, onSignOut }) {
       setCreateInventoryData({ client_id: '', product_name: '', sku: '', quantity: '', alert_threshold: '10', warehouse: 'France', unit_price: '', notes: '' })
       setShowCreateInventory(false)
       await loadAll()
-      toast.success('Article ajouté au stock')
-    } catch (err) { toast.error("Erreur lors de la creation de l'article.") }
+      toast.success(t('toast.inventoryItemAdded'))
+    } catch (err) { toast.error(t('toast.inventoryItemCreationError')) }
   }
 
   const handleSaveShipment = async () => {
@@ -746,8 +747,8 @@ export default function Admin({ user, profile, onSignOut }) {
       await updateShipment(editingShipment.id, payload)
       setEditingShipment(null)
       await loadAll()
-      toast.success('Envoi mis à jour')
-    } catch (err) { toast.error('Erreur: ' + err.message) }
+      toast.success(t('toast.shipmentUpdated'))
+    } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
   }
 
   const handleDeleteShipment = async (id) => {
@@ -760,8 +761,8 @@ export default function Admin({ user, profile, onSignOut }) {
         try {
           await deleteShipment(id)
           await loadAll()
-          toast.success('Envoi supprimé')
-        } catch (err) { toast.error('Erreur: ' + err.message) }
+          toast.success(t('toast.shipmentDeleted'))
+        } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
       },
     })
   }
@@ -780,8 +781,8 @@ export default function Admin({ user, profile, onSignOut }) {
       await updateInventoryItem(editingInventoryItem.id, payload)
       setEditingInventoryItem(null)
       await loadAll()
-      toast.success('Article mis à jour')
-    } catch (err) { toast.error('Erreur: ' + err.message) }
+      toast.success(t('toast.inventoryItemUpdated'))
+    } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
   }
 
   const handleDeleteInventory = async (id) => {
@@ -794,8 +795,8 @@ export default function Admin({ user, profile, onSignOut }) {
         try {
           await deleteInventoryItem(id)
           await loadAll()
-          toast.success('Article supprimé')
-        } catch (err) { toast.error('Erreur: ' + err.message) }
+          toast.success(t('toast.inventoryItemDeleted'))
+        } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
       },
     })
   }
@@ -809,16 +810,17 @@ export default function Admin({ user, profile, onSignOut }) {
 
   const focusGlow = `0 0 0 3px ${c.redSoft}`
   const inputStyle = {
-    width: '100%', padding: `${sp[2]} ${sp[2]}`, background: c.bgSurface,
-    border: `1px solid ${c.border}`, borderBottom: `2px solid ${c.border}`, color: c.text,
+    width: '100%', padding: `${sp[2]} ${sp[2]}`, background: c.bgInput,
+    border: 'none', borderBottom: `1px solid ${c.border}`, color: c.text,
     fontSize: size.sm, outline: 'none', fontFamily: f.body,
-    transition: `all 0.2s ${ease.smooth}`,
+    borderRadius: `${radius.xs} ${radius.xs} 0 0`,
+    transition: `all 0.25s ${ease.expo}`,
   }
 
   const labelStyle = {
-    display: 'block', fontSize: '10px', fontWeight: 600,
+    display: 'block', fontSize: size['2xs'], fontWeight: 600,
     color: c.textTertiary, marginBottom: '6px', fontFamily: f.mono,
-    letterSpacing: '0.08em', textTransform: 'uppercase',
+    letterSpacing: '0.10em', textTransform: 'uppercase',
   }
 
   const filters = [
@@ -828,19 +830,19 @@ export default function Admin({ user, profile, onSignOut }) {
   ]
 
   const mainTabs = [
-    { key: 'overview', label: "Vue d'ensemble", icon: icons.trending },
-    { key: 'commandes', label: 'Commandes', icon: icons.file },
-    { key: 'catalogue', label: 'Catalogue & Fournisseurs', icon: icons.doc },
-    { key: 'expedition', label: 'Expédition', icon: icons.send, color: c.teal },
-    { key: 'stock', label: 'Stock', icon: icons.save, color: c.purple },
-    { key: 'boutiques', label: 'Boutiques', icon: icons.link, color: c.gold },
-    { key: 'vehicules', label: 'Véhicules', icon: 'M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0M3 11l1-9h12l1 9M3 11h14M3 11v5h1m13-5v5h-1M6 8h8', color: c.red },
+    { key: 'overview', label: t('admin.overview') || "Vue d'ensemble", icon: icons.trending },
+    { key: 'commandes', label: t('nav.orders'), icon: icons.file },
+    { key: 'catalogue', label: t('admin.catalogueSuppliers') || 'Catalogue & Fournisseurs', icon: icons.doc },
+    { key: 'expedition', label: t('nav.shipping'), icon: icons.send, color: c.teal },
+    { key: 'stock', label: t('nav.stock'), icon: icons.save, color: c.purple },
+    { key: 'boutiques', label: t('admin.shops') || 'Boutiques', icon: icons.link, color: c.gold },
+    { key: 'vehicules', label: t('admin.vehicles') || 'Véhicules', icon: 'M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0M3 11l1-9h12l1 9M3 11h14M3 11v5h1m13-5v5h-1M6 8h8', color: c.red },
     // fournisseurs merged into catalogue tab
-    { key: 'formation', label: 'Formation', icon: 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z', color: c.purple },
-    { key: 'services', label: 'Services', icon: icons.shield, color: c.amber },
-    { key: 'pipeline', label: 'Pipeline Leads', icon: 'M13 2L3 14h9l-1 8 10-12h-9l1-8', color: c.green },
-    { key: 'orders_pipeline', label: 'Pipeline Commandes', icon: '📦', color: c.teal },
-    { key: 'clients', label: 'Clients', icon: icons.users },
+    { key: 'formation', label: t('nav.formation'), icon: 'M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z', color: c.purple },
+    { key: 'services', label: t('admin.services') || 'Services', icon: icons.shield, color: c.amber },
+    { key: 'pipeline', label: t('admin.pipelineLeads') || 'Pipeline Leads', icon: 'M13 2L3 14h9l-1 8 10-12h-9l1-8', color: c.green },
+    { key: 'orders_pipeline', label: t('admin.pipelineOrders') || 'Pipeline Commandes', icon: '📦', color: c.teal },
+    { key: 'clients', label: t('nav.clients'), icon: icons.users },
   ]
 
   /* ── Sidebar grouped sections ── */
@@ -876,7 +878,7 @@ export default function Admin({ user, profile, onSignOut }) {
     <div style={{ height: '100vh', display: 'flex', background: c.bg, position: 'relative', overflow: 'hidden' }}>
       <style>{keyframes}</style>
       {/* Skeleton sidebar */}
-      <div style={{ width: 240, background: c.bg, borderRight: `1px solid ${c.borderSubtle}`, padding: sp[3], display: 'flex', flexDirection: 'column', gap: sp[2] }}>
+      <div style={{ width: 240, background: c.bg, borderInlineEnd: `1px solid ${c.borderSubtle}`, padding: sp[3], display: 'flex', flexDirection: 'column', gap: sp[2] }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[3] }}>
           <div style={{ width: 24, height: 24, background: `${c.red}15`, animation: 'skeletonPulse 1.5s ease infinite' }} />
           <div style={{ width: 80, height: 12, background: `${c.gold}10`, animation: 'skeletonPulse 1.5s ease infinite 0.1s' }} />
@@ -920,9 +922,9 @@ export default function Admin({ user, profile, onSignOut }) {
     <div style={{ fontFamily: f.body, background: c.bg, color: c.text, height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <style>{keyframes}{scrollbarCSS}{`
         @media (max-width: 768px) {
-          .admin-sidebar { position: fixed !important; left: 0 !important; top: 48px !important; width: ${sidebarOpen ? '240px' : '0'} !important; height: calc(100vh - 48px) !important; z-index: 40 !important; box-shadow: ${sidebarOpen ? '2px 0 8px oklch(5% 0.005 50 / 0.5)' : 'none'} !important; overflow-y: auto !important; transition: width 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) !important; }
-          .admin-sidebar-overlay { display: ${sidebarOpen ? 'block' : 'none'} !important; position: fixed !important; inset: 0 !important; background: oklch(5% 0.005 50 / 0.80) !important; z-index: 39 !important; top: 48px !important; }
-          .admin-main-panel { margin-left: 0 !important; }
+          .admin-sidebar { position: fixed !important; inset-inline-start: 0 !important; top: 48px!important; width: ${sidebarOpen ? '240px' : '0'} !important; height: calc(100vh - 48px) !important; z-index: 40 !important; box-shadow: ${sidebarOpen ? (isRtl ? '-2px 0 8px oklch(5% 0.005 50 / 0.5)' : '2px 0 8px oklch(5% 0.005 50 / 0.5)') : 'none'} !important; overflow-y: auto !important; transition: width 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) !important; }
+          .admin-sidebar-overlay { display: ${sidebarOpen ? 'block' : 'none'} !important; position: fixed !important; inset: 0 !important; background: oklch(5% 0.005 50 / 0.80) !important; z-index: 39 !important; top: 48px!important; }
+          .admin-main-panel { margin-inline-start: 0 !important; }
           .admin-sidebar-nav { width: 100% !important; }
           .admin-sidebar-nav button { justify-content: flex-start !important; min-height: 44px !important; }
           .admin-sidebar-nav span { display: inline !important; }
@@ -951,10 +953,9 @@ export default function Admin({ user, profile, onSignOut }) {
 
       {/* ════════════ REDESIGNED TOP BAR ════════════ */}
       <header style={{
-        padding: `0 ${sp[4]}`, height: '52px', borderBottom: `1px solid ${c.borderSubtle}`,
+        padding: `0 ${sp[3]}`, height: '48px', borderBottom: `1px solid ${c.borderSubtle}`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: c.bgWarm, flexShrink: 0,
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        background: c.bgCard, flexShrink: 0,
         position: 'relative', zIndex: 41,
       }}>
         {/* Left: hamburger + breadcrumb */}
@@ -969,7 +970,7 @@ export default function Admin({ user, profile, onSignOut }) {
           <div className="admin-topbar-stats" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: f.mono, fontSize: '11px', letterSpacing: '0.04em' }}>
             <span style={{ color: c.goldMuted }}>ADMIN</span>
             <span style={{ color: c.borderSubtle }}>/</span>
-            <span style={{ color: c.text, fontWeight: 600 }}>{(mainTabs.find(t => t.key === mainTab)?.label || 'Vue d\'ensemble').toUpperCase()}</span>
+            <span style={{ color: c.gold, fontWeight: 600 }}>{(mainTabs.find(t => t.key === mainTab)?.label || 'Vue d\'ensemble').toUpperCase()}</span>
             {mainTab === 'commandes' && selectedId && (
               <>
                 <span style={{ color: c.borderSubtle }}>/</span>
@@ -982,13 +983,14 @@ export default function Admin({ user, profile, onSignOut }) {
         {/* Center: search bar */}
         <button onClick={() => setShowCommandBar(true)} style={{
           display: 'flex', alignItems: 'center', gap: sp[2], padding: `6px ${sp[3]}`,
-          background: `${c.bgSurface}`, border: `1px solid ${c.borderSubtle}`,
-          cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`, minWidth: 220,
+          background: c.bgInput, border: 'none', borderBottom: `1px solid ${c.border}`,
+          cursor: 'pointer', transition: `all 0.25s ${ease.expo}`, minWidth: 220,
+          borderRadius: `${radius.sm} ${radius.sm} 0 0`,
         }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = c.goldMuted }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle }}>
           <Icon d={icons.search} size={13} color={c.textTertiary} />
-          <span style={{ color: c.textTertiary, fontSize: '11px', fontFamily: f.body, flex: 1, textAlign: 'left' }}>Rechercher...</span>
+          <span style={{ color: c.textTertiary, fontSize: '11px', fontFamily: f.body, flex: 1, textAlign: 'start' }}>Rechercher...</span>
           <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.goldMuted, border: `1px solid ${c.borderSubtle}`, padding: '1px 5px', letterSpacing: '0.04em' }}>⌘K</span>
         </button>
 
@@ -1005,10 +1007,10 @@ export default function Admin({ user, profile, onSignOut }) {
           {/* Notification bell */}
           <div style={{ position: 'relative' }}>
             <button onClick={() => { setShowNotifPanel(!showNotifPanel); if (!showNotifPanel) markAllRead() }} style={{
-              background: 'transparent', border: `1px solid ${unreadNotifs > 0 ? c.gold : c.border}`,
-              width: 36, height: 36, display: 'flex',
+              background: 'transparent', border: `1px solid ${unreadNotifs > 0 ? c.borderGold : c.borderSubtle}`,
+              width: 34, height: 34, display: 'flex', borderRadius: radius.md,
               alignItems: 'center', justifyContent: 'center', color: unreadNotifs > 0 ? c.gold : c.textTertiary, cursor: 'pointer',
-              transition: `all 0.2s ${ease.smooth}`, position: 'relative',
+              transition: `all 0.25s ${ease.expo}`, position: 'relative',
             }}>
               <Icon d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" size={15} />
               {unreadNotifs > 0 && (
@@ -1026,8 +1028,8 @@ export default function Admin({ user, profile, onSignOut }) {
               <div className="admin-notif-panel" style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: sp[1],
                 width: 360, maxHeight: 500, overflowY: 'auto',
-                background: c.bgElevated, border: `1px solid ${c.border}`,
-                boxShadow: '0 8px 32px oklch(5% 0.005 50 / 0.6)',
+                background: c.bgCard, border: `1px solid ${c.border}`,
+                boxShadow: shadow.xs, borderRadius: radius.sm,
                 zIndex: 100, padding: sp[2], display: 'flex', flexDirection: 'column',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2], paddingBottom: sp[2], borderBottom: `1px solid ${c.borderSubtle}` }}>
@@ -1079,7 +1081,7 @@ export default function Admin({ user, profile, onSignOut }) {
                           padding: sp[2], marginBottom: '2px',
                           background: n.read ? 'transparent' : `${config.color}12`,
                           border: `1px solid ${n.read ? c.borderSubtle : config.color}30`,
-                          borderLeft: `3px solid ${config.color}`,
+                          borderInlineStart: `3px solid ${config.color}`,
                           fontSize: size.xs, cursor: 'pointer',
                           transition: 'all 0.2s',
                         }}
@@ -1106,7 +1108,7 @@ export default function Admin({ user, profile, onSignOut }) {
           </div>
           {/* Admin avatar + name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: 'end' }}>
               <div style={{ fontSize: '11px', color: c.text, fontWeight: 600, lineHeight: 1.2 }}>{profile?.full_name?.split(' ')[0] || 'Admin'}</div>
               <div style={{ fontSize: '8px', color: c.goldMuted, fontFamily: f.mono, letterSpacing: '0.06em' }}>SUPER ADMIN</div>
             </div>
@@ -1138,8 +1140,8 @@ export default function Admin({ user, profile, onSignOut }) {
           <div style={{ position: 'fixed', inset: 0, background: 'oklch(5% 0.005 50 / 0.75)', backdropFilter: 'blur(4px)' }} />
           <div ref={cmdBarRef} style={{
             width: 520, position: 'relative', zIndex: 1,
-            background: 'rgba(21, 18, 15, 0.95)', backdropFilter: 'blur(16px)',
-            border: `1px solid ${c.gold}40`, boxShadow: '0 32px 64px oklch(5% 0.005 50 / 0.8)',
+            background: c.bgCard,
+            border: `1px solid ${c.border}`, boxShadow: shadow.xs,
             animation: 'fadeSlideIn 0.2s ease',
           }}>
             <div style={{ padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', gap: sp[2] }}>
@@ -1162,7 +1164,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 { label: 'Créer boutique', key: 'boutiques', icon: icons.link, shortcut: '⌘3', action: () => setMainTab('boutiques') },
                 { label: 'Ajouter expédition', key: 'expedition', icon: icons.send, shortcut: '⌘4', action: () => setMainTab('expedition') },
                 { label: 'Nouveau service e-com', key: 'services', icon: icons.shield, shortcut: '⌘5', action: () => setMainTab('services') },
-                { label: 'Export backup JSON', key: 'backup', icon: icons.download, shortcut: '⌘6', action: async () => { toast.success('Export JSON…'); await exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices) } },
+                { label: 'Export backup JSON', key: 'backup', icon: icons.download, shortcut: '⌘6', action: async () => { toast.success(t('toast.exportJSONStart')); await exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices) } },
               ].filter(a => !cmdSearch || a.label.toLowerCase().includes(cmdSearch.toLowerCase())).map((act, i) => (
                 <div key={act.label} onClick={() => { act.action(); setShowCommandBar(false); setCmdSearch('') }}
                   style={{
@@ -1199,23 +1201,29 @@ export default function Admin({ user, profile, onSignOut }) {
 
         {/* ════════════ VERTICAL SIDEBAR — Collapsible ════════════ */}
         <aside className="admin-sidebar" style={{
-          width: sidebarCollapsed ? '64px' : '240px', background: c.bg, borderRight: `1px solid ${c.borderSubtle}`,
+          width: sidebarCollapsed ? '56px' : '220px', background: c.bg, borderInlineEnd: `1px solid ${c.borderSubtle}`,
           display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'relative',
-          transition: `width 0.3s ${ease.luxury}`, overflow: 'hidden',
+          transition: `width 0.35s ${ease.luxury}`, overflowX: 'hidden', overflowY: 'auto',
+          minHeight: 0,
         }}>
-          <DecoPattern color={c.gold} opacity={0.04} />
+          <DecoPattern color={c.gold} opacity={0.025} />
           {/* Brand header + collapse toggle */}
-          <div style={{ padding: sidebarCollapsed ? `${sp[3]} ${sp[1.5]}` : `${sp[3]} ${sp[3]}`, borderBottom: `1px solid ${c.borderSubtle}`, position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: sidebarCollapsed ? 'center' : 'stretch' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sidebarCollapsed ? 0 : sp[2], justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-              <DragonMark s={24} />
+          <div style={{ padding: sidebarCollapsed ? `${sp[2]} ${sp[1]}` : `${sp[2]} ${sp[2]}`, borderBottom: `1px solid ${c.borderSubtle}`, position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: sidebarCollapsed ? 'center' : 'stretch' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: sp[1.5], marginBottom: sidebarCollapsed ? 0 : sp[1.5], justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
+              <DragonMark s={20} />
               {!sidebarCollapsed && (
                 <div>
-                  <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, letterSpacing: '0.06em' }}>CARAXES</div>
-                  <div style={{ fontSize: '8px', color: c.gold, fontFamily: f.mono, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>ADMIN</div>
+                  <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.xs, letterSpacing: '0.10em' }}>CARAXES</div>
+                  <div style={{ fontSize: '8px', color: c.gold, fontFamily: f.mono, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>ADMIN</div>
                 </div>
               )}
             </div>
             {!sidebarCollapsed && <ArtDecoDivider width={80} />}
+            {!sidebarCollapsed && (
+              <div style={{ marginTop: sp[2] }}>
+                <LocaleAndPwaControls compact />
+              </div>
+            )}
             {/* Collapse button */}
             <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{
               position: 'absolute', top: sidebarCollapsed ? 12 : 12, right: sidebarCollapsed ? 'auto' : 8,
@@ -1260,7 +1268,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       display: 'flex', alignItems: 'center', gap: '6px',
                     }}>
                       <span>{group.label}</span>
-                      <div style={{ flex: 1, height: '1px', background: `linear-gradient(90deg, ${c.goldMuted}30, transparent)` }} />
+                      <div style={{ flex: 1, height: '1px', background: c.borderSubtle }} />
                     </div>
                   )}
                   {sidebarCollapsed && gi > 0 && group.label && (
@@ -1277,17 +1285,18 @@ export default function Admin({ user, profile, onSignOut }) {
                           display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : sp[2],
                           justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                           padding: sidebarCollapsed ? '10px 0' : `8px ${sp[3]}`,
-                          background: mainTab === t.key ? c.bgElevated : 'transparent',
+                          background: mainTab === t.key ? c.bgHover : 'transparent',
                           border: 'none',
-                          borderLeft: `3px solid ${mainTab === t.key ? (t.color || c.gold) : 'transparent'}`,
+                          borderInlineStart: `2px solid ${mainTab === t.key ? c.gold : 'transparent'}`,
                           color: mainTab === t.key ? c.text : c.textTertiary,
                           fontSize: size.xs, fontWeight: mainTab === t.key ? 700 : 500,
                           cursor: 'pointer', fontFamily: f.body,
-                          transition: `all 0.2s ${ease.smooth}`,
-                          width: '100%', textAlign: 'left', position: 'relative',
+                          transition: `all 0.25s ${ease.expo}`,
+                          width: '100%', textAlign: 'start', position: 'relative',
+                          borderRadius: radius.sm,
                         }}>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <Icon d={t.icon} size={16} color={mainTab === t.key ? (t.color || c.gold) : c.textTertiary} />
+                          <Icon d={t.icon} size={18} color={mainTab === t.key ? (t.color || c.gold) : c.textTertiary} sw={1.5} />
                           {badge > 0 && sidebarCollapsed && (
                             <div style={{
                               position: 'absolute', top: -4, right: -6,
@@ -1301,7 +1310,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         {!sidebarCollapsed && <span>{t.label}</span>}
                         {!sidebarCollapsed && badge > 0 && (
                           <span style={{
-                            marginLeft: 'auto', padding: '1px 6px', fontSize: '9px', fontWeight: 700,
+                            marginInlineStart: 'auto', padding: '1px 6px', fontSize: '9px', fontWeight: 700,
                             fontFamily: f.mono, background: t.key === 'stock' ? `${c.red}20` : `${c.gold}15`,
                             color: t.key === 'stock' ? c.red : c.gold, letterSpacing: '0.02em',
                           }}>{badge}</span>
@@ -1322,7 +1331,8 @@ export default function Admin({ user, profile, onSignOut }) {
           {!sidebarCollapsed && (
           <div className="admin-sidebar-stats" style={{
             padding: `${sp[3]}`, borderTop: `1px solid ${c.borderSubtle}`,
-            borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgSurface, position: 'relative', zIndex: 1,
+            borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgCard, position: 'relative', zIndex: 1,
+            borderRadius: radius.sm, margin: sp[1.5],
           }}>
             <div style={{ fontFamily: f.mono, fontSize: '9px', letterSpacing: '0.04em', color: c.textTertiary, marginBottom: sp[2] }}>RÉSUMÉ</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
@@ -1403,7 +1413,7 @@ export default function Admin({ user, profile, onSignOut }) {
         {/* ════════════ SIDEBAR (Commandes) ════════════ */}
         {mainTab === 'commandes' && (
         <aside className="admin-sidebar" style={{
-          width: '360px', borderRight: `1px solid ${c.borderSubtle}`,
+          width: '360px', borderInlineEnd: `1px solid ${c.borderSubtle}`,
           display: mobileShowDetail && window.innerWidth <= 768 ? 'none' : 'flex',
           flexDirection: 'column', background: c.bg, flexShrink: 0,
         }}>
@@ -1415,7 +1425,7 @@ export default function Admin({ user, profile, onSignOut }) {
               { l: 'LIVRÉES', v: deliveredOrders, col: c.green },
               { l: 'CE MOIS', v: orders.filter(o => { const d = new Date(o.created_at); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }).length, col: c.teal },
             ].map(stat => (
-              <div key={stat.l} style={{ padding: `${sp[2]} ${sp[1]}`, textAlign: 'center', borderRight: `1px solid ${c.borderSubtle}` }}>
+              <div key={stat.l} style={{ padding: `${sp[2]} ${sp[1]}`, textAlign: 'center', borderInlineEnd: `1px solid ${c.borderSubtle}` }}>
                 <div style={{ fontFamily: f.mono, fontSize: '7px', color: stat.col, letterSpacing: '0.12em', marginBottom: 3 }}>{stat.l}</div>
                 <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: c.text }}>{stat.v}</div>
               </div>
@@ -1425,7 +1435,7 @@ export default function Admin({ user, profile, onSignOut }) {
           <div style={{ padding: `${sp[3]} ${sp[3]} ${sp[2]}` }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: sp[1], padding: `8px ${sp[2]}`,
-              background: c.bgSurface, border: `1px solid ${c.border}`, marginBottom: sp[2],
+              background: c.bgCard, border: `1px solid ${c.border}`, marginBottom: sp[2],
               transition: `all 0.2s ${ease.smooth}`,
             }}>
               <Icon d={icons.search} size={15} color={c.textTertiary} />
@@ -1465,7 +1475,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     style={{
                       padding: `${sp[2]} ${sp[3]}`, cursor: 'pointer',
                       borderBottom: `1px solid ${c.borderSubtle}`,
-                      borderLeft: `3px solid ${isSelected ? c.gold : 'transparent'}`,
+                      borderInlineStart: `3px solid ${isSelected ? c.gold : 'transparent'}`,
                       background: isSelected ? c.bgElevated : 'transparent',
                       transition: `border-color 0.2s ${ease.smooth}`,
                     }}>
@@ -1503,7 +1513,7 @@ export default function Admin({ user, profile, onSignOut }) {
         )}
 
         {/* ════════════ MAIN CONTENT ════════════ */}
-        <main className="admin-main-panel admin-scroll admin-detail" style={{ flex: 1, display: !mobileShowDetail && window.innerWidth <= 768 && mainTab === 'commandes' ? 'none' : 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', marginLeft: 0 }}>
+        <main className="admin-main-panel admin-scroll admin-detail" style={{ flex: 1, display: !mobileShowDetail && window.innerWidth <= 768 && mainTab === 'commandes' ? 'none' : 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', marginInlineStart: 0 }}>
 
           {/* ── OVERVIEW TAB ── */}
           {mainTab === 'overview' && (() => {
@@ -1523,9 +1533,9 @@ export default function Admin({ user, profile, onSignOut }) {
             return (
             <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
               {/* Welcome + Backup */}
-              <div style={{ position: 'relative', overflow: 'hidden', padding: sp[5], marginBottom: sp[4], marginLeft: `-${sp[4]}`, marginRight: `-${sp[4]}`, marginTop: `-${sp[4]}`, background: `linear-gradient(135deg, ${c.bgElevated}, ${c.bg})`, border: `1px solid ${c.borderSubtle}` }}>
+              <div style={{ position: 'relative', overflow: 'hidden', padding: sp[5], marginBottom: sp[4], marginInlineStart: `-${sp[4]}`, marginInlineEnd: `-${sp[4]}`, marginTop: `-${sp[4]}`, background: `${c.bgCard}`, border: `1px solid ${c.borderSubtle}` }}>
                 <DecoPattern color={c.gold} opacity={0.05} />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c.gold}, transparent 40%)` }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: c.gold, opacity: 0.4 }} />
                 <div style={{ position: 'absolute', top: 16, right: 24, width: 40, height: 40, border: `1px solid ${c.gold}18`, transform: 'rotate(45deg)' }} />
                 <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
@@ -1538,9 +1548,9 @@ export default function Admin({ user, profile, onSignOut }) {
                   </div>
                   <div style={{ display: 'flex', gap: sp[1] }}>
                   <button onClick={async () => {
-                    toast.success('Export JSON en cours…')
-                    try { const s = await exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices); toast.success(`Backup JSON : ${s.total_clients} clients, ${s.total_orders} commandes`) }
-                    catch (e) { toast.error('Erreur export JSON') }
+                    toast.success(t('toast.exportJSONInProgress'))
+                    try { const s = await exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices); toast.success(tToast('exportJSONSuccess', { clients: s.total_clients, orders: s.total_orders })) }
+                    catch (e) { toast.error(t('toast.exportJSONError')) }
                   }} style={{
                     padding: `8px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.gold}`,
                     color: c.gold, fontFamily: f.mono, fontSize: '9px', fontWeight: 700,
@@ -1553,9 +1563,9 @@ export default function Admin({ user, profile, onSignOut }) {
                     <Icon d={icons.download} size={12} /> Backup JSON
                   </button>
                   <button onClick={async () => {
-                    toast.success('Export CSV en cours…')
-                    try { const s = await exportBackupCSVs(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices); toast.success(`Backup CSV : ${s.total_clients} clients, ${s.total_orders} commandes`) }
-                    catch (e) { toast.error('Erreur export CSV') }
+                    toast.success(t('toast.exportCSVInProgress'))
+                    try { const s = await exportBackupCSVs(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices); toast.success(tToast('exportCSVSuccess', { clients: s.total_clients, orders: s.total_orders })) }
+                    catch (e) { toast.error(t('toast.exportCSVError')) }
                   }} style={{
                     padding: `8px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,
                     color: c.textTertiary, fontFamily: f.mono, fontSize: '9px', fontWeight: 600,
@@ -1576,7 +1586,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <div style={{ display: 'flex', gap: sp[2], marginBottom: sp[4], flexWrap: 'wrap' }}>
                   {lowStockItems.length > 0 && (
                     <div onClick={() => setMainTab('stock')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMainTab('stock') } }} style={{
-                      padding: `${sp[2]} ${sp[3]}`, background: `${c.red}10`, borderLeft: `3px solid ${c.red}`,
+                      padding: `${sp[2]} ${sp[3]}`, background: `${c.red}10`, borderInlineStart: `3px solid ${c.red}`,
                       display: 'flex', alignItems: 'center', gap: sp[2], cursor: 'pointer',
                     }}>
                       <span style={{ fontSize: '16px', color: c.gold, fontFamily: f.display }}>◆</span>
@@ -1607,7 +1617,7 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* ── ACTIONS RAPIDES — Compact Command Style ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[4] }}>
                 <button onClick={() => setShowCommandBar(true)} style={{
-                  padding: `10px ${sp[3]}`, background: c.bgSurface, border: `1px solid ${c.borderSubtle}`,
+                  padding: `10px ${sp[3]}`, background: c.bgCard, border: `1px solid ${c.borderSubtle}`,
                   color: c.textTertiary, fontSize: '12px', fontFamily: f.body,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: sp[2],
                   transition: `all 0.2s ${ease.luxury}`, flex: 1, maxWidth: 400,
@@ -1616,7 +1626,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle; e.currentTarget.style.color = c.textTertiary }}>
                   <Icon d={icons.search} size={14} color={c.goldMuted} />
                   <span>Actions rapides...</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: f.mono, fontSize: '9px', border: `1px solid ${c.borderSubtle}`, padding: '1px 6px', color: c.goldMuted }}>⌘K</span>
+                  <span style={{ marginInlineStart: 'auto', fontFamily: f.mono, fontSize: '9px', border: `1px solid ${c.borderSubtle}`, padding: '1px 6px', color: c.goldMuted }}>⌘K</span>
                 </button>
                 {/* Quick shortcut buttons */}
                 {[
@@ -1662,15 +1672,15 @@ export default function Admin({ user, profile, onSignOut }) {
                     <div className="admin-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: sp[3], marginBottom: sp[3] }}>
                       {primaryStats.map((stat, i) => (
                         <div key={i} onClick={stat.click} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stat.click() } }} style={{
-                          padding: sp[4], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`,
-                          position: 'relative', overflow: 'hidden', cursor: 'pointer',
-                          animation: `cardReveal 0.5s ${ease.smooth} ${0.05 * i}s backwards`,
-                          transition: `all 0.3s ${ease.luxury}`,
+                          padding: sp[4], background: c.bgCard, border: `1px solid ${c.borderSubtle}`,
+                          borderRadius: radius.sm, position: 'relative', overflow: 'hidden', cursor: 'pointer',
+                          boxShadow: 'none', animation: `cardReveal 0.5s ${ease.smooth} ${0.05 * i}s backwards`,
+                          transition: `all 0.25s ${ease.luxury}`,
                         }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = stat.color + '40'; e.currentTarget.style.background = c.bgElevated; e.currentTarget.style.transform = 'translateY(-3px)' }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle; e.currentTarget.style.background = c.bgSurface; e.currentTarget.style.transform = 'translateY(0)' }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = stat.color + '40' }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle }}
                         >
-                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${stat.color}, transparent 60%)` }} />
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: stat.color, opacity: 0.5 }} />
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[2] }}>
                             <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>{stat.label}</div>
                             {stat.trend && (
@@ -1693,13 +1703,13 @@ export default function Admin({ user, profile, onSignOut }) {
                     <div className="admin-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: sp[2], marginBottom: sp[4] }}>
                       {secondaryStats.map((stat, i) => (
                         <div key={i} onClick={stat.click} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stat.click() } }} style={{
-                          padding: `${sp[2]} ${sp[3]}`, background: c.bgSurface, border: `1px solid ${stat.alert ? `${c.red}30` : c.borderSubtle}`,
-                          position: 'relative', overflow: 'hidden', cursor: 'pointer',
-                          animation: `cardReveal 0.5s ${ease.smooth} ${0.08 * i}s backwards`,
+                          padding: `${sp[2]} ${sp[3]}`, background: c.bgCard, border: `1px solid ${stat.alert ? `${c.red}30` : c.borderSubtle}`,
+                          borderRadius: radius.sm, position: 'relative', overflow: 'hidden', cursor: 'pointer',
+                          boxShadow: shadow.xs, animation: `cardReveal 0.5s ${ease.smooth} ${0.08 * i}s backwards`,
                           transition: `all 0.25s ${ease.luxury}`,
                         }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = stat.color + '35'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = stat.alert ? `${c.red}30` : c.borderSubtle; e.currentTarget.style.transform = 'translateY(0)' }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = stat.color + '35' }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = stat.alert ? `${c.red}30` : c.borderSubtle }}
                         >
                           <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: stat.color }} />
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1733,14 +1743,14 @@ export default function Admin({ user, profile, onSignOut }) {
                   const orderDate = new Date(o.created_at)
                   return orderDate.getMonth() === prevMonth && orderDate.getFullYear() === prevYear
                 })
-                const totalCA = caOrders.reduce((sum, o) => sum + (o.budget || 0), 0)
-                const prevCA = prevMonthOrders.reduce((sum, o) => sum + (o.budget || 0), 0)
+                const totalCA = caOrders.reduce((sum, o) => sum + parseBudget(o.budget), 0)
+                const prevCA = prevMonthOrders.reduce((sum, o) => sum + parseBudget(o.budget), 0)
                 const caDiff = prevCA === 0 ? 0 : ((totalCA - prevCA) / prevCA * 100)
                 const avgOrderValue = caOrders.length > 0 ? totalCA / caOrders.length : 0
                 const monthName = new Date(caYear, caMonth).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
                 return (
-                  <div style={{ marginBottom: sp[4], padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}` }}>
+                  <div style={{ marginBottom: sp[4], padding: sp[4], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm, boxShadow: shadow.xs }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
                       <div>
                         <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 600, letterSpacing: '-0.01em' }}>Chiffre d'affaires</h3>
@@ -1755,7 +1765,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: sp[2] }}>
                       <div style={{ padding: sp[3], background: c.bg, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.gold}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>CA Total</div>
-                        <div style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, color: c.gold, lineHeight: 1 }}>{totalCA.toLocaleString('fr-FR')}€</div>
+                        <div style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, color: c.gold, lineHeight: 1 }}>{fmtMoney(totalCA)}</div>
                       </div>
                       <div style={{ padding: sp[3], background: c.bg, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.red}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Commandes</div>
@@ -1763,7 +1773,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       </div>
                       <div style={{ padding: sp[3], background: c.bg, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.teal}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>Panier moyen</div>
-                        <div style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, color: c.teal, lineHeight: 1 }}>{avgOrderValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}€</div>
+                        <div style={{ fontFamily: f.display, fontSize: size['2xl'], fontWeight: 700, color: c.teal, lineHeight: 1 }}>{fmtMoney(avgOrderValue)}</div>
                       </div>
                       <div style={{ padding: sp[3], background: c.bg, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${caDiff >= 0 ? c.green : c.red}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>vs mois dernier</div>
@@ -1783,11 +1793,12 @@ export default function Admin({ user, profile, onSignOut }) {
                   { label: 'Boutiques', desc: 'E-commerce clé en main', count: shops.length, iconD: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z', color: c.gold, note: `${shops.filter(s => s.status === 'active').length} active${shops.filter(s => s.status === 'active').length > 1 ? 's' : ''}`, click: () => setMainTab('boutiques') },
                 ].map((svc, i) => (
                   <div key={i} style={{
-                    padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`,
-                    position: 'relative', overflow: 'hidden', animation: `cardReveal 0.5s ${ease.smooth} ${0.05 * i}s backwards`,
+                    padding: sp[3], background: c.bgCard, border: `1px solid ${c.borderSubtle}`,
+                    borderRadius: radius.md, position: 'relative', overflow: 'hidden', animation: `cardReveal 0.5s ${ease.smooth} ${0.05 * i}s backwards`,
+                    boxShadow: 'none', transition: `all 0.3s ${ease.luxury}`,
                   }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, width: '3px', height: '100%', background: svc.color }} />
-                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderTop: `2px solid ${c.gold}`, borderLeft: `2px solid ${c.gold}`, opacity: 0.35 }} />
+                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderTop: `2px solid ${c.gold}`, borderInlineStart: `2px solid ${c.gold}`, opacity: 0.35 }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: sp[1], marginBottom: sp[1] }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={svc.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={svc.iconD}/></svg>
                       <span style={{ fontFamily: f.display, fontSize: size.sm, fontWeight: 700, color: svc.color }}>{svc.label}</span>
@@ -1802,7 +1813,7 @@ export default function Admin({ user, profile, onSignOut }) {
               </div>
 
               {/* ── PIPELINE ── */}
-              <div style={{ marginBottom: sp[4], padding: sp[4], background: c.bgSurface, border: `1px solid ${c.border}` }}>
+              <div style={{ marginBottom: sp[4], padding: sp[4], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm, boxShadow: shadow.xs }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
                   <div>
                     <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 600, letterSpacing: '-0.01em' }}>Pipeline Commandes</h3>
@@ -1845,7 +1856,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div className="admin-overview-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[3], marginBottom: sp[4] }}>
 
                 {/* Expéditions liées aux commandes */}
-                <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm, boxShadow: shadow.xs, position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: c.teal, opacity: 0.6 }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
@@ -1893,7 +1904,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
 
                 {/* Stock & E-commerce */}
-                <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm, boxShadow: shadow.xs, position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: c.purple, opacity: 0.6 }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
@@ -1925,7 +1936,7 @@ export default function Admin({ user, profile, onSignOut }) {
                           <div key={item.id || i} onClick={() => setMainTab('stock')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMainTab('stock') } }} style={{
                             padding: `${sp[1]} ${sp[2]}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             background: isLow ? `${c.red}08` : c.bgElevated, cursor: 'pointer',
-                            transition: `background 0.15s ${ease.smooth}`, borderLeft: `3px solid ${isLow ? c.red : c.border}`,
+                            transition: `background 0.15s ${ease.smooth}`, borderInlineStart: `3px solid ${isLow ? c.red : c.border}`,
                             animation: `fadeSlideIn 0.4s ${ease.smooth} ${0.05 * i}s backwards`,
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = c.bg }}
@@ -1947,13 +1958,13 @@ export default function Admin({ user, profile, onSignOut }) {
               </div>
 
               {/* ── BOUTIQUES E-COMMERCE ── */}
-              <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm, boxShadow: shadow.xs, position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: c.gold, opacity: 0.6 }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
                     <span style={{ fontSize: '14px', color: c.gold }}>◉</span>
                     <span style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700 }}>Boutiques E-commerce</span>
-                    <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.gold, fontWeight: 700, background: `${c.gold}15`, padding: '2px 6px', marginLeft: sp[1] }}>
+                    <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.gold, fontWeight: 700, background: `${c.gold}15`, padding: '2px 6px', marginInlineStart: sp[1] }}>
                       {shops.length}
                     </span>
                   </div>
@@ -1994,7 +2005,7 @@ export default function Admin({ user, profile, onSignOut }) {
                           </div>
                           {(shop.monthly_revenue > 0 || shop.monthly_orders > 0) && (
                             <div style={{ marginTop: '4px', fontSize: '9px', fontFamily: f.mono, color: c.textSecondary }}>
-                              {shop.monthly_orders || 0} cmd · {(shop.monthly_revenue || 0).toLocaleString('fr-FR')}€/mois
+                              {shop.monthly_orders || 0} cmd · {fmtMoney(shop.monthly_revenue || 0)}/mois
                             </div>
                           )}
                         </div>
@@ -2006,13 +2017,13 @@ export default function Admin({ user, profile, onSignOut }) {
 
               {/* ── SERVICES E-COM ── */}
               {ecomServices.length > 0 && (
-                <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm, boxShadow: shadow.xs, position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: c.amber, opacity: 0.6 }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: sp[1] }}>
                       <span style={{ fontSize: '14px', color: c.amber }}>◉</span>
                       <span style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700 }}>Services E-com</span>
-                      <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.amber, fontWeight: 700, background: `${c.amber}15`, padding: '2px 6px', marginLeft: sp[1] }}>
+                      <span style={{ fontFamily: f.mono, fontSize: '9px', color: c.amber, fontWeight: 700, background: `${c.amber}15`, padding: '2px 6px', marginInlineStart: sp[1] }}>
                         {ecomServices.length}
                       </span>
                     </div>
@@ -2065,14 +2076,14 @@ export default function Admin({ user, profile, onSignOut }) {
                       const hasShipment = orderShipments.length > 0
                       return (
                         <div key={order.id} style={{
-                          padding: `${sp[2]} ${sp[3]}`, background: c.bgSurface,
+                          padding: `${sp[2]} ${sp[3]}`, background: c.bgCard,
                           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          borderBottom: `1px solid ${c.borderSubtle}`, borderLeft: `3px solid ${STATUSES[order.status]?.color || c.border}`,
+                          borderBottom: `1px solid ${c.borderSubtle}`, borderInlineStart: `3px solid ${STATUSES[order.status]?.color || c.border}`,
                           cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
                         }}
                         onClick={() => { setMainTab('commandes'); setSelectedId(order.id) }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = c.bgElevated; e.currentTarget.style.boxShadow = `inset 0 0 0 1px ${c.gold}30` }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = c.bgSurface; e.currentTarget.style.boxShadow = 'none' }}>
+                        onMouseLeave={(e) => { e.currentTarget.style.background = c.bgCard; e.currentTarget.style.boxShadow = 'none' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], flex: 1, minWidth: 0 }}>
                             <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0 }}>{order.ref}</span>
                             <span style={{ fontWeight: 600, fontSize: size.sm, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product}</span>
@@ -2097,9 +2108,9 @@ export default function Admin({ user, profile, onSignOut }) {
           {mainTab === 'commandes' && selectedId ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               {/* Header accent */}
-              <div style={{ position: 'relative', height: 48, overflow: 'hidden', flexShrink: 0, background: `linear-gradient(135deg, ${c.bgElevated}, ${c.bg})` }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c.red}, transparent 50%)` }} />
-                <DecoPattern color={c.gold} opacity={0.04} />
+              <div style={{ position: 'relative', height: 48, overflow: 'hidden', flexShrink: 0, background: `${c.bgCard}` }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: c.red, opacity: 0.5 }} />
+                <DecoPattern color={c.gold} opacity={0.025} />
               </div>
               {/* Order Header */}
               <div style={{ padding: `${sp[3]} ${sp[4]}`, borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm, flexShrink: 0 }}>
@@ -2117,19 +2128,19 @@ export default function Admin({ user, profile, onSignOut }) {
                       {selected?.product}
                     </h2>
                     <p style={{ fontSize: size.xs, color: c.textSecondary }}>
-                      {clientName(selected?.client_id)} · {selected?.quantity?.toLocaleString('fr-FR')} unités · {selected?.budget}
+                      {clientName(selected?.client_id)} · {selected?.quantity?.toLocaleString('fr-FR')} unités · {selected?.budget || '–'}
                     </p>
                   </div>
                   <StatusPill status={selected?.status} size="lg" />
                 </div>
                 {/* ── Order Tracking Timeline ── */}
-                <div style={{ marginTop: sp[3], padding: `0 ${sp[2]}`, background: `${c.bgSurface}`, border: `1px solid ${c.borderSubtle}`, borderRadius: 0 }}>
+                <div style={{ marginTop: sp[3], padding: `0 ${sp[2]}`, background: `${c.bgCard}`, border: `1px solid ${c.borderSubtle}`, borderRadius: 0 }}>
                   <OrderTrackingTimeline currentStatus={typeof selected?.status === 'number' ? selected.status : STATUSES.findIndex(s => s.key === selected?.status)} />
                 </div>
               </div>
 
               {/* Sub-tabs */}
-              <div style={{ display: 'flex', borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm, flexShrink: 0, paddingLeft: sp[4], gap: '2px' }}>
+              <div style={{ display: 'flex', borderBottom: `1px solid ${c.borderSubtle}`, background: c.bgWarm, flexShrink: 0, paddingInlineStart: sp[4], gap: '2px' }}>
                 {[
                   { key: 'messages', label: 'Messages', icon: icons.msg },
                   { key: 'details', label: 'Détails', icon: icons.edit },
@@ -2146,7 +2157,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     <Icon d={t.icon} size={13} color={tab === t.key ? c.red : c.textTertiary} />
                     {t.label}
                     {t.key === 'messages' && messages.length > 0 && (
-                      <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.gold, fontWeight: 700, marginLeft: '2px' }}>{messages.length}</span>
+                      <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.gold, fontWeight: 700, marginInlineStart: '2px' }}>{messages.length}</span>
                     )}
                   </button>
                 ))}
@@ -2175,7 +2186,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         <input
                           value={newMsg} onChange={e => setNewMsg(e.target.value)}
                           placeholder="Votre message…"
-                          style={{ flex: 1, padding: `10px ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', transition: `all 0.2s ${ease.smooth}` }}
+                          style={{ flex: 1, padding: `10px ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', transition: `all 0.2s ${ease.smooth}` }}
                           onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
                           onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}
                         />
@@ -2228,7 +2239,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       const clientProfile = allProfiles.find(p => p.id === selected?.client_id)
                       const tier = getTierByKey(clientProfile?.client_tier || DEFAULT_TIER)
                       return clientProfile ? (
-                        <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, position: 'relative', overflow: 'hidden' }}>
                           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: tier.color }} />
                           <div style={labelStyle}>Client</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[2] }}>
@@ -2270,7 +2281,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         ].map((field, i) => (
                           <div key={i} style={{ gridColumn: field.col ? `span ${field.col}` : 'auto' }}>
                             <div style={labelStyle}>{field.label}</div>
-                            <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.border}`, fontSize: size.sm, color: c.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6 }}>
+                            <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.border}`, fontSize: size.sm, color: c.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.6 }}>
                               {field.value}
                             </div>
                           </div>
@@ -2380,8 +2391,8 @@ export default function Admin({ user, profile, onSignOut }) {
                               const accent = catColors[s.category] || c.gold
                               return (
                                 <div key={s.id} style={{
-                                  padding: sp[2], background: c.bgSurface, border: `1px solid ${c.border}`,
-                                  borderLeft: `3px solid ${accent}`, transition: `all 0.2s ${ease.smooth}`,
+                                  padding: sp[2], background: c.bgCard, border: `1px solid ${c.border}`,
+                                  borderInlineStart: `3px solid ${accent}`, transition: `all 0.2s ${ease.smooth}`,
                                 }}
                                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
                                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.borderLeftColor = accent }}>
@@ -2422,12 +2433,12 @@ export default function Admin({ user, profile, onSignOut }) {
                       <div style={labelStyle}>Télécharger un document</div>
                       <label style={{
                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        padding: sp[4], background: c.bgSurface, border: `2px dashed ${c.border}`,
+                        padding: sp[4], background: c.bgCard, border: `2px dashed ${c.border}`,
                         textAlign: 'center', cursor: uploadingFile ? 'wait' : 'pointer',
-                        transition: `all 0.3s ${ease.out}`, gap: sp[1], minHeight: '100px',
+                        transition: `all 0.35s ${ease.luxury}`, gap: sp[1], minHeight: '100px',
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = c.bgElevated }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgSurface }}>
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgCard }}>
                         <Icon d={uploadingFile ? icons.trending : icons.upload} size={24} color={c.textTertiary} />
                         <div style={{ fontSize: size.sm, color: c.text, fontWeight: 600 }}>
                           {uploadingFile ? 'Envoi en cours…' : 'Cliquez ou glissez un fichier'}
@@ -2443,7 +2454,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                         {documents.map((doc, i) => (
                           <div key={doc.id} style={{
-                            padding: `${sp[2]} ${sp[3]}`, background: c.bgSurface,
+                            padding: `${sp[2]} ${sp[3]}`, background: c.bgCard,
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             borderBottom: `1px solid ${c.borderSubtle}`,
                           }}>
@@ -2481,11 +2492,11 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* ═══ UNIFIED HEADER: Catalogue & Fournisseurs ═══ */}
               <div style={{
                 height: 100, marginBottom: sp[3], position: 'relative', overflow: 'hidden',
-                background: `linear-gradient(135deg, ${c.bgElevated}, ${c.bg})`,
+                background: `${c.bgCard}`,
                 border: `1px solid ${c.borderSubtle}`,
               }}>
                 <DecoPattern color={c.teal} opacity={0.06} />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c.teal}, ${c.gold}, transparent 60%)` }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: c.teal, opacity: 0.5 }} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `0 ${sp[5]}`, zIndex: 1 }}>
                   <div>
                     <p style={{ fontFamily: f.mono, fontSize: '10px', color: c.teal, letterSpacing: '0.12em', textTransform: 'uppercase', margin: `0 0 ${sp[1]}`, fontWeight: 600 }}>◆ SOURCING & SUPPLY CHAIN</p>
@@ -2528,7 +2539,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     transition: `all 0.2s ${ease.luxury}`,
                   }}>
                     <span style={{ fontWeight: 600, fontSize: size.sm, color: catalogSubTab === st.key ? c.text : c.textTertiary }}>{st.label}</span>
-                    {st.count !== undefined && <span style={{ marginLeft: '6px', fontFamily: f.mono, fontSize: '10px', color: c.goldMuted }}>({st.count})</span>}
+                    {st.count !== undefined && <span style={{ marginInlineStart: '6px', fontFamily: f.mono, fontSize: '10px', color: c.goldMuted }}>({st.count})</span>}
                   </button>
                 ))}
               </div>
@@ -2539,7 +2550,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <input type="text" value={catalogSubTab === 'fournisseurs' ? supplierSearch : catalogSearch}
                   onChange={e => catalogSubTab === 'fournisseurs' ? setSupplierSearch(e.target.value) : setCatalogSearch(e.target.value)}
                   placeholder={catalogSubTab === 'fournisseurs' ? "Rechercher fournisseur, ville, spécialité..." : "Rechercher un produit, une catégorie..."}
-                  style={{ ...inputStyle, paddingLeft: sp[5], borderBottom: `2px solid ${c.border}` }}
+                  style={{ ...inputStyle, paddingInlineStart: sp[5], borderBottom: `2px solid ${c.border}` }}
                   onFocus={(e) => { e.target.style.borderBottomColor = c.gold }}
                   onBlur={(e) => { e.target.style.borderBottomColor = c.border }} />
               </div>
@@ -2572,7 +2583,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         <tr style={{ borderBottom: `1px solid ${c.border}` }}>
                           {['Fournisseur', 'Catégorie', 'Ville', 'MOQ', 'Prix', 'Délai', 'Certif.', 'Contact', 'Actions'].map(h => (
                             <th key={h} style={{
-                              padding: '10px 12px', textAlign: 'left',
+                              padding: '10px 12px', textAlign: 'start',
                               fontFamily: f.mono, fontSize: '9px', fontWeight: 700,
                               color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em',
                             }}>{h}</th>
@@ -2594,7 +2605,7 @@ export default function Admin({ user, profile, onSignOut }) {
                             animationDelay: `${idx * 40}ms`,
                             background: s.custom ? `${c.gold}04` : 'transparent',
                           }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = c.bgDefault || c.bgSurface }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = c.bgDefault || c.bgCard }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = s.custom ? `${c.gold}04` : 'transparent' }}>
                             <td style={{ padding: '10px 12px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2612,7 +2623,7 @@ export default function Admin({ user, profile, onSignOut }) {
                             <td style={{ padding: '10px 12px', color: c.textSecondary }}>{s.leadTime}</td>
                             <td style={{ padding: '10px 12px' }}>
                               {(s.certifications || []).length > 0 ? s.certifications.map(cert => (
-                                <span key={cert} style={{ padding: '1px 6px', fontSize: '8px', fontFamily: f.mono, color: c.gold, border: `1px solid ${c.gold}22`, marginRight: 4 }}>{cert}</span>
+                                <span key={cert} style={{ padding: '1px 6px', fontSize: '8px', fontFamily: f.mono, color: c.gold, border: `1px solid ${c.gold}22`, marginInlineEnd: 4 }}>{cert}</span>
                               )) : <span style={{ color: c.textTertiary }}>—</span>}
                             </td>
                             <td style={{ padding: '10px 12px' }}>
@@ -2640,7 +2651,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                   <button onClick={() => {
                                     setConfirmDialog({ open: true, title: 'Supprimer', message: `Supprimer "${s.name}" ?`, onConfirm: () => {
                                       setCustomSuppliers(prev => prev.filter(x => x.id !== s.id))
-                                      toast.success('Fournisseur supprimé')
+                                      toast.success(t('toast.supplierDeleted'))
                                     }})
                                   }} title="Supprimer" style={{
                                     width: 28, height: 28, background: 'transparent', border: `1px solid ${c.red}40`,
@@ -2677,7 +2688,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
 
                 {products.length === 0 ? (
-                  <div style={{ padding: sp[4], textAlign: 'center', color: c.textTertiary, background: c.bgSurface, border: `1px solid ${c.border}` }}>
+                  <div style={{ padding: sp[4], textAlign: 'center', color: c.textTertiary, background: c.bgCard, border: `1px solid ${c.border}` }}>
                     <div style={{ fontSize: '32px', marginBottom: sp[1], opacity: 0.3 }}>📦</div>
                     <p style={{ fontSize: size.sm, fontWeight: 600, marginBottom: sp[1] }}>Aucun produit personnalisé</p>
                     <p style={{ fontSize: size.xs, color: c.textTertiary, maxWidth: 400, margin: '0 auto' }}>
@@ -2709,8 +2720,8 @@ export default function Admin({ user, profile, onSignOut }) {
                               for (const url of (prod.image_urls || [])) { await deleteProductImage(url) }
                               await deleteProduct(prod.id)
                               await loadAll()
-                              toast.success('Produit supprimé')
-                            } catch (err) { toast.error('Erreur: ' + err.message) }
+                              toast.success(t('toast.productDeleted'))
+                            } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                           }
                         })
                         return
@@ -2720,27 +2731,23 @@ export default function Admin({ user, profile, onSignOut }) {
                         try {
                           await updateProduct(prod.id, { active: !prod.active })
                           await loadAll()
-                          toast.success(prod.active ? 'Produit désactivé' : 'Produit activé')
-                        } catch (err) { toast.error('Erreur: ' + err.message) }
+                          toast.success(prod.active ? t('toast.productToggleDeactivated') : t('toast.productToggleActivated'))
+                        } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                       }
                       return (
                       <div key={prod.id} className="catalog-card" style={{
-                        background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden',
-                        transition: `all 0.3s ${ease.out}`, cursor: 'pointer', opacity: prod.active ? 1 : 0.6,
-                        position: 'relative', animation: `cardReveal 0.5s ${ease.smooth} ${0.03 * (i % 10)}s backwards`,
+                        background: c.bgCard, border: `1px solid ${c.border}`, overflow: 'hidden', borderRadius: radius.md,
+                        transition: `all 0.35s ${ease.luxury}`, cursor: 'pointer', opacity: prod.active ? 1 : 0.6,
+                        boxShadow: shadow.xs, position: 'relative', animation: `cardReveal 0.5s ${ease.smooth} ${0.03 * (i % 10)}s backwards`,
                       }}
                       onClick={openEditModal}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = c.gold
-                        e.currentTarget.style.boxShadow = `0 0 0 2px ${c.gold}30`
-                        e.currentTarget.style.transform = 'translateY(-2px)'
                         const overlay = e.currentTarget.querySelector('.card-actions')
                         if (overlay) overlay.style.opacity = '1'
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.borderColor = c.border
-                        e.currentTarget.style.boxShadow = 'none'
-                        e.currentTarget.style.transform = 'translateY(0)'
                         const overlay = e.currentTarget.querySelector('.card-actions')
                         if (overlay) overlay.style.opacity = '0'
                       }}>
@@ -2749,7 +2756,7 @@ export default function Admin({ user, profile, onSignOut }) {
                           {prod.image_urls?.[0] ? (
                             <img src={prod.image_urls[0]} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', background: `linear-gradient(135deg, ${c.bg}, ${c.bgElevated})` }}>
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', background: c.bgElevated }}>
                               <DecoPattern color={c.gold} opacity={0.06} />
                               <DragonMark s={32} />
                             </div>
@@ -2798,7 +2805,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         </div>
                         {/* Card content */}
                         <div style={{ padding: sp[2], position: 'relative' }}>
-                          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', borderTop: `1.5px solid ${c.gold}`, borderLeft: `1.5px solid ${c.gold}`, opacity: 0.3, pointerEvents: 'none' }} />
+                          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', borderTop: `1.5px solid ${c.gold}`, borderInlineStart: `1.5px solid ${c.gold}`, opacity: 0.3, pointerEvents: 'none' }} />
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                             <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.sm, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prod.name}</div>
                           </div>
@@ -2812,7 +2819,7 @@ export default function Admin({ user, profile, onSignOut }) {
                             { label: 'Marge', value: prod.margin_estimate || '-', color: c.gold },
                             { label: 'MOQ', value: prod.moq || '-', color: c.amber },
                           ].map((cell, j) => (
-                            <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
+                            <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderInlineEnd: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
                               <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
                               <div style={{ fontFamily: f.mono, fontSize: size.xs, fontWeight: 700, color: cell.color }}>{cell.value}</div>
                             </div>
@@ -2842,7 +2849,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   {TIERS.map(tier => (
                     <button key={tier.key} onClick={() => setExpandedTier(expandedTier === tier.key ? null : tier.key)} style={{
                       padding: `8px ${sp[3]}`, border: `1px solid ${expandedTier === tier.key ? tier.color : c.border}`,
-                      background: expandedTier === tier.key ? `${tier.color}15` : c.bgSurface,
+                      background: expandedTier === tier.key ? `${tier.color}15` : c.bgCard,
                       color: expandedTier === tier.key ? tier.color : c.textSecondary,
                       fontFamily: f.body, fontSize: size.sm, fontWeight: expandedTier === tier.key ? 700 : 500,
                       cursor: 'pointer',
@@ -2867,7 +2874,7 @@ export default function Admin({ user, profile, onSignOut }) {
                       <div style={{ display: 'flex', gap: sp[3], padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
                         <div style={{ textAlign: 'center', flex: 1 }}>
                           <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Commande min.</div>
-                          <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: tier.color }}>{tier.minOrderValue.toLocaleString('fr-FR')}€</div>
+                          <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: tier.color }}>{fmtMoney(tier.minOrderValue)}</div>
                         </div>
                         <div style={{ width: '1px', background: c.border }} />
                         <div style={{ textAlign: 'center', flex: 1 }}>
@@ -2885,8 +2892,8 @@ export default function Admin({ user, profile, onSignOut }) {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: sp[3] }}>
                         {cats.map((cat, ci) => (
                           <div key={cat.id} style={{
-                            background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden',
-                            transition: `all 0.2s ${ease.smooth}`,
+                            background: c.bgCard, border: `1px solid ${c.border}`, overflow: 'hidden', borderRadius: radius.md,
+                            transition: `all 0.2s ${ease.smooth}`, boxShadow: shadow.xs,
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = tier.color }}
                           onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border }}>
@@ -2906,7 +2913,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                 { label: 'MOQ', value: getTierMOQ(cat.moq, expandedTier), color: c.amber },
                                 { label: 'Marge', value: cat.margin || '-', color: c.gold },
                               ].map((cell, j) => (
-                                <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
+                                <div key={j} style={{ padding: `${sp[1]} ${sp[2]}`, borderInlineEnd: j < 2 ? `1px solid ${c.borderSubtle}` : 'none', textAlign: 'center' }}>
                                   <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{cell.label}</div>
                                   <div style={{ fontFamily: f.mono, fontSize: size.xs, fontWeight: 700, color: cell.color }}>{cell.value}</div>
                                 </div>
@@ -2960,7 +2967,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                   message: `Voulez-vous supprimer "${cat.name}" du catalogue ${tier.label} ?`,
                                   onConfirm: () => {
                                     deleteCatalogItem(expandedTier, cat.id)
-                                    toast.success(`"${cat.name}" supprimé du catalogue`)
+                                    toast.success(tToast('catalogItemRemoved', { name: cat.name }))
                                   }
                                 })
                               }} style={{
@@ -3011,13 +3018,13 @@ export default function Admin({ user, profile, onSignOut }) {
                       const productCount = products.filter(p => p.category === cat.name).length
                       return (
                         <div key={cat.id} style={{
-                          background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden',
-                          transition: `all 0.2s ${ease.smooth}`,
+                          background: c.bgCard, border: `1px solid ${c.border}`, overflow: 'hidden', borderRadius: radius.md,
+                          transition: `all 0.2s ${ease.smooth}`, boxShadow: shadow.xs,
                           cursor: 'pointer', position: 'relative', animation: `cardReveal 0.5s ${ease.smooth} ${0.04 * (idx % 8)}s backwards`,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.boxShadow = `0 4px 12px ${c.gold}22` }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = 'none' }}>
-                          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderTop: `2px solid ${c.gold}`, borderLeft: `2px solid ${c.gold}`, opacity: 0.35, pointerEvents: 'none' }} />
+                          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderTop: `2px solid ${c.gold}`, borderInlineStart: `2px solid ${c.gold}`, opacity: 0.35, pointerEvents: 'none' }} />
                           {/* Category header */}
                           <div style={{ padding: sp[3], borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'flex-start', gap: sp[2], justifyContent: 'space-between' }}>
                             <div style={{ flex: 1 }}>
@@ -3034,7 +3041,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
                           {/* Stats */}
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${c.borderSubtle}` }}>
-                            <div style={{ padding: `${sp[1]} ${sp[2]}`, borderRight: `1px solid ${c.borderSubtle}`, textAlign: 'center' }}>
+                            <div style={{ padding: `${sp[1]} ${sp[2]}`, borderInlineEnd: `1px solid ${c.borderSubtle}`, textAlign: 'center' }}>
                               <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Produits</div>
                               <div style={{ fontFamily: f.mono, fontSize: size.sm, fontWeight: 700, color: c.gold }}>{productCount}</div>
                             </div>
@@ -3062,8 +3069,8 @@ export default function Admin({ user, profile, onSignOut }) {
                                   try {
                                     await deleteCategory(cat.id)
                                     await loadAll()
-                                    toast.success('Categorie supprimee')
-                                  } catch (err) { toast.error('Erreur: ' + err.message) }
+                                    toast.success(t('toast.categoryRemoved'))
+                                  } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                                 }
                               })
                               return
@@ -3085,26 +3092,26 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* ── CATEGORY DETAIL/EDIT MODAL ── */}
               {showCategoryModal && (
                 <div style={{
-                  position: 'fixed', inset: 0, background: `radial-gradient(ellipse at center, transparent 50%, oklch(0% 0 0 / 0.4) 100%), ${c.bgOverlay}`, zIndex: 1000,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+                  position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
                 }} onClick={() => setShowCategoryModal(false)}>
                   <div style={{
-                    background: c.bgBase, border: `1px solid ${c.border}`, width: '90%', maxWidth: '500px', maxHeight: '85vh', overflow: 'auto',
-                    borderRadius: '2px', animation: `cardReveal 0.4s ${ease.smooth}`,
+                    background: c.bgCard, border: `1px solid ${c.borderLight}`, width: '90%', maxWidth: '500px', maxHeight: '85vh', overflow: 'auto',
+                    borderRadius: radius.sm, animation: `cardReveal 0.4s ${ease.smooth}`, boxShadow: shadow.xs,
                   }} onClick={e => e.stopPropagation()}>
                     <form onSubmit={async (e) => {
                       e.preventDefault()
                       try {
                         if (editingCategory) {
                           await updateCategory(editingCategory.id, categoryForm)
-                          toast.success('Categorie mise a jour')
+                          toast.success(t('toast.categoryUpdated'))
                         } else {
                           await createCategory(categoryForm)
-                          toast.success('Categorie creee')
+                          toast.success(t('toast.categoryCreated'))
                         }
                         setShowCategoryModal(false)
                         await loadAll()
-                      } catch (err) { toast.error('Erreur: ' + err.message) }
+                      } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                     }} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                       <div style={{ padding: sp[4], borderBottom: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, margin: 0 }}>
@@ -3186,8 +3193,8 @@ export default function Admin({ user, profile, onSignOut }) {
                                   await deleteCategory(editingCategory.id)
                                   setShowCategoryModal(false)
                                   await loadAll()
-                                  toast.success('Categorie supprimee')
-                                } catch (err) { toast.error('Erreur: ' + err.message) }
+                                  toast.success(t('toast.categoryRemoved'))
+                                } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                               }
                             })
                             return
@@ -3207,7 +3214,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         <button type="submit" style={{
                           padding: `10px ${sp[3]}`, background: c.red, color: c.text,
                           border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
-                          cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                          cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}>
@@ -3222,12 +3229,12 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* ── CATALOG ITEM EDIT MODAL ── */}
               {showCatalogItemModal && (
                 <div style={{
-                  position: 'fixed', inset: 0, background: c.bgOverlay, zIndex: 1000,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)',
+                  position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
                 }} onClick={() => setShowCatalogItemModal(false)}>
                   <div style={{
-                    background: c.bgBase, border: `1px solid ${c.border}`, width: '90%', maxWidth: '520px', maxHeight: '85vh', overflow: 'auto',
-                    borderRadius: '2px', animation: `cardReveal 0.4s ${ease.smooth}`,
+                    background: c.bgCard, border: `1px solid ${c.borderLight}`, width: '90%', maxWidth: '520px', maxHeight: '85vh', overflow: 'auto',
+                    borderRadius: radius.sm, animation: `cardReveal 0.4s ${ease.smooth}`, boxShadow: shadow.xs,
                   }} onClick={e => e.stopPropagation()}>
                     <form onSubmit={(e) => {
                       e.preventDefault()
@@ -3243,7 +3250,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         locations: catalogItemForm.locations.split(',').map(s => s.trim()).filter(Boolean),
                       }
                       saveCatalogOverride(editingCatalogTier, editingCatalogItem.id, override)
-                      toast.success(`"${override.name}" modifié`)
+                      toast.success(tToast('overrideModified', { name: override.name }))
                       setShowCatalogItemModal(false)
                     }} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                       <div style={{ padding: sp[4], borderBottom: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -3330,7 +3337,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         <button type="submit" style={{
                           padding: `10px ${sp[3]}`, background: c.red, color: c.text,
                           border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
-                          cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                          cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}>
@@ -3380,13 +3387,13 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* ── PRODUCT DETAIL/EDIT MODAL ── */}
               {showProductModal && (
                 <div style={{
-                  position: 'fixed', inset: 0, background: c.bgOverlay, zIndex: 1000,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)',
+                  position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', zIndex: 1000,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
                 }} onClick={() => setShowProductModal(false)}>
                   <div style={{
-                    background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+                    background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
                     maxWidth: '560px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
-                    animation: `cardReveal 0.4s ${ease.smooth}`,
+                    animation: `cardReveal 0.4s ${ease.smooth}`, borderRadius: radius.sm, boxShadow: shadow.xs,
                   }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
                     <button onClick={() => setShowProductModal(false)} style={{
                       position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
@@ -3417,8 +3424,8 @@ export default function Admin({ user, profile, onSignOut }) {
                                   const newUrls = editingProduct.image_urls.filter((_, j) => j !== i)
                                   await updateProduct(editingProduct.id, { image_urls: newUrls })
                                   setEditingProduct({ ...editingProduct, image_urls: newUrls })
-                                  toast.success('Image supprimée')
-                                } catch (err) { toast.error('Erreur: ' + (err.message || 'Inconnue')) }
+                                  toast.success(t('toast.imageDeleted'))
+                                } catch (err) { toast.error(tToast('genericError', { error: err.message || 'Inconnue' })) }
                               }} style={{
                                 position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.7)', border: 'none',
                                 color: c.white, cursor: 'pointer', width: 18, height: 18, fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -3443,8 +3450,8 @@ export default function Admin({ user, profile, onSignOut }) {
                             const newUrls = [...(editingProduct.image_urls || []), url]
                             await updateProduct(editingProduct.id, { image_urls: newUrls })
                             setEditingProduct({ ...editingProduct, image_urls: newUrls })
-                            toast.success('Image ajoutée')
-                          } catch (err) { toast.error("Erreur upload: " + err.message) }
+                            toast.success(t('toast.imageAdded'))
+                          } catch (err) { toast.error(tToast('imageUploadError', { error: err.message })) }
                           setProductUploading(false)
                           e.target.value = ''
                         }} />
@@ -3467,14 +3474,14 @@ export default function Admin({ user, profile, onSignOut }) {
                       try {
                         if (editingProduct) {
                           await updateProduct(editingProduct.id, payload)
-                          toast.success('Produit mis à jour')
+                          toast.success(t('toast.productUpdated'))
                         } else {
                           await createProduct(payload)
-                          toast.success('Produit créé')
+                          toast.success(t('toast.productCreated'))
                         }
                         setShowProductModal(false)
                         await loadAll()
-                      } catch (err) { toast.error('Erreur: ' + err.message) }
+                      } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                     }} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
                       <div>
                         <label style={labelStyle}>Nom du produit *</label>
@@ -3571,8 +3578,8 @@ export default function Admin({ user, profile, onSignOut }) {
                                   await deleteProduct(editingProduct.id)
                                   setShowProductModal(false)
                                   await loadAll()
-                                  toast.success('Produit supprime')
-                                } catch (err) { toast.error('Erreur: ' + err.message) }
+                                  toast.success(t('toast.productDeleted'))
+                                } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                               }
                             })
                             return
@@ -3592,7 +3599,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         <button type="submit" style={{
                           padding: `10px ${sp[3]}`, background: c.red, color: c.text,
                           border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
-                          cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                          cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}>
@@ -3622,8 +3629,8 @@ export default function Admin({ user, profile, onSignOut }) {
                 <button onClick={() => setShowCreateShipment(true)} style={{
                   padding: `10px ${sp[3]}`, background: c.teal, color: c.text, border: 'none',
                   fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
-                  transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
-                  borderRadius: '3px', boxShadow: shadow.md,
+                  transition: `all 0.35s ${ease.luxury}`, display: 'flex', alignItems: 'center', gap: '6px',
+                  borderRadius: '3px', boxShadow: shadow.xs,
                 }}>
                   <Icon d={icons.plus} size={16} color={c.text} />
                   Nouvel envoi
@@ -3662,15 +3669,15 @@ export default function Admin({ user, profile, onSignOut }) {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: size.sm }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${c.border}`, background: c.bg }}>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Client</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Tracking</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Statut</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Méthode</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Origine</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Destination</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>ETA</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Poids</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Actions</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Client</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Tracking</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Statut</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Méthode</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Origine</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Destination</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>ETA</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Poids</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -3711,7 +3718,7 @@ export default function Admin({ user, profile, onSignOut }) {
                               }} style={{
                                 padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
                                 color: c.teal, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
-                                transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                                transition: `all 0.35s ${ease.luxury}`, borderRadius: '2px',
                               }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = `${c.teal}15`; e.currentTarget.style.borderColor = c.teal }}
                               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
@@ -3720,7 +3727,7 @@ export default function Admin({ user, profile, onSignOut }) {
                               <button onClick={() => handleDeleteShipment(shipment.id)} style={{
                                 padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
                                 color: c.red, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
-                                transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                                transition: `all 0.35s ${ease.luxury}`, borderRadius: '2px',
                               }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}15`; e.currentTarget.style.borderColor = c.red }}
                               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
@@ -3754,8 +3761,8 @@ export default function Admin({ user, profile, onSignOut }) {
                 <button onClick={() => setShowCreateInventory(true)} style={{
                   padding: `10px ${sp[3]}`, background: c.purple, color: c.text, border: 'none',
                   fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
-                  transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
-                  borderRadius: '3px', boxShadow: shadow.md,
+                  transition: `all 0.35s ${ease.luxury}`, display: 'flex', alignItems: 'center', gap: '6px',
+                  borderRadius: '3px', boxShadow: shadow.xs,
                 }}>
                   <Icon d={icons.plus} size={16} color={c.text} />
                   Nouvel article
@@ -3794,14 +3801,14 @@ export default function Admin({ user, profile, onSignOut }) {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: size.sm }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${c.border}`, background: c.bg }}>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Produit</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>SKU</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Quantité</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Seuil alerte</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Entrepôt</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Statut</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Mis à jour</th>
-                          <th style={{ padding: sp[3], textAlign: 'left', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Actions</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Produit</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>SKU</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Quantité</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Seuil alerte</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Entrepôt</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Statut</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Mis à jour</th>
+                          <th style={{ padding: sp[3], textAlign: 'start', fontFamily: f.mono, fontWeight: 600, color: c.textSecondary }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -3844,7 +3851,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                 }} style={{
                                   padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
                                   color: c.purple, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
-                                  transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                                  transition: `all 0.35s ${ease.luxury}`, borderRadius: '2px',
                                 }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = `${c.purple}15`; e.currentTarget.style.borderColor = c.purple }}
                                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
@@ -3853,7 +3860,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                 <button onClick={() => handleDeleteInventory(item.id)} style={{
                                   padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
                                   color: c.red, fontSize: size.xs, cursor: 'pointer', fontFamily: f.mono,
-                                  transition: `all 0.3s ${ease.out}`, borderRadius: '2px',
+                                  transition: `all 0.35s ${ease.luxury}`, borderRadius: '2px',
                                 }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = `${c.red}15`; e.currentTarget.style.borderColor = c.red }}
                                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = c.border }}>
@@ -3905,7 +3912,7 @@ export default function Admin({ user, profile, onSignOut }) {
             return (
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
               {/* ── LEFT: SHOP LIST ── */}
-              <div className="admin-scroll admin-sidebar" style={{ width: selectedShop ? '380px' : '100%', flexShrink: 0, overflowY: 'auto', padding: sp[4], borderRight: selectedShop ? `1px solid ${c.border}` : 'none', transition: 'width 0.3s ease' }}>
+              <div className="admin-scroll admin-sidebar" style={{ width: selectedShop ? '380px' : '100%', flexShrink: 0, overflowY: 'auto', padding: sp[4], borderInlineEnd: selectedShop ? `1px solid ${c.border}` : 'none', transition: 'width 0.3s ease' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[3] }}>
                   <div>
                     <h2 style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, letterSpacing: '-0.01em' }}>
@@ -3930,7 +3937,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <div style={{ display: 'grid', gridTemplateColumns: selectedShop ? '1fr 1fr' : 'repeat(auto-fit, minmax(150px, 1fr))', gap: sp[2], marginBottom: sp[3] }}>
                   {[
                     { label: 'Boutiques', value: shops.length, color: c.gold, sub: `${shops.filter(s => s.status === 'active').length} actives` },
-                    { label: 'Revenus/mois', value: `${totalRevenue.toLocaleString('fr-FR')}€`, color: c.green, sub: `${totalOrders} commandes` },
+                    { label: 'Revenus/mois', value: fmtMoney(totalRevenue), color: c.green, sub: `${totalOrders} commandes` },
                     ...(!selectedShop ? [
                       { label: 'Produits sync.', value: totalProducts, color: c.teal, sub: `${[...new Set(shops.map(s => s.platform))].length} plateformes` },
                       { label: 'En construction', value: shops.filter(s => s.status === 'building' || s.status === 'draft').length, color: c.amber, sub: `${shops.filter(s => s.status === 'review').length} en revue` },
@@ -3945,7 +3952,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
 
                 {/* Filters */}
-                <div style={{ display: 'flex', gap: sp[2], marginBottom: sp[3], flexWrap: 'wrap', alignItems: 'center', padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}` }}>
+                <div style={{ display: 'flex', gap: sp[2], marginBottom: sp[3], flexWrap: 'wrap', alignItems: 'center', padding: `${sp[1]} ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}` }}>
                   <div style={{ position: 'relative', flex: '1 1 140px', minWidth: 120 }}>
                     <div style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                       <Icon d={icons.search} size={11} color={c.textTertiary} />
@@ -3979,9 +3986,9 @@ export default function Admin({ user, profile, onSignOut }) {
                       const isSelected = selectedShopId === shop.id
                       return (
                         <div key={shop.id} onClick={() => setSelectedShopId(isSelected ? null : shop.id)} style={{
-                          padding: `${sp[2]} ${sp[3]}`, background: isSelected ? `${c.gold}08` : c.bgSurface,
+                          padding: `${sp[2]} ${sp[3]}`, background: isSelected ? `${c.gold}08` : c.bgCard,
                           borderBottom: `1px solid ${isSelected ? `${c.gold}33` : c.borderSubtle}`,
-                          borderLeft: isSelected ? `3px solid ${c.gold}` : '3px solid transparent',
+                          borderInlineStart: isSelected ? `3px solid ${c.gold}` : '3px solid transparent',
                           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           transition: `all 0.15s ${ease.smooth}`,
                         }}>
@@ -4005,7 +4012,7 @@ export default function Admin({ user, profile, onSignOut }) {
                               <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: '2px', display: 'flex', gap: sp[1] }}>
                                 <span>{client?.full_name?.split(' ')[0] || client?.email?.split('@')[0] || '—'}</span>
                                 <span style={{ color: c.gold }}>{platformLabels[shop.platform] || shop.platform}</span>
-                                {(shop.monthly_revenue > 0) && <span style={{ color: c.green }}>{parseFloat(shop.monthly_revenue).toLocaleString('fr-FR')}€/m</span>}
+                                {(shop.monthly_revenue > 0) && <span style={{ color: c.green }}>{fmtMoney(shop.monthly_revenue)}/m</span>}
                               </div>
                             </div>
                           </div>
@@ -4015,12 +4022,12 @@ export default function Admin({ user, profile, onSignOut }) {
                               setShopCreationLoading(true)
                               try {
                                 const clientData = allProfiles.find(p => p.id === shop.client_id)
-                                await fetch('https://caraxes13.app.n8n.cloud/webhook/create-shop', {
+                                await fetch(`${N8N_WEBHOOK_URL}/create-shop`, {
                                   method: 'POST', headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ ...shop, client: clientData }),
                                 })
-                                toast.success(`Création "${shop.name}" lancée sur N8N`)
-                              } catch (err) { toast.error('Erreur N8N: ' + err.message) }
+                                toast.success(tToast('productCreationN8N', { name: shop.name }))
+                              } catch (err) { toast.error(tToast('n8nError', { error: err.message })) }
                               finally { setShopCreationLoading(false) }
                             }} title="Lancer création via N8N" style={{
                               padding: '4px 8px', background: `${c.teal}12`, border: `1px solid ${c.teal}40`,
@@ -4097,7 +4104,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   </div>
 
                   {/* Setup progress */}
-                  <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
+                  <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
                     <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Progression</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                       {setupSteps.map((step, i) => {
@@ -4123,7 +4130,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                 <div style={{ flex: 1, height: 2, background: isCompleted && i < currentIdx ? c.gold : c.border, margin: '0 4px', transition: 'background 0.3s ease' }} />
                               )}
                             </div>
-                            <div style={{ marginTop: '6px', paddingRight: sp[2] }}>
+                            <div style={{ marginTop: '6px', paddingInlineEnd: sp[2] }}>
                               <div style={{ fontSize: '10px', fontWeight: isCurrent ? 700 : 500, color: isCurrent ? c.gold : c.textSecondary }}>{step.label}</div>
                               <div style={{ fontSize: '8px', color: c.textTertiary, marginTop: '1px' }}>{step.desc}</div>
                             </div>
@@ -4143,7 +4150,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     {[
                       { label: 'Produits', value: selectedShop.products_synced || 0, color: c.teal, icon: '📦' },
                       { label: 'Commandes/mois', value: selectedShop.monthly_orders || 0, color: c.blue, icon: '🛒' },
-                      { label: 'Revenus/mois', value: `${parseFloat(selectedShop.monthly_revenue || 0).toLocaleString('fr-FR')}€`, color: c.green, icon: '💰' },
+                      { label: 'Revenus/mois', value: fmtMoney(selectedShop.monthly_revenue || 0), color: c.green, icon: '💰' },
                       { label: 'Template', value: templateLabels[selectedShop.template] || selectedShop.template || '—', color: c.gold, icon: '🎨' },
                     ].map((kpi, i) => (
                       <div key={i} style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, textAlign: 'center' }}>
@@ -4157,7 +4164,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   {/* Detail grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[3], marginBottom: sp[3] }}>
                     {/* Client info */}
-                    <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}` }}>
+                    <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}` }}>
                       <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Client</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
                         <div style={{
@@ -4175,7 +4182,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     </div>
 
                     {/* Tech info */}
-                    <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}` }}>
+                    <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}` }}>
                       <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Configuration</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1] }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: size.xs }}>
@@ -4208,7 +4215,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
                   {/* Theme config preview */}
                   {selectedShop.theme_config && typeof selectedShop.theme_config === 'object' && Object.keys(selectedShop.theme_config).length > 0 && (
-                    <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
+                    <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
                       <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Thème</div>
                       <div style={{ display: 'flex', gap: sp[3], flexWrap: 'wrap', alignItems: 'center' }}>
                         {selectedShop.theme_config.primary_color && (
@@ -4235,7 +4242,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
                   {/* Notes */}
                   {selectedShop.notes && (
-                    <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
+                    <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
                       <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Notes internes</div>
                       <p style={{ fontSize: size.sm, color: c.textSecondary, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{selectedShop.notes}</p>
                     </div>
@@ -4257,18 +4264,18 @@ export default function Admin({ user, profile, onSignOut }) {
                       try {
                         const clientData = allProfiles.find(p => p.id === selectedShop.client_id)
                         const shopData = { ...selectedShop, client: clientData }
-                        const response = await fetch('https://caraxes13.app.n8n.cloud/webhook/create-shop', {
+                        const response = await fetch(`${N8N_WEBHOOK_URL}/create-shop`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify(shopData),
                         })
                         if (response.ok) {
-                          toast.success('Création boutique lancée sur N8N')
+                          toast.success(t('toast.shopCreationStartedN8N'))
                         } else {
-                          toast.error('Erreur lors de l\'appel N8N')
+                          toast.error(t('toast.shopN8NCallError'))
                         }
                       } catch (err) {
-                        toast.error('Erreur: ' + err.message)
+                        toast.error(tToast('genericError', { error: err.message }))
                       } finally {
                         setShopCreationLoading(false)
                       }
@@ -4285,8 +4292,8 @@ export default function Admin({ user, profile, onSignOut }) {
                         title: 'Supprimer',
                         message: 'Supprimer cette boutique ?',
                         onConfirm: async () => {
-                          try { await deleteShop(selectedShop.id); setSelectedShopId(null); await loadAll(); toast.success('Boutique supprimée') }
-                          catch (err) { toast.error('Erreur: ' + err.message) }
+                          try { await deleteShop(selectedShop.id); setSelectedShopId(null); await loadAll(); toast.success(t('toast.shopDeleted')) }
+                          catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                         }
                       })
                       return
@@ -4307,12 +4314,12 @@ export default function Admin({ user, profile, onSignOut }) {
           {/* ── BOUTIQUE MODAL ── */}
           {showShopModal && (
             <div style={{
-              position: 'fixed', inset: 0, background: c.bgOverlay, zIndex: 1000,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)',
+              position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', zIndex: 1000,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
             }} onClick={() => setShowShopModal(false)}>
               <div style={{
-                background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
-                maxWidth: '520px', width: '90%', maxHeight: '85vh', overflowY: 'auto',
+                background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
+                maxWidth: '520px', width: '90%', maxHeight: '85vh', overflowY: 'auto', borderRadius: radius.sm, boxShadow: shadow.xs,
               }} onClick={e => e.stopPropagation()} className="admin-scroll">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
                   <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700 }}>
@@ -4325,18 +4332,18 @@ export default function Admin({ user, profile, onSignOut }) {
 
                 <form onSubmit={async (e) => {
                   e.preventDefault()
-                  if (!shopForm.name.trim() || !shopForm.client_id) { toast.error('Nom et client requis'); return }
+                  if (!shopForm.name.trim() || !shopForm.client_id) { toast.error(t('toast.shopRequired')); return }
                   try {
                     if (editingShop) {
                       await updateShop(editingShop.id, shopForm)
-                      toast.success('Boutique mise à jour')
+                      toast.success(t('toast.shopUpdated'))
                     } else {
                       await createShop(shopForm)
-                      toast.success('Boutique créée')
+                      toast.success(t('toast.shopCreated'))
                     }
                     setShowShopModal(false)
                     await loadAll()
-                  } catch (err) { toast.error('Erreur: ' + err.message) }
+                  } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                 }} style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
 
                   <div>
@@ -4393,9 +4400,9 @@ export default function Admin({ user, profile, onSignOut }) {
                         try {
                           await updateShop(editingShop.id, { status: e.target.value })
                           setEditingShop({ ...editingShop, status: e.target.value })
-                          toast.success('Statut mis à jour')
+                          toast.success(t('toast.statusUpdated'))
                           await loadAll()
-                        } catch (err) { toast.error('Erreur: ' + err.message) }
+                        } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                       }} style={inputStyle}>
                         <option value="draft">Brouillon</option>
                         <option value="building">En construction</option>
@@ -4455,8 +4462,8 @@ export default function Admin({ user, profile, onSignOut }) {
                           title: 'Supprimer',
                           message: 'Supprimer cette boutique ?',
                           onConfirm: async () => {
-                            try { await deleteShop(editingShop.id); setShowShopModal(false); await loadAll(); toast.success('Boutique supprimée') }
-                            catch (err) { toast.error('Erreur: ' + err.message) }
+                            try { await deleteShop(editingShop.id); setShowShopModal(false); await loadAll(); toast.success(t('toast.shopDeleted')) }
+                            catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                           }
                         })
                         return
@@ -4476,22 +4483,22 @@ export default function Admin({ user, profile, onSignOut }) {
                     }}>{editingShop ? 'Sauvegarder' : 'Créer la boutique'}</button>
                     {!editingShop && (
                       <button type="button" onClick={async () => {
-                        if (!shopForm.name.trim() || !shopForm.client_id) { toast.error('Nom et client requis'); return }
+                        if (!shopForm.name.trim() || !shopForm.client_id) { toast.error(t('toast.shopRequired')); return }
                         try {
                           const newShop = await createShop(shopForm)
-                          toast.success('Boutique créée')
+                          toast.success(t('toast.shopCreated'))
                           // Lancer N8N automatiquement
                           setShopCreationLoading(true)
                           const clientData = allProfiles.find(p => p.id === shopForm.client_id)
-                          await fetch('https://caraxes13.app.n8n.cloud/webhook/create-shop', {
+                          await fetch(`${N8N_WEBHOOK_URL}/create-shop`, {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ ...newShop, ...shopForm, client: clientData }),
                           })
-                          toast.success('Création lancée sur N8N ⚡')
+                          toast.success(t('toast.shopCreationN8N'))
                           setShopCreationLoading(false)
                           setShowShopModal(false)
                           await loadAll()
-                        } catch (err) { setShopCreationLoading(false); toast.error('Erreur: ' + err.message) }
+                        } catch (err) { setShopCreationLoading(false); toast.error(tToast('genericError', { error: err.message })) }
                       }} disabled={shopCreationLoading} style={{
                         padding: `10px ${sp[3]}`, background: c.teal, color: c.bg,
                         border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
@@ -4516,11 +4523,11 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* Header */}
               <div style={{
                 height: 100, marginBottom: sp[4], position: 'relative', overflow: 'hidden',
-                background: `linear-gradient(135deg, ${c.bgElevated}, ${c.bg})`,
+                background: `${c.bgCard}`,
                 border: `1px solid ${c.borderSubtle}`,
               }}>
                 <DecoPattern color={c.red} opacity={0.06} />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c.red}, transparent 60%)` }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: c.red, opacity: 0.5 }} />
                 <div style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, border: `1px solid ${c.red}22`, transform: 'rotate(45deg)' }} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `0 ${sp[5]}`, zIndex: 1 }}>
                   <div>
@@ -4543,10 +4550,10 @@ export default function Admin({ user, profile, onSignOut }) {
                 {[
                   { label: 'Demandes totales', value: vehicleRequests.length, color: c.red },
                   { label: 'En cours', value: vehicleRequests.filter(v => v.status === 'sourcing' || v.status === 'demande').length, color: c.amber },
-                  { label: 'Budget total', value: vehicleRequests.reduce((sum, v) => sum + (parseFloat(v.budget) || 0), 0).toLocaleString('fr-FR') + '€', color: c.gold },
+                  { label: 'Budget total', value: fmtMoney(vehicleRequests.reduce((sum, v) => sum + (parseFloat(v.budget) || 0), 0)), color: c.gold },
                   { label: 'Destinations', value: [...new Set(vehicleRequests.map(v => v.destination))].length, color: c.teal },
                 ].map((stat, i) => (
-                  <div key={i} style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, borderTop: `2px solid ${stat.color}` }}>
+                  <div key={i} style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, borderTop: `2px solid ${stat.color}` }}>
                     <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>{stat.label}</div>
                     <div style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: stat.color }}>{stat.value}</div>
                   </div>
@@ -4554,7 +4561,7 @@ export default function Admin({ user, profile, onSignOut }) {
               </div>
 
               {/* Vehicle requests table */}
-              <div style={{ padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}`, marginBottom: sp[4] }}>
+              <div style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, marginBottom: sp[4] }}>
                 <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[3], fontWeight: 600 }}>Demandes véhicules</div>
                 {vehicleRequests.length === 0 ? (
                   <div style={{ padding: sp[4], textAlign: 'center', color: c.textTertiary }}>
@@ -4612,12 +4619,12 @@ export default function Admin({ user, profile, onSignOut }) {
           {/* ── VEHICLE MODAL ── */}
           {showVehicleModal && (
             <div style={{
-              position: 'fixed', inset: 0, background: c.bgOverlay, zIndex: 1000,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)',
+              position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', zIndex: 1000,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
             }} onClick={() => { setShowVehicleModal(false); setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '', status: 'demande' }) }}>
               <div style={{
-                background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
-                maxWidth: '520px', width: '90%', maxHeight: '85vh', overflowY: 'auto',
+                background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
+                maxWidth: '520px', width: '90%', maxHeight: '85vh', overflowY: 'auto', borderRadius: radius.sm, boxShadow: shadow.xs,
               }} onClick={e => e.stopPropagation()} className="admin-scroll">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
                   <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700 }}>Nouvelle demande véhicule</h2>
@@ -4629,14 +4636,14 @@ export default function Admin({ user, profile, onSignOut }) {
                 <form onSubmit={(e) => {
                   e.preventDefault()
                   if (!vehicleForm.client_id || !vehicleForm.destination || !vehicleForm.budget) {
-                    toast.error('Client, destination et budget requis')
+                    toast.error(t('toast.destinationAndBudgetRequired'))
                     return
                   }
                   const newVehicle = { ...vehicleForm, id: Date.now() }
                   setVehicleRequests([...vehicleRequests, newVehicle])
                   setShowVehicleModal(false)
                   setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '', status: 'demande' })
-                  toast.success('Demande créée')
+                  toast.success(t('toast.requestCreated'))
                 }} style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
                   <div>
                     <label style={labelStyle}>Client</label>
@@ -4699,11 +4706,11 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* Banner */}
               <div style={{
                 height: 100, marginBottom: sp[4], position: 'relative', overflow: 'hidden',
-                background: `linear-gradient(135deg, ${c.bgElevated}, ${c.bg})`,
+                background: `${c.bgCard}`,
                 border: `1px solid ${c.borderSubtle}`,
               }}>
                 <DecoPattern color={c.purple} opacity={0.06} />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c.purple}, transparent 60%)` }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: c.purple, opacity: 0.5 }} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `0 ${sp[5]}`, zIndex: 1 }}>
                   <div>
                     <p style={{ fontFamily: f.mono, fontSize: '10px', color: c.purple, letterSpacing: '0.12em', textTransform: 'uppercase', margin: `0 0 ${sp[1]}`, fontWeight: 600 }}>◆ BASE DE CONNAISSANCES</p>
@@ -4721,7 +4728,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 ].map(t => (
                   <button key={t.key} onClick={() => { setAdminFormationType(t.key); setAdminActiveLesson(null); setAdminExpandedModule(null) }} style={{
                     flex: 1, padding: `${sp[2]} ${sp[3]}`, background: adminFormationType === t.key ? c.bgElevated : c.bg,
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    border: 'none', cursor: 'pointer', textAlign: 'start',
                     borderBottom: `2px solid ${adminFormationType === t.key ? c.purple : 'transparent'}`,
                   }}>
                     <div style={{ fontWeight: 600, fontSize: size.sm, color: adminFormationType === t.key ? c.text : c.textTertiary }}>{t.label}</div>
@@ -4764,7 +4771,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   padding: `8px ${sp[3]}`, background: c.purple, color: c.text, border: 'none',
                   fontFamily: f.mono, fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em',
                   display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase',
-                  transition: `all 0.3s ${ease.out}`,
+                  transition: `all 0.35s ${ease.luxury}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${c.purpleSoft}` }}
                 onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}>
@@ -4815,8 +4822,8 @@ export default function Admin({ user, profile, onSignOut }) {
                               const parts = line.split('**')
                               return <p key={i} style={{ margin: `${sp[1]} 0` }}>{parts.map((part, j) => j % 2 === 1 ? <strong key={j} style={{ color: c.text }}>{part}</strong> : part)}</p>
                             }
-                            if (line.startsWith('- ') || line.startsWith('→ ')) return <div key={i} style={{ paddingLeft: sp[2], margin: '4px 0', display: 'flex', gap: '8px' }}><span style={{ color: c.gold }}>·</span><span>{line.slice(2)}</span></div>
-                            if (line.match(/^\d+\./)) return <div key={i} style={{ paddingLeft: sp[2], margin: '4px 0', display: 'flex', gap: '8px' }}><span style={{ color: c.gold, fontFamily: f.mono, fontSize: '10px', fontWeight: 700 }}>{line.match(/^\d+/)[0]}</span><span>{line.replace(/^\d+\.\s*/, '')}</span></div>
+                            if (line.startsWith('- ') || line.startsWith('→ ')) return <div key={i} style={{ paddingInlineStart: sp[2], margin: '4px 0', display: 'flex', gap: '8px' }}><span style={{ color: c.gold }}>·</span><span>{line.slice(2)}</span></div>
+                            if (line.match(/^\d+\./)) return <div key={i} style={{ paddingInlineStart: sp[2], margin: '4px 0', display: 'flex', gap: '8px' }}><span style={{ color: c.gold, fontFamily: f.mono, fontSize: '10px', fontWeight: 700 }}>{line.match(/^\d+/)[0]}</span><span>{line.replace(/^\d+\.\s*/, '')}</span></div>
                             if (line.startsWith('|')) return null
                             if (line.trim() === '') return <div key={i} style={{ height: sp[2] }} />
                             return <p key={i} style={{ margin: `${sp[1]} 0` }}>{line}</p>
@@ -4852,15 +4859,15 @@ export default function Admin({ user, profile, onSignOut }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
                     {/* Stats */}
                     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(formation.modules.length, 3)}, 1fr)`, gap: sp[2], marginBottom: sp[2] }}>
-                      <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.purple}` }}>
+                      <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, borderInlineStart: `3px solid ${c.purple}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.08em' }}>MODULES</div>
                         <div style={{ fontSize: size.lg, fontWeight: 700, color: c.text }}>{formation.modules.length}</div>
                       </div>
-                      <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.gold}` }}>
+                      <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, borderInlineStart: `3px solid ${c.gold}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.08em' }}>LEÇONS</div>
                         <div style={{ fontSize: size.lg, fontWeight: 700, color: c.text }}>{formation.modules.reduce((a, m) => a + m.lessons.length, 0)}</div>
                       </div>
-                      <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.teal}` }}>
+                      <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, borderInlineStart: `3px solid ${c.teal}` }}>
                         <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, letterSpacing: '0.08em' }}>DURÉE</div>
                         <div style={{ fontSize: size.lg, fontWeight: 700, color: c.text }}>{formation.duration}</div>
                       </div>
@@ -4869,13 +4876,13 @@ export default function Admin({ user, profile, onSignOut }) {
                     {formation.modules.map((mod, modIdx) => (
                       <div key={mod.id} style={{
                         background: c.bgElevated, border: `1px solid ${c.border}`,
-                        borderLeft: `3px solid ${mod.color}`, overflow: 'hidden',
+                        borderInlineStart: `3px solid ${mod.color}`, overflow: 'hidden',
                         animation: `cardReveal 0.5s ${ease.smooth} ${modIdx * 50}ms backwards`,
                       }}>
                         <button onClick={() => setAdminExpandedModule(adminExpandedModule === mod.id ? null : mod.id)} style={{
                           width: '100%', padding: `${sp[3]} ${sp[3]}`, background: 'transparent',
                           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
-                          justifyContent: 'space-between', textAlign: 'left',
+                          justifyContent: 'space-between', textAlign: 'start',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
                             <span style={{ fontFamily: f.mono, fontSize: size.sm, color: mod.color, fontWeight: 700 }}>{mod.icon}</span>
@@ -4896,7 +4903,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                 background: 'transparent', border: 'none', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 borderBottom: lIdx < mod.lessons.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
-                                textAlign: 'left', transition: `background 0.15s ${ease.smooth}`,
+                                textAlign: 'start', transition: `background 0.15s ${ease.smooth}`,
                               }}
                                 onMouseEnter={(e) => { e.currentTarget.style.background = c.bgDefault }}
                                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
@@ -5004,9 +5011,9 @@ export default function Admin({ user, profile, onSignOut }) {
                 setShowServiceModal(false)
                 setEditingService(null)
                 loadAll()
-                toast.success(editingService ? 'Service mis à jour' : 'Service créé')
+                toast.success(editingService ? t('toast.serviceUpdated') : t('toast.serviceCreated'))
               } catch (err) {
-                toast.error('Erreur: ' + err.message)
+                toast.error(tToast('genericError', { error: err.message }))
               }
             }
 
@@ -5022,7 +5029,7 @@ export default function Admin({ user, profile, onSignOut }) {
               try {
                 await updateEcomService(service.id, updates)
                 loadAll()
-              } catch (err) { toast.error('Erreur: ' + err.message) }
+              } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
             }
 
             const handleStatusChange = async (service, newStatus) => {
@@ -5032,8 +5039,8 @@ export default function Admin({ user, profile, onSignOut }) {
                 if (newStatus === 'delivered') updates.delivered_at = new Date().toISOString()
                 await updateEcomService(service.id, updates)
                 loadAll()
-                toast.success('Statut mis à jour')
-              } catch (err) { toast.error('Erreur: ' + err.message) }
+                toast.success(t('toast.statusUpdated'))
+              } catch (err) { toast.error(tToast('genericError', { error: err.message })) }
             }
 
             return (
@@ -5050,13 +5057,13 @@ export default function Admin({ user, profile, onSignOut }) {
                     setQuickLaunchForm({ client_id: '', platform: 'shopify', shopName: '', pack: 'starter', category: '', branding: 'none', launchMethod: 'n8n', notes: '' })
                     setShowQuickLaunchModal(true)
                   }} style={{
-                    padding: `10px ${sp[3]}`, background: `linear-gradient(135deg, ${c.gold}, ${c.goldDim})`, color: c.bg, border: 'none',
+                    padding: `10px ${sp[3]}`, background: `${c.gold}`, color: c.bg, border: 'none',
                     fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: '6px',
                     transition: `all 0.25s ${ease.luxury}`,
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${c.gold}33` }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}>
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border }}>
                     <Icon d={icons.link} size={14} color={c.bg} />
                     Lancer une boutique
                   </button>
@@ -5087,7 +5094,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 ))}
                 <div style={{ padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}` }}>
                   <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>CA Total</div>
-                  <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: c.green }}>{totalRevenue.toLocaleString('fr-FR')}€</div>
+                  <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: c.green }}>{fmtMoney(totalRevenue)}</div>
                   <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, marginTop: '2px' }}>{ecomServices.filter(s => s.status === 'delivered' || s.status === 'active').length} livrés</div>
                 </div>
               </div>
@@ -5118,8 +5125,8 @@ export default function Admin({ user, profile, onSignOut }) {
                     const progress = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0
 
                     return (
-                      <div key={svc.id} style={{ background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[3], transition: 'all 0.2s ease', position: 'relative', animation: `cardReveal 0.5s ${ease.smooth} backwards` }}>
-                        <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderTop: `2px solid ${c.gold}`, borderLeft: `2px solid ${c.gold}`, opacity: 0.3, pointerEvents: 'none' }} />
+                      <div key={svc.id} style={{ background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[3], transition: 'all 0.2s ease', position: 'relative', animation: `cardReveal 0.5s ${ease.smooth} backwards` }}>
+                        <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderTop: `2px solid ${c.gold}`, borderInlineStart: `2px solid ${c.gold}`, opacity: 0.3, pointerEvents: 'none' }} />
                         {/* Header row */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: sp[2] }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
@@ -5173,7 +5180,7 @@ export default function Admin({ user, profile, onSignOut }) {
                               <div key={task.key || idx} onClick={() => handleToggleTask(svc, idx)} style={{
                                 display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px',
                                 background: task.done ? `${c.green}08` : 'transparent', cursor: 'pointer',
-                                borderLeft: `2px solid ${task.done ? c.green : c.border}`,
+                                borderInlineStart: `2px solid ${task.done ? c.green : c.border}`,
                                 transition: 'all 0.15s ease',
                               }}>
                                 <div style={{
@@ -5209,14 +5216,14 @@ export default function Admin({ user, profile, onSignOut }) {
                             setShowSiteCreationModal(true)
                           }} style={{
                             marginTop: sp[2], width: '100%', padding: `10px ${sp[2]}`,
-                            background: `linear-gradient(135deg, ${c.gold}, ${c.goldDim})`, color: c.bg,
+                            background: `${c.gold}`, color: c.bg,
                             border: 'none', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: f.mono,
                             letterSpacing: '0.06em', textTransform: 'uppercase',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                             transition: `all 0.25s ${ease.luxury}`,
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 12px ${c.gold}33` }}
-                          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}>
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border }}>
                             <Icon d={icons.plus} size={13} color={c.bg} />
                             Lancer la création du site
                           </button>
@@ -5242,13 +5249,13 @@ export default function Admin({ user, profile, onSignOut }) {
                               timestamp: new Date().toISOString(),
                             }
                             try {
-                              await fetch('https://caraxes13.app.n8n.cloud/webhook/site-creation', {
+                              await fetch(`${N8N_WEBHOOK_URL}/site-creation`, {
                                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(n8nPayload),
                               })
-                              toast.success('Envoyé sur N8N ✓')
+                              toast.success(t('toast.n8nSuccess'))
                             } catch (err) {
-                              toast.warning('Envoi N8N non confirmé — vérifiez le workflow')
+                              toast.warning(t('toast.n8nNotConfirmedWorkflow'))
                             }
                           }} style={{
                             marginTop: sp[1], width: '100%', padding: `8px ${sp[2]}`,
@@ -5271,8 +5278,8 @@ export default function Admin({ user, profile, onSignOut }) {
 
               {/* Create/Edit Service Modal */}
               {showServiceModal && (
-                <div style={{ position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: sp[3] }} onClick={() => setShowServiceModal(false)}>
-                  <div style={{ background: c.bgSurface, border: `1px solid ${c.border}`, width: '100%', maxWidth: 500, maxHeight: '80vh', overflow: 'auto', padding: sp[4] }} onClick={e => e.stopPropagation()}>
+                <div style={{ position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: sp[3], backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} onClick={() => setShowServiceModal(false)}>
+                  <div style={{ background: c.bgCard, border: `1px solid ${c.borderLight}`, width: '100%', maxWidth: 500, maxHeight: '80vh', overflow: 'auto', padding: sp[4], borderRadius: radius.sm, boxShadow: shadow.xs }} onClick={e => e.stopPropagation()}>
                     <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: sp[3] }}>
                       {editingService ? 'Modifier le service' : 'Nouveau service e-com'}
                     </h3>
@@ -5352,8 +5359,8 @@ export default function Admin({ user, profile, onSignOut }) {
                             setConfirmDialog({
                               open: true, title: 'Supprimer ce service ?', message: 'Cette action est irréversible.',
                               onConfirm: async () => {
-                                try { await deleteEcomService(editingService.id); setShowServiceModal(false); setEditingService(null); loadAll(); toast.success('Service supprimé') }
-                                catch (err) { toast.error('Erreur: ' + err.message) }
+                                try { await deleteEcomService(editingService.id); setShowServiceModal(false); setEditingService(null); loadAll(); toast.success(t('toast.serviceDeleted')) }
+                                catch (err) { toast.error(tToast('genericError', { error: err.message })) }
                               }
                             })
                           }} style={{
@@ -5408,27 +5415,27 @@ export default function Admin({ user, profile, onSignOut }) {
                 </h2>
                 {/* Stats row */}
                 <div className="admin-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: sp[2], marginBottom: sp[3] }}>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.gold}` }}>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.gold}`, borderRadius: radius.sm }}>
                     <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total prospects</div>
                     <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.gold }}>{leads.length}</div>
                   </div>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.green}` }}>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.green}`, borderRadius: radius.sm }}>
                     <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Payes</div>
                     <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.green }}>{leads.filter(l => ['paid', 'account_created', 'onboarding', 'active'].includes(l.status)).length}</div>
                   </div>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.blue}` }}>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.blue}`, borderRadius: radius.sm }}>
                     <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Conversion</div>
                     <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.blue }}>{conversionRate}%</div>
                   </div>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.amber}` }}>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.amber}`, borderRadius: radius.sm }}>
                     <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>CA Pipeline</div>
-                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.amber }}>{totalValue.toLocaleString('fr-FR')}€</div>
+                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.amber }}>{fmtMoney(totalValue)}</div>
                   </div>
                 </div>
               </div>
 
               {/* Funnel visualization */}
-              <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}` }}>
+              <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}` }}>
                 <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Conversion funnel</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1] }}>
                   {PIPELINE_STAGES.filter(s => !['payment_failed', 'churned'].includes(s.key)).map((stage, idx, arr) => {
@@ -5457,7 +5464,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   const nextStage = PIPELINE_STAGES[stageIdx + 1]
                   const prevStage = stageIdx > 0 ? PIPELINE_STAGES[stageIdx - 1] : null
                   return (
-                    <div key={stage.key} style={{ background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, minHeight: 300, display: 'flex', flexDirection: 'column' }}>
+                    <div key={stage.key} style={{ background: c.bgCard, border: `1px solid ${c.borderSubtle}`, minHeight: 300, display: 'flex', flexDirection: 'column', borderRadius: radius.sm, overflow: 'hidden' }}>
                       {/* Stage header */}
                       <div style={{ padding: `${sp[2]} ${sp[2]}`, borderBottom: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${stage.color}` }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[1] }}>
@@ -5476,8 +5483,8 @@ export default function Admin({ user, profile, onSignOut }) {
                           const daysSince = Math.floor((Date.now() - new Date(lead.created_at)) / (1000 * 60 * 60 * 24))
                           return (
                             <div key={lead.id} style={{
-                              padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}`,
-                              fontSize: size.xs, cursor: 'default', transition: 'all 0.2s',
+                              padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}`, borderRadius: radius.sm,
+                              fontSize: size.xs, cursor: 'default', transition: `all 0.2s ${ease.smooth}`,
                             }}
                               onMouseEnter={e => { e.currentTarget.style.borderColor = stage.color; e.currentTarget.style.boxShadow = `0 0 0 2px ${stage.color}15` }}
                               onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle; e.currentTarget.style.boxShadow = 'none' }}
@@ -5497,12 +5504,12 @@ export default function Admin({ user, profile, onSignOut }) {
                               {/* Action buttons */}
                               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                 {prevStage && (
-                                  <button onClick={async () => { try { await updateLead(lead.id, { status: prevStage.key }); await loadAll(); toast.success('Prospect reculé') } catch(e) { toast.error(e.message) } }} style={{
+                                  <button onClick={async () => { try { await updateLead(lead.id, { status: prevStage.key }); await loadAll(); toast.success(t('toast.leadMovedBackward')) } catch(e) { toast.error(e.message) } }} style={{
                                     padding: '3px 6px', background: 'transparent', border: `1px solid ${c.border}30`, color: c.textTertiary, fontSize: '8px', fontFamily: f.mono, cursor: 'pointer', flex: 1,
                                   }} title="Reculer">← Reculer</button>
                                 )}
                                 {nextStage && (
-                                  <button onClick={async () => { try { await updateLead(lead.id, { status: nextStage.key }); await loadAll(); toast.success('Prospect avancé') } catch(e) { toast.error(e.message) } }} style={{
+                                  <button onClick={async () => { try { await updateLead(lead.id, { status: nextStage.key }); await loadAll(); toast.success(t('toast.leadMovedForward')) } catch(e) { toast.error(e.message) } }} style={{
                                     padding: '3px 6px', background: 'transparent', border: `1px solid ${nextStage.color}40`, color: nextStage.color, fontSize: '8px', fontFamily: f.mono, cursor: 'pointer', flex: 1, fontWeight: 600,
                                   }} title="Avancer">Avancer →</button>
                                 )}
@@ -5518,7 +5525,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
               {/* Lost leads section */}
               {getStageLeads('churned').length > 0 && (
-                <div style={{ marginTop: sp[3], padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}` }}>
+                <div style={{ marginTop: sp[3], padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}` }}>
                   <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>
                     Prospects perdus ({getStageLeads('churned').length})
                   </div>
@@ -5537,23 +5544,94 @@ export default function Admin({ user, profile, onSignOut }) {
 
           {/* ── ORDERS PIPELINE TAB ── */}
           {mainTab === 'orders_pipeline' && (() => {
-            const ordersFiltered = search
-              ? orders.filter(o => {
-                  const clientName = allProfiles.find(p => p.id === o.client_id)?.full_name || ''
-                  const product = o.product || ''
-                  const ref = o.ref || ''
-                  return clientName.toLowerCase().includes(search.toLowerCase()) ||
-                         product.toLowerCase().includes(search.toLowerCase()) ||
-                         ref.toLowerCase().includes(search.toLowerCase())
+            // Build client-scoring map for tier filtering (top 20% = A, quartiles for B/C/D)
+            const clientScoringMap = (() => {
+              const map = {}
+              try {
+                const perClient = {}
+                orders.forEach(o => {
+                  if (!o.client_id) return
+                  const s = typeof o.status === 'number' ? STATUSES[o.status]?.key : o.status
+                  if (!perClient[o.client_id]) perClient[o.client_id] = { ltv: 0, count: 0, last: 0 }
+                  perClient[o.client_id].count += 1
+                  if (s === 'delivered') perClient[o.client_id].ltv += parseBudget(o.budget)
+                  const t = new Date(o.created_at).getTime()
+                  if (t > perClient[o.client_id].last) perClient[o.client_id].last = t
                 })
-              : orders
+                const now = Date.now()
+                const scores = Object.entries(perClient).map(([cid, v]) => {
+                  const daysSince = (now - v.last) / (1000 * 60 * 60 * 24)
+                  const recency = Math.max(0, 100 - daysSince)
+                  const freq = Math.min(100, v.count * 20)
+                  const ltvScore = Math.min(100, v.ltv / 100)
+                  const score = ltvScore * 0.40 + recency * 0.25 + freq * 0.20 + 25 * 0.15
+                  return { cid, score }
+                })
+                scores.sort((a, b) => b.score - a.score)
+                const n = scores.length
+                scores.forEach((s, idx) => {
+                  const pct = (idx + 1) / n
+                  let tier = 'D'
+                  if (pct <= 0.20) tier = 'A'
+                  else if (pct <= 0.45) tier = 'B'
+                  else if (pct <= 0.75) tier = 'C'
+                  map[s.cid] = { tier, score: s.score }
+                })
+              } catch (_) {}
+              return map
+            })()
+
+            const periodCutoff = (() => {
+              const now = Date.now()
+              if (kanbanFilterPeriod === '7') return now - 7 * 86400000
+              if (kanbanFilterPeriod === '30') return now - 30 * 86400000
+              if (kanbanFilterPeriod === '90') return now - 90 * 86400000
+              return 0
+            })()
+
+            const ordersFiltered = orders.filter(o => {
+              // Client filter
+              if (kanbanFilterClient !== 'all' && o.client_id !== kanbanFilterClient) return false
+              // Tier filter
+              if (kanbanFilterTier !== 'all') {
+                const t = clientScoringMap[o.client_id]?.tier || 'D'
+                if (t !== kanbanFilterTier) return false
+              }
+              // Period filter (based on created_at)
+              if (periodCutoff > 0) {
+                const ct = new Date(o.created_at).getTime()
+                if (ct < periodCutoff) return false
+              }
+              // Search filter
+              if (kanbanSearch) {
+                const q = kanbanSearch.toLowerCase()
+                const clientName = allProfiles.find(p => p.id === o.client_id)?.full_name || ''
+                const clientEmail = allProfiles.find(p => p.id === o.client_id)?.email || ''
+                const product = o.product || ''
+                const ref = o.ref || ''
+                const matches = clientName.toLowerCase().includes(q) ||
+                                clientEmail.toLowerCase().includes(q) ||
+                                product.toLowerCase().includes(q) ||
+                                ref.toLowerCase().includes(q)
+                if (!matches) return false
+              }
+              return true
+            })
+
+            const hasFilters = kanbanFilterClient !== 'all' || kanbanFilterTier !== 'all' || kanbanFilterPeriod !== 'all' || !!kanbanSearch
+            const resetFilters = () => {
+              setKanbanFilterClient('all')
+              setKanbanFilterTier('all')
+              setKanbanFilterPeriod('all')
+              setKanbanSearch('')
+            }
 
             const getOrdersByStatus = (statusKey) => ordersFiltered.filter(o => {
               const orderStatus = typeof o.status === 'number' ? STATUSES[o.status]?.key : o.status
               return orderStatus === statusKey
             })
 
-            const totalOrderValue = orders.reduce((sum, o) => sum + (o.budget || 0), 0)
+            const totalOrderValue = orders.reduce((sum, o) => sum + parseBudget(o.budget), 0)
             const deliveredCount = orders.filter(o => {
               const orderStatus = typeof o.status === 'number' ? STATUSES[o.status]?.key : o.status
               return orderStatus === 'delivered'
@@ -5567,34 +5645,115 @@ export default function Admin({ user, profile, onSignOut }) {
             <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
               {/* Orders pipeline header */}
               <div style={{ marginBottom: sp[4] }}>
-                <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: sp[2], display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: sp[1], display: 'flex', alignItems: 'center', gap: sp[2] }}>
                   <span style={{ fontSize: size.xl }}>📦</span>
-                  Pipeline Commandes
+                  {t('admin.pipelineOrders')}
                 </h2>
+                <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: sp[2] }}>
+                  {t('admin.kanbanSubtitle')}
+                </div>
                 {/* Stats row */}
                 <div className="admin-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: sp[2], marginBottom: sp[3] }}>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.gold}` }}>
-                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total commandes</div>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.gold}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('admin.totalOrders')}</div>
                     <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.gold }}>{orders.length}</div>
                   </div>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.red}` }}>
-                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>En cours</div>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.red}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('admin.inProgress')}</div>
                     <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.red }}>{activeCount}</div>
                   </div>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.green}` }}>
-                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Livrées</div>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.green}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('admin.delivered')}</div>
                     <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.green }}>{deliveredCount}</div>
                   </div>
-                  <div style={{ padding: sp[2], background: c.bgSurface, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.teal}` }}>
-                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Budget total</div>
-                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.teal }}>{totalOrderValue.toLocaleString('fr-FR')}€</div>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.teal}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('admin.totalBudget')}</div>
+                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.teal }}>{fmtMoney(totalOrderValue)}</div>
                   </div>
                 </div>
               </div>
 
+              {/* Kanban filter bar */}
+              <div style={{ marginBottom: sp[3], padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, borderInlineStart: `3px solid ${c.gold}`, borderRadius: radius.sm }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[2], flexWrap: 'wrap', gap: sp[2] }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
+                    <span style={{ fontSize: size.sm }}>🔎</span>
+                    <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+                      {t('admin.filters')}
+                    </div>
+                    {hasFilters && (
+                      <span style={{ padding: '2px 8px', fontSize: '9px', fontFamily: f.mono, color: c.gold, background: `${c.gold}15`, border: `1px solid ${c.gold}`, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        {t('admin.filtersActive')} · {ordersFiltered.length}/{orders.length}
+                      </span>
+                    )}
+                  </div>
+                  {hasFilters && (
+                    <button
+                      onClick={resetFilters}
+                      style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${c.borderSubtle}`, color: c.textSecondary, fontSize: '10px', fontFamily: f.mono, textTransform: 'uppercase', letterSpacing: '0.06em', cursor: 'pointer' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.color = c.gold }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle; e.currentTarget.style.color = c.textSecondary }}
+                    >
+                      ✕ {t('admin.clearFilters')}
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: sp[2] }}>
+                  {/* Search */}
+                  <input
+                    type="text"
+                    value={kanbanSearch}
+                    onChange={e => setKanbanSearch(e.target.value)}
+                    placeholder={t('admin.searchOrder')}
+                    style={{ padding: '8px 10px', background: c.bg, border: `1px solid ${c.borderSubtle}`, color: c.text, fontSize: size.xs, fontFamily: f.body, outline: 'none' }}
+                    onFocus={e => { e.currentTarget.style.borderColor = c.gold }}
+                    onBlur={e => { e.currentTarget.style.borderColor = c.borderSubtle }}
+                  />
+                  {/* Client filter */}
+                  <select
+                    value={kanbanFilterClient}
+                    onChange={e => setKanbanFilterClient(e.target.value)}
+                    style={{ padding: '8px 10px', background: c.bg, border: `1px solid ${c.borderSubtle}`, color: c.text, fontSize: size.xs, fontFamily: f.body, outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="all">{t('admin.allClients')}</option>
+                    {allProfiles
+                      .filter(p => orders.some(o => o.client_id === p.id))
+                      .sort((a, b) => (a.full_name || a.email || '').localeCompare(b.full_name || b.email || ''))
+                      .map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.full_name || p.email?.split('@')[0] || 'Client'}
+                        </option>
+                      ))}
+                  </select>
+                  {/* Tier filter */}
+                  <select
+                    value={kanbanFilterTier}
+                    onChange={e => setKanbanFilterTier(e.target.value)}
+                    style={{ padding: '8px 10px', background: c.bg, border: `1px solid ${c.borderSubtle}`, color: c.text, fontSize: size.xs, fontFamily: f.body, outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="all">{t('admin.allTiers')}</option>
+                    <option value="A">A · {t('admin.top20')}</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
+                  {/* Period filter */}
+                  <select
+                    value={kanbanFilterPeriod}
+                    onChange={e => setKanbanFilterPeriod(e.target.value)}
+                    style={{ padding: '8px 10px', background: c.bg, border: `1px solid ${c.borderSubtle}`, color: c.text, fontSize: size.xs, fontFamily: f.body, outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="all">{t('admin.allPeriods')}</option>
+                    <option value="7">{t('admin.last7days')}</option>
+                    <option value="30">{t('admin.last30days')}</option>
+                    <option value="90">{t('admin.last90days')}</option>
+                  </select>
+                </div>
+              </div>
+
               {/* Funnel visualization */}
-              <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgSurface, border: `1px solid ${c.border}` }}>
-                <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>Distribution par statut</div>
+              <div style={{ marginBottom: sp[4], padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: radius.sm, boxShadow: shadow.xs }}>
+                <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[2] }}>{t('admin.distributionByStatus')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1] }}>
                   {STATUSES.map((status, idx) => {
                     const count = getOrdersByStatus(status.key).length
@@ -5621,15 +5780,48 @@ export default function Admin({ user, profile, onSignOut }) {
                   const statusOrders = getOrdersByStatus(statusObj.key)
                   const nextStatus = STATUSES[statusIdx + 1]
                   const prevStatus = statusIdx > 0 ? STATUSES[statusIdx - 1] : null
+                  const isHovered = kanbanHoverCol === statusObj.key && kanbanDrag && kanbanDrag.fromIdx !== statusIdx
                   return (
-                    <div key={statusObj.key} style={{
-                      background: c.bgSurface,
-                      border: `1px solid ${c.borderSubtle}`,
-                      borderTop: `3px solid ${statusObj.color}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      minHeight: 400,
-                    }}>
+                    <div
+                      key={statusObj.key}
+                      onDragOver={(e) => { e.preventDefault(); if (kanbanHoverCol !== statusObj.key) setKanbanHoverCol(statusObj.key) }}
+                      onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget)) return; setKanbanHoverCol(null) }}
+                      onDrop={async (e) => {
+                        e.preventDefault()
+                        setKanbanHoverCol(null)
+                        const data = kanbanDrag
+                        setKanbanDrag(null)
+                        if (!data || data.fromIdx === statusIdx) return
+                        try {
+                          await updateOrder(data.orderId, { status: statusIdx })
+                          // Fire-and-forget push notification to the order's client.
+                          try {
+                            const draggedOrder = orders.find(o => o.id === data.orderId)
+                            if (draggedOrder?.client_id) {
+                              sendPushToUser({
+                                userId: draggedOrder.client_id,
+                                title: 'CARAXES — statut mis à jour',
+                                body: `Votre commande ${draggedOrder.ref || draggedOrder.id?.slice(0, 8)} : ${statusObj.label}`,
+                                url: '/',
+                                tag: `order-${draggedOrder.id}`,
+                              }).catch(() => {})
+                            }
+                          } catch (_) {}
+                          await loadAll()
+                          toast.success(tToast('statusUpdatedWithLabel', { label: statusObj.label }))
+                        } catch (err) { toast.error(tToast('genericError', { error: err.message || t('toast.unknownError') })) }
+                      }}
+                      style={{
+                        background: isHovered ? `${statusObj.color}10` : c.bgCard,
+                        border: `1px solid ${isHovered ? statusObj.color : c.borderSubtle}`,
+                        borderTop: `3px solid ${statusObj.color}`,
+                        borderRadius: radius.sm,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 400,
+                        transition: `background 0.15s ${ease.smooth}, border-color 0.15s ${ease.smooth}`,
+                        overflow: 'hidden',
+                      }}>
                       {/* Column header */}
                       <div style={{
                         padding: `${sp[2]} ${sp[3]}`,
@@ -5689,17 +5881,27 @@ export default function Admin({ user, profile, onSignOut }) {
                         {statusOrders.map(order => {
                           const orderClient = allProfiles.find(p => p.id === order.client_id)
                           const daysSince = Math.floor((Date.now() - new Date(order.created_at)) / (1000 * 60 * 60 * 24))
+                          const isBeingDragged = kanbanDrag && kanbanDrag.orderId === order.id
                           return (
                             <div
                               key={order.id}
+                              draggable
+                              onDragStart={(e) => {
+                                setKanbanDrag({ orderId: order.id, fromIdx: statusIdx })
+                                try { e.dataTransfer.setData('text/plain', order.id); e.dataTransfer.effectAllowed = 'move' } catch (_) {}
+                              }}
+                              onDragEnd={() => { setKanbanDrag(null); setKanbanHoverCol(null) }}
                               style={{
                                 padding: sp[2],
                                 background: c.bg,
                                 border: `1px solid ${c.borderSubtle}`,
-                                borderLeft: `3px solid ${statusObj.color}`,
-                                cursor: 'pointer',
+                                borderInlineStart: `3px solid ${statusObj.color}`,
+                                borderRadius: radius.sm,
+                                cursor: 'grab',
                                 transition: `all 0.2s ${ease.smooth}`,
                                 fontSize: size.xs,
+                                opacity: isBeingDragged ? 0.45 : 1,
+                                transform: isBeingDragged ? 'scale(0.98)' : 'none',
                               }}
                               onMouseEnter={e => {
                                 e.currentTarget.style.borderColor = statusObj.color
@@ -5752,7 +5954,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', fontSize: '9px',
                               }}>
                                 <span style={{ color: c.textTertiary, fontFamily: f.mono }}>{(order.quantity || 0).toLocaleString('fr-FR')}u</span>
-                                {order.budget > 0 && <span style={{ color: c.gold, fontWeight: 700, fontFamily: f.mono }}>{order.budget.toLocaleString('fr-FR')}€</span>}
+                                {order.budget && <span style={{ color: c.gold, fontWeight: 700, fontFamily: f.mono }}>{order.budget}</span>}
                               </div>
 
                               {/* Days since creation */}
@@ -5770,12 +5972,28 @@ export default function Admin({ user, profile, onSignOut }) {
                               {/* Action buttons */}
                               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                                 {prevStatus && (
-                                  <button onClick={async () => { try { await updateOrder(order.id, { status: statusIdx - 1 }); await loadAll(); toast.success('Commande reculée') } catch(e) { toast.error(e.message) } }} style={{
+                                  <button onClick={async () => {
+                                    try {
+                                      await updateOrder(order.id, { status: statusIdx - 1 })
+                                      if (order.client_id) {
+                                        sendPushToUser({ userId: order.client_id, title: 'CARAXES — statut mis à jour', body: `Votre commande ${order.ref || order.id?.slice(0, 8)} : ${prevStatus.label}`, url: '/', tag: `order-${order.id}` }).catch(() => {})
+                                      }
+                                      await loadAll(); toast.success(t('toast.orderMovedBackward'))
+                                    } catch(e) { toast.error(tToast('genericError', { error: e.message })) }
+                                  }} style={{
                                     padding: '3px 6px', background: 'transparent', border: `1px solid ${c.border}30`, color: c.textTertiary, fontSize: '8px', fontFamily: f.mono, cursor: 'pointer', flex: 1,
                                   }} title="Reculer">← Reculer</button>
                                 )}
                                 {nextStatus && (
-                                  <button onClick={async () => { try { await updateOrder(order.id, { status: statusIdx + 1 }); await loadAll(); toast.success('Commande avancée') } catch(e) { toast.error(e.message) } }} style={{
+                                  <button onClick={async () => {
+                                    try {
+                                      await updateOrder(order.id, { status: statusIdx + 1 })
+                                      if (order.client_id) {
+                                        sendPushToUser({ userId: order.client_id, title: 'CARAXES — statut mis à jour', body: `Votre commande ${order.ref || order.id?.slice(0, 8)} : ${nextStatus.label}`, url: '/', tag: `order-${order.id}` }).catch(() => {})
+                                      }
+                                      await loadAll(); toast.success(t('toast.orderMovedForward'))
+                                    } catch(e) { toast.error(tToast('genericError', { error: e.message })) }
+                                  }} style={{
                                     padding: '3px 6px', background: 'transparent', border: `1px solid ${nextStatus.color}40`, color: nextStatus.color, fontSize: '8px', fontFamily: f.mono, cursor: 'pointer', flex: 1, fontWeight: 600,
                                   }} title="Avancer">Avancer →</button>
                                 )}
@@ -5799,6 +6017,18 @@ export default function Admin({ user, profile, onSignOut }) {
               if (search && !(cl.full_name || '').toLowerCase().includes(search.toLowerCase()) && !(cl.email || '').toLowerCase().includes(search.toLowerCase()) && !(cl.company || '').toLowerCase().includes(search.toLowerCase())) return false
               return true
             })
+            // Compute scores for the cohort + create a lookup by id.
+            const scored = scoreCohort(filteredClients, orders)
+            const scoreById = new Map(scored.map((s) => [s.client.id, s]))
+            // Sort clients by score descending (top-revenue first).
+            const sortedClients = [...filteredClients].sort((a, b) => {
+              const sa = scoreById.get(a.id)?.score || 0
+              const sb = scoreById.get(b.id)?.score || 0
+              return sb - sa
+            })
+            const top20Count = scored.filter((s) => s.isTop20).length
+            const top20LTV = scored.filter((s) => s.isTop20).reduce((sum, s) => sum + s.ltv, 0)
+            const totalLTV = scored.reduce((sum, s) => sum + s.ltv, 0)
             return (
             <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
               {/* Header */}
@@ -5815,7 +6045,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <button onClick={() => setShowCreateOrder(true)} style={{
                   padding: `10px ${sp[3]}`, background: c.red, color: c.text, border: 'none',
                   fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
-                  transition: `all 0.3s ${ease.out}`, display: 'flex', alignItems: 'center', gap: '6px',
+                  transition: `all 0.35s ${ease.luxury}`, display: 'flex', alignItems: 'center', gap: '6px',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = shadow.glow }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.boxShadow = 'none' }}>
@@ -5827,7 +6057,7 @@ export default function Admin({ user, profile, onSignOut }) {
               {/* Filters bar */}
               <div style={{
                 display: 'flex', gap: sp[2], marginBottom: sp[3], flexWrap: 'wrap', alignItems: 'center',
-                padding: `${sp[2]} ${sp[3]}`, background: c.bgSurface, border: `1px solid ${c.border}`,
+                padding: `${sp[2]} ${sp[3]}`, background: c.bgCard, border: `1px solid ${c.border}`,
               }}>
                 {/* Search */}
                 <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
@@ -5870,36 +6100,67 @@ export default function Admin({ user, profile, onSignOut }) {
                 </div>
               </div>
 
+              {/* Scoring summary banner */}
+              {filteredClients.length > 0 && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: sp[2],
+                  marginBottom: sp[3],
+                }}>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.gold}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>LTV total</div>
+                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.gold }}>{fmtMoney(totalLTV)}</div>
+                  </div>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.green}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Top 20% → LTV</div>
+                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.green }}>{fmtMoney(top20LTV)}</div>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary }}>
+                      {top20Count} client{top20Count > 1 ? 's' : ''} · {totalLTV > 0 ? Math.round((top20LTV / totalLTV) * 100) : 0}% du CA
+                    </div>
+                  </div>
+                  <div style={{ padding: sp[2], background: c.bgCard, border: `1px solid ${c.borderSubtle}`, borderTop: `2px solid ${c.teal}`, borderRadius: radius.sm }}>
+                    <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Score moyen</div>
+                    <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.teal }}>
+                      {scored.length ? Math.round(scored.reduce((s, x) => s + x.score, 0) / scored.length) : 0}
+                      <span style={{ fontSize: '11px', color: c.textTertiary, fontFamily: f.mono, marginInlineStart: 4 }}>/ 100</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {filteredClients.length === 0 ? (
                 <DragonEmptyState title="Aucun client" subtitle={search || clientTierFilter ? 'Aucun résultat pour ces filtres' : 'Invitez des clients pour commencer'} />
               ) : (
                 /* ── CLIENT TABLE ── */
-                <div className="admin-client-table" style={{ background: c.bgSurface, border: `1px solid ${c.border}`, overflow: 'hidden' }}>
+                <div className="admin-client-table" style={{ background: c.bgCard, border: `1px solid ${c.border}`, overflow: 'hidden', borderRadius: radius.sm, boxShadow: shadow.xs }}>
                   {/* Table header */}
                   <div style={{
-                    display: 'grid', gridTemplateColumns: '2.5fr 1fr 1.5fr 0.8fr 0.8fr 1fr',
+                    display: 'grid', gridTemplateColumns: '2.5fr 0.8fr 1fr 1.3fr 0.8fr 0.8fr 1fr',
                     padding: `${sp[2]} ${sp[3]}`, borderBottom: `1px solid ${c.border}`, background: c.bgElevated,
                     gap: sp[2],
                   }}>
-                    {['Client', 'Profil', 'Services', 'Commandes', 'Dernière', 'Actions'].map(h => (
+                    {['Client', 'Score', 'Profil', 'Services', 'Commandes', 'Dernière', 'Actions'].map(h => (
                       <div key={h} style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{h}</div>
                     ))}
                   </div>
 
                   {/* Table rows */}
-                  {filteredClients.map((client, i) => {
+                  {sortedClients.map((client, i) => {
                     const orderCount = getClientOrderCount(client.id)
                     const lastOrderDate = getClientLastOrderDate(client.id)
                     const initial = (client.full_name || client.email).charAt(0).toUpperCase()
                     const tier = getTierByKey(client.client_tier || DEFAULT_TIER)
                     const isSelected = selectedClientTab === client.id
+                    const sc = scoreById.get(client.id) || { score: 0, band: 'D', ltv: 0, isTop20: false, recencyDays: null }
+                    const bandColor = SCORE_BAND_COLOR[sc.band] || c.textTertiary
                     return (
                       <div key={client.id}>
                         {/* Main row */}
                         <div
                           onClick={() => setSelectedClientTab(isSelected ? null : client.id)}
                           style={{
-                            display: 'grid', gridTemplateColumns: '2.5fr 1fr 1.5fr 0.8fr 0.8fr 1fr',
+                            display: 'grid', gridTemplateColumns: '2.5fr 0.8fr 1fr 1.3fr 0.8fr 0.8fr 1fr',
                             padding: `${sp[2]} ${sp[3]}`, gap: sp[2],
                             borderBottom: `1px solid ${isSelected ? tier.color + '33' : c.borderSubtle}`,
                             background: isSelected ? `${tier.color}08` : 'transparent',
@@ -5931,6 +6192,28 @@ export default function Admin({ user, profile, onSignOut }) {
                                 {client.email}
                                 {client.company && <span style={{ color: c.textSecondary }}> &middot; {client.company}</span>}
                               </div>
+                            </div>
+                          </div>
+
+                          {/* Score cell */}
+                          <div title={`LTV ${fmtMoney(sc.ltv)} · ${sc.recencyDays == null ? 'Aucune commande' : `dernière il y a ${sc.recencyDays}j`} · fréquence ${sc.frequencyPerMonth?.toFixed(1) || 0}/mois`}>
+                            <div style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              padding: '3px 8px',
+                              border: `1px solid ${bandColor}44`,
+                              background: `${bandColor}14`,
+                              color: bandColor,
+                              fontFamily: f.mono,
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              letterSpacing: '0.04em',
+                            }}>
+                              <span style={{ fontFamily: f.display, fontSize: '13px', fontWeight: 700 }}>{sc.score}</span>
+                              <span style={{ opacity: 0.7 }}>·</span>
+                              <span>{sc.band}</span>
+                              {sc.isTop20 && (
+                                <span style={{ color: c.gold, fontSize: '10px', marginInlineStart: 2 }}>★</span>
+                              )}
                             </div>
                           </div>
 
@@ -6006,7 +6289,7 @@ export default function Admin({ user, profile, onSignOut }) {
                             {/* ── CLIENT SCORE + QUICK STATS ── */}
                             {(() => {
                               const clientOrders = orders.filter(o => o.client_id === client.id)
-                              const clientRevenue = clientOrders.reduce((sum, o) => sum + (o.budget || 0), 0)
+                              const clientRevenue = clientOrders.reduce((sum, o) => sum + parseBudget(o.budget), 0)
                               const daysSinceCreation = Math.max(1, Math.floor((Date.now() - new Date(client.created_at).getTime()) / 86400000))
                               const orderFreq = clientOrders.length / Math.max(1, daysSinceCreation / 30)
                               const reliabilityScore = Math.min(100, Math.round(
@@ -6035,7 +6318,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                       <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, letterSpacing: '0.06em' }}>COMMANDES</div>
                                     </div>
                                     <div>
-                                      <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.gold }}>{clientRevenue > 0 ? `${(clientRevenue / 1000).toFixed(1)}k` : '0'}€</div>
+                                      <div style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.gold }}>{clientRevenue > 0 ? `${(clientRevenue / 1000).toFixed(1)}k\u00A0€` : fmtMoney(0)}</div>
                                       <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, letterSpacing: '0.06em' }}>REVENUE</div>
                                     </div>
                                     <div>
@@ -6102,9 +6385,9 @@ export default function Admin({ user, profile, onSignOut }) {
                                           if (svc.free) return
                                           const current = client.services_enabled || ['sourcing']
                                           const next = enabled ? current.filter(s => s !== svc.key) : [...current, svc.key]
-                                          updateProfile(client.id, { services_enabled: next }).then(() => loadAll()).catch(err => { toast.error('Erreur: ' + (err.message || 'Inconnue')); console.error('Error:', err) })
+                                          updateProfile(client.id, { services_enabled: next }).then(() => loadAll()).catch(err => { toast.error(tToast('genericError', { error: err.message || 'Inconnue' })); console.error('Error:', err) })
                                         }} style={{
-                                          padding: `${sp[1]} ${sp[2]}`, textAlign: 'left',
+                                          padding: `${sp[1]} ${sp[2]}`, textAlign: 'start',
                                           background: enabled ? `${svc.color}08` : 'transparent',
                                           border: `1px solid ${enabled ? svc.color + '30' : c.borderSubtle}`,
                                           cursor: svc.free ? 'default' : 'pointer',
@@ -6144,7 +6427,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                     padding: `${sp[1]} ${sp[2]}`, width: '100%',
                                     background: c.bgElevated, border: `1px solid ${c.teal}22`,
                                     color: c.text, fontSize: size.xs, fontFamily: f.body, cursor: 'pointer',
-                                    textAlign: 'left', display: 'flex', alignItems: 'center', gap: sp[2],
+                                    textAlign: 'start', display: 'flex', alignItems: 'center', gap: sp[2],
                                     transition: `all 0.2s ${ease.smooth}`,
                                   }}
                                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.teal; e.currentTarget.style.background = `${c.teal}08` }}
@@ -6178,7 +6461,7 @@ export default function Admin({ user, profile, onSignOut }) {
                                           transition: `all 0.2s ${ease.smooth}`,
                                         }}
                                         onClick={() => { setMainTab('commandes'); setSelectedId(order.id) }}
-                                        onMouseEnter={e => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = c.bgSurface }}
+                                        onMouseEnter={e => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = c.bgCard }}
                                         onMouseLeave={e => { e.currentTarget.style.borderColor = c.borderSubtle; e.currentTarget.style.background = c.bgElevated }}>
                                           <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ fontSize: size.xs, fontWeight: 600, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product}</div>
@@ -6208,14 +6491,14 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Client Password ════════════ */}
       {clientPasswordModal && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000,
         }} onClick={() => setClientPasswordModal(null)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
-            maxWidth: '440px', width: '90%', position: 'relative',
+            background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
+            maxWidth: '440px', width: '90%', position: 'relative', borderRadius: radius.sm, boxShadow: shadow.xs,
           }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ height: 2, background: c.red, position: 'absolute', top: 0, left: 0, right: 0 }} />
+            <div style={{ height: 2, background: c.red, position: 'absolute', top: 0, left: 0, right: 0, borderRadius: `${radius.xs} ${radius.xs} 0 0` }} />
 
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[3] }}>
@@ -6257,7 +6540,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
                 <button onClick={() => setPasswordAction('reset')} style={{
                   width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
-                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'start',
                   display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = c.goldSoft }}
@@ -6271,7 +6554,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
                 <button onClick={() => setPasswordAction('set')} style={{
                   width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
-                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'start',
                   display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.red; e.currentTarget.style.background = `${c.red}10` }}
@@ -6287,7 +6570,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
                 <button onClick={() => setPasswordAction('reset-account')} style={{
                   width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
-                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'start',
                   display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'oklch(55% 0.18 35)'; e.currentTarget.style.background = 'oklch(55% 0.18 35 / 0.08)' }}
@@ -6307,15 +6590,15 @@ export default function Admin({ user, profile, onSignOut }) {
                   const newRole = isAdmin ? 'client' : 'admin'
                   try {
                     await updateProfile(clientPasswordModal.id, { role: newRole })
-                    toast.success(isAdmin ? 'Compte repassé en client' : 'Compte promu admin')
+                    toast.success(isAdmin ? t('toast.accountToggledClient') : t('toast.accountToggledAdmin'))
                     setClientPasswordModal(null)
                     await loadAll()
                   } catch (err) {
-                    toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                    toast.error(tToast('genericError', { error: err.message || 'Inconnue' }))
                   }
                 }} style={{
                   width: '100%', padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
-                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'left',
+                  color: c.text, fontSize: size.sm, fontFamily: f.body, cursor: 'pointer', textAlign: 'start',
                   display: 'flex', alignItems: 'center', gap: sp[2], transition: `all 0.2s ${ease.smooth}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.purple; e.currentTarget.style.background = `${c.purple}10` }}
@@ -6354,10 +6637,10 @@ export default function Admin({ user, profile, onSignOut }) {
                     try {
                       const { error } = await resetPassword(clientPasswordModal.email)
                       if (error) throw error
-                      toast.success('Email de réinitialisation envoyé')
+                      toast.success(t('toast.resetEmailSent'))
                       setClientPasswordModal(null)
                     } catch (err) {
-                      toast.error('Erreur: ' + err.message)
+                      toast.error(tToast('genericError', { error: err.message }))
                     } finally { setPasswordLoading(false) }
                   }} disabled={passwordLoading} style={{
                     flex: 1, padding: `10px ${sp[2]}`, background: c.gold, border: 'none',
@@ -6405,16 +6688,16 @@ export default function Admin({ user, profile, onSignOut }) {
                     color: c.textTertiary, fontSize: size.sm, fontFamily: f.body, fontWeight: 600, cursor: 'pointer',
                   }}>Retour</button>
                   <button onClick={async () => {
-                    if (newTempPassword.length < 8) { toast.error('Minimum 8 caractères'); return }
+                    if (newTempPassword.length < 8) { toast.error(t('toast.passwordMinLength')); return }
                     setPasswordLoading(true)
                     try {
                       const { error } = await resetPassword(clientPasswordModal.email)
                       if (error) throw error
-                      toast.success('Email de réinitialisation envoyé à ' + clientPasswordModal.email)
+                      toast.success(tToast('resetEmailSentTo', { email: clientPasswordModal.email }))
                       setPasswordAction('done')
                       setLastSetPassword('')
                     } catch (err) {
-                      toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                      toast.error(tToast('genericError', { error: err.message || 'Inconnue' }))
                     } finally { setPasswordLoading(false) }
                   }} disabled={passwordLoading || newTempPassword.length < 8} style={{
                     flex: 1, padding: `10px ${sp[2]}`, background: newTempPassword.length >= 8 ? c.red : c.bgElevated,
@@ -6449,7 +6732,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <div style={{ display: 'flex', gap: sp[2] }}>
                   <button onClick={() => {
                     navigator.clipboard.writeText(lastSetPassword)
-                    toast.success('Mot de passe copié')
+                    toast.success(t('toast.passwordCopied'))
                   }} style={{
                     flex: 1, padding: `10px ${sp[2]}`, background: c.gold, border: 'none',
                     color: c.bg, fontSize: size.sm, fontFamily: f.body, fontWeight: 700, cursor: 'pointer',
@@ -6499,11 +6782,11 @@ export default function Admin({ user, profile, onSignOut }) {
                         phone: null,
                         city: null,
                       })
-                      toast.success('Compte réinitialisé — le client devra refaire l\'onboarding')
+                      toast.success(t('toast.accountReset'))
                       setClientPasswordModal(null)
                       loadAll()
                     } catch (err) {
-                      toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                      toast.error(tToast('genericError', { error: err.message || 'Inconnue' }))
                     } finally { setPasswordLoading(false) }
                   }} disabled={passwordLoading} style={{
                     flex: 1, padding: `10px ${sp[2]}`, background: 'oklch(55% 0.18 35)', border: 'none',
@@ -6522,12 +6805,12 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Create Order ════════════ */}
       {showCreateOrder && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
         }} onClick={() => setShowCreateOrder(false)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
-            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+            background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
+            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative', borderRadius: radius.sm, boxShadow: shadow.xs,
           }} onClick={(e) => e.stopPropagation()}>
             {/* Close button */}
             <button onClick={() => setShowCreateOrder(false)} style={{
@@ -6550,7 +6833,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div>
                 <label style={labelStyle}>Client *</label>
                 <select value={createOrderData.clientId} onChange={e => setCreateOrderData({...createOrderData, clientId: e.target.value})}
-                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingInlineEnd: sp[3]}}
                   onFocus={(e) => { e.target.style.borderColor = c.gold; e.target.style.boxShadow = focusGlow }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
                   <option value="">Sélectionner un client…</option>
@@ -6613,7 +6896,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <button type="submit" style={{
                   flex: 1, padding: `10px ${sp[3]}`, background: c.red, color: c.text,
                   border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
-                  cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                  cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep; e.currentTarget.style.boxShadow = shadow.glow }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = c.red; e.currentTarget.style.boxShadow = 'none' }}>
@@ -6628,11 +6911,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ═══════ MODAL: Nouvel envoi ═══════ */}
       {showCreateShipment && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
         }} onClick={() => setShowCreateShipment(false)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
           }} onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowCreateShipment(false)} style={{
@@ -6655,7 +6938,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div>
                 <label style={labelStyle}>Client *</label>
                 <select value={createShipmentData.client_id} onChange={e => setCreateShipmentData({...createShipmentData, client_id: e.target.value})}
-                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingInlineEnd: sp[3]}}
                   onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
                   <option value="">Choisir un client...</option>
@@ -6669,7 +6952,7 @@ export default function Admin({ user, profile, onSignOut }) {
                   const ord = orders.find(o => o.id === e.target.value)
                   setCreateShipmentData({...createShipmentData, order_id: e.target.value, product_name: ord?.product || createShipmentData.product_name, client_id: ord?.client_id || createShipmentData.client_id})
                 }}
-                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingInlineEnd: sp[3]}}
                   onFocus={(e) => { e.target.style.borderColor = c.teal; e.target.style.boxShadow = `0 0 0 3px ${c.teal}22` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
                   <option value="">Aucune (envoi libre)</option>
@@ -6759,7 +7042,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <button type="submit" style={{
                   flex: 1, padding: `10px ${sp[3]}`, background: c.teal, color: c.text,
                   border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
-                  cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                  cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}>
@@ -6774,11 +7057,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ═══════ MODAL: Nouvel article stock ═══════ */}
       {showCreateInventory && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
         }} onClick={() => setShowCreateInventory(false)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
           }} onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowCreateInventory(false)} style={{
@@ -6801,7 +7084,7 @@ export default function Admin({ user, profile, onSignOut }) {
               <div>
                 <label style={labelStyle}>Client *</label>
                 <select value={createInventoryData.client_id} onChange={e => setCreateInventoryData({...createInventoryData, client_id: e.target.value})}
-                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingRight: sp[3]}}
+                  style={{...inputStyle, cursor: 'pointer', appearance: 'none', paddingInlineEnd: sp[3]}}
                   onFocus={(e) => { e.target.style.borderColor = c.purple; e.target.style.boxShadow = `0 0 0 3px ${c.purple}22` }}
                   onBlur={(e) => { e.target.style.borderColor = c.border; e.target.style.boxShadow = 'none' }}>
                   <option value="">Choisir un client...</option>
@@ -6879,7 +7162,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 <button type="submit" style={{
                   flex: 1, padding: `10px ${sp[3]}`, background: c.purple, color: c.text,
                   border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
-                  cursor: 'pointer', transition: `all 0.3s ${ease.out}`,
+                  cursor: 'pointer', transition: `all 0.35s ${ease.luxury}`,
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}>
@@ -6894,11 +7177,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ═══════ MODAL: Edit Shipment ═══════ */}
       {editingShipment && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
         }} onClick={() => setEditingShipment(null)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
           }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
             <button onClick={() => setEditingShipment(null)} style={{
@@ -6997,11 +7280,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ═══════ MODAL: Edit Inventory ═══════ */}
       {editingInventoryItem && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
         }} onClick={() => setEditingInventoryItem(null)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
           }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
             <button onClick={() => setEditingInventoryItem(null)} style={{
@@ -7091,11 +7374,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Send Formation to Clients ════════════ */}
       {showSendFormationModal && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000,
         }} onClick={() => setShowSendFormationModal(false)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '500px', width: '90%', position: 'relative', maxHeight: '80vh', overflowY: 'auto',
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ height: 2, background: c.purple, position: 'absolute', top: 0, left: 0, right: 0 }} />
@@ -7171,7 +7454,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 color: c.textTertiary, cursor: 'pointer', fontFamily: f.body, fontSize: size.sm,
               }}>Annuler</button>
               <button onClick={async () => {
-                if (!sendFormationData.clientIds.length) { toast.error('Sélectionnez au moins un client'); return }
+                if (!sendFormationData.clientIds.length) { toast.error(t('toast.selectClientFormation')); return }
                 setSendFormationLoading(true)
                 try {
                   const formation = sendFormationData.formationType === 'interne' ? FORMATION_INTERNE : FORMATION_CLIENT
@@ -7188,7 +7471,7 @@ export default function Admin({ user, profile, onSignOut }) {
 
                     if (sendFormationData.deliveryMethod.includes('email')) {
                       try {
-                        const response = await fetch('https://caraxes13.app.n8n.cloud/webhook/send-formation', {
+                        const response = await fetch(`${N8N_WEBHOOK_URL}/send-formation`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
@@ -7205,7 +7488,7 @@ export default function Admin({ user, profile, onSignOut }) {
                         if (!response.ok) throw new Error(`Webhook error: ${response.status}`)
                       } catch (err) {
                         console.error(`Erreur envoi email pour ${client.email}:`, err)
-                        toast.error(`Erreur envoi à ${client.email}`)
+                        toast.error(tToast('genericError', { error: 'envoi à ' + client.email }))
                       }
                     }
 
@@ -7217,10 +7500,10 @@ export default function Admin({ user, profile, onSignOut }) {
                       }
                     }
                   }
-                  toast.success(`Formation envoyée à ${sendFormationData.clientIds.length} client(s)`)
+                  toast.success(t('toast.manualCreationRecorded'))
                   setShowSendFormationModal(false)
                   loadAll()
-                } catch (err) { toast.error('Erreur: ' + (err.message || 'Inconnue')) }
+                } catch (err) { toast.error(tToast('genericError', { error: err.message || 'Inconnue' })) }
                 finally { setSendFormationLoading(false) }
               }} disabled={sendFormationLoading} style={{
                 padding: `10px ${sp[3]}`, background: c.purple, color: c.text, border: 'none',
@@ -7237,11 +7520,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Site Creation Launch ════════════ */}
       {showSiteCreationModal && selectedEcomServiceForCreation && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000,
         }} onClick={() => setShowSiteCreationModal(false)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '520px', width: '90%', position: 'relative',
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ height: 2, background: c.gold, position: 'absolute', top: 0, left: 0, right: 0 }} />
@@ -7342,21 +7625,21 @@ export default function Admin({ user, profile, onSignOut }) {
                   }
                   if (siteCreationData.launchMethod === 'n8n') {
                     try {
-                      await fetch('https://caraxes13.app.n8n.cloud/webhook/site-creation', {
+                      await fetch(`${N8N_WEBHOOK_URL}/site-creation`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
                       })
-                      toast.success('Webhook N8N déclenché avec succès')
+                      toast.success(t('toast.n8nWebhookSuccess'))
                     } catch (fetchErr) {
-                      toast.warning('Webhook envoyé (vérifiez N8N)')
+                      toast.warning(t('toast.n8nWebhookSent'))
                     }
                   } else {
-                    toast.success('Création manuelle enregistrée')
+                    toast.success(t('toast.manualCreationRecorded'))
                   }
                   await updateEcomService(selectedEcomServiceForCreation.id, { status: 'in_progress', started_at: new Date().toISOString() })
                   await loadAll()
                   setShowSiteCreationModal(false)
-                } catch (err) { toast.error('Erreur: ' + (err.message || 'Inconnue')) }
+                } catch (err) { toast.error(tToast('genericError', { error: err.message || 'Inconnue' })) }
                 finally { setSiteCreationLoading(false) }
               }} disabled={siteCreationLoading} style={{
                 padding: `10px ${sp[3]}`, background: c.gold, color: c.bg, border: 'none',
@@ -7373,11 +7656,11 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Client Feature Toggles ════════════ */}
       {showClientFeaturesModal && editingClientFeatures && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000,
         }} onClick={() => { setShowClientFeaturesModal(false); setEditingClientFeatures(null) }}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '480px', width: '90%', position: 'relative',
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ height: 2, background: c.teal, position: 'absolute', top: 0, left: 0, right: 0 }} />
@@ -7433,11 +7716,11 @@ export default function Admin({ user, profile, onSignOut }) {
               <button onClick={async () => {
                 try {
                   await updateProfile(editingClientFeatures, { features: clientFeatures })
-                  toast.success('Fonctionnalités mises à jour')
+                  toast.success(t('toast.featuresUpdated'))
                   setShowClientFeaturesModal(false)
                   setEditingClientFeatures(null)
                   loadAll()
-                } catch (err) { toast.error('Erreur: ' + (err.message || 'Inconnue')) }
+                } catch (err) { toast.error(tToast('genericError', { error: err.message || 'Inconnue' })) }
               }} style={{
                 padding: `10px ${sp[3]}`, background: c.teal, color: c.bg, border: 'none',
                 cursor: 'pointer', fontFamily: f.body, fontSize: size.sm, fontWeight: 700,
@@ -7452,14 +7735,14 @@ export default function Admin({ user, profile, onSignOut }) {
       {/* ════════════ MODAL: Quick Launch Boutique ════════════ */}
       {showQuickLaunchModal && (
         <div style={{
-          position: 'fixed', inset: 0, background: c.bgOverlay, display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
           alignItems: 'center', justifyContent: 'center', zIndex: 1000,
         }} onClick={() => setShowQuickLaunchModal(false)}>
           <div style={{
-            background: c.bgSurface, border: `1px solid ${c.border}`, padding: sp[4],
+            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
             maxWidth: '560px', width: '90%', position: 'relative', maxHeight: '85vh', overflowY: 'auto',
           }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ height: 2, background: `linear-gradient(90deg, ${c.gold}, ${c.red})`, position: 'absolute', top: 0, left: 0, right: 0 }} />
+            <div style={{ height: 2, background: c.gold, position: 'absolute', top: 0, left: 0, right: 0 }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[3] }}>
               <div>
                 <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.md }}>Lancer une boutique</div>
@@ -7632,7 +7915,7 @@ export default function Admin({ user, profile, onSignOut }) {
                 color: c.textTertiary, cursor: 'pointer', fontFamily: f.body, fontSize: size.sm,
               }}>Annuler</button>
               <button onClick={async () => {
-                if (!quickLaunchForm.client_id) { toast.error('Sélectionnez un client'); return }
+                if (!quickLaunchForm.client_id) { toast.error(t('toast.clientRequired')); return }
                 setQuickLaunchLoading(true)
                 try {
                   const client = allProfiles.find(p => p.id === quickLaunchForm.client_id)
@@ -7660,7 +7943,7 @@ export default function Admin({ user, profile, onSignOut }) {
                     started_at: new Date().toISOString(),
                   }
                   const newService = await createEcomService(servicePayload)
-                  toast.success('Service e-commerce créé')
+                  toast.success(t('toast.ecomServiceCreated'))
 
                   // 2. If N8N, fire webhook
                   if (quickLaunchForm.launchMethod === 'n8n') {
@@ -7682,14 +7965,14 @@ export default function Admin({ user, profile, onSignOut }) {
                         notes: quickLaunchForm.notes,
                         timestamp: new Date().toISOString(),
                       }
-                      await fetch('https://caraxes13.app.n8n.cloud/webhook/site-creation', {
+                      await fetch(`${N8N_WEBHOOK_URL}/site-creation`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(webhookPayload),
                       })
-                      toast.success('Webhook N8N envoyé — création en cours')
+                      toast.success(t('toast.n8nWebhookSentCreating'))
                     } catch (fetchErr) {
                       console.warn('Webhook error:', fetchErr)
-                      toast.warning('Service créé mais webhook N8N non confirmé')
+                      toast.warning(t('toast.n8nWebhookNotConfirmed'))
                     }
                   }
 
@@ -7702,12 +7985,12 @@ export default function Admin({ user, profile, onSignOut }) {
                   await loadAll()
                   setShowQuickLaunchModal(false)
                 } catch (err) {
-                  toast.error('Erreur: ' + (err.message || 'Inconnue'))
+                  toast.error(tToast('genericError', { error: err.message || 'Inconnue' }))
                 } finally {
                   setQuickLaunchLoading(false)
                 }
               }} disabled={quickLaunchLoading} style={{
-                padding: `10px ${sp[4]}`, background: `linear-gradient(135deg, ${c.gold}, ${c.goldDim})`, color: c.bg, border: 'none',
+                padding: `10px ${sp[4]}`, background: `${c.gold}`, color: c.bg, border: 'none',
                 cursor: quickLaunchLoading ? 'not-allowed' : 'pointer', fontFamily: f.body, fontSize: size.sm,
                 fontWeight: 700, opacity: quickLaunchLoading ? 0.6 : 1,
                 display: 'flex', alignItems: 'center', gap: '8px',
@@ -7759,7 +8042,7 @@ export default function Admin({ user, profile, onSignOut }) {
               setCustomSuppliers(prev => [...prev, newSupplier])
               setShowAddSupplier(false)
               setSupplierForm({ name: '', category: '', city: '', province: '', specialty: '', moq: '', priceRange: '', leadTime: '', email: '', wechat: '', phone: '', website: '', certifications: '', notes: '' })
-              toast.success(`Fournisseur "${newSupplier.name}" ajouté`)
+              toast.success(t('toast.supplierDeleted'))
             }} style={{ padding: sp[4], display: 'flex', flexDirection: 'column', gap: sp[2] }}>
               {[
                 { key: 'name', label: 'Nom du fournisseur *', placeholder: 'ex: Guangzhou Texprint Co.', required: true },
@@ -7782,11 +8065,11 @@ export default function Admin({ user, profile, onSignOut }) {
                   {field.multiline ? (
                     <textarea value={supplierForm[field.key]} onChange={e => setSupplierForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                       placeholder={field.placeholder} rows={3}
-                      style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', resize: 'vertical' }} />
+                      style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', resize: 'vertical' }} />
                   ) : (
                     <input value={supplierForm[field.key]} onChange={e => setSupplierForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                       placeholder={field.placeholder} type={field.type || 'text'} required={field.required}
-                      style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none' }} />
+                      style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none' }} />
                   )}
                 </div>
               ))}
@@ -7818,26 +8101,26 @@ export default function Admin({ user, profile, onSignOut }) {
                 <label style={{ display: 'block', fontFamily: f.mono, fontSize: '9px', color: c.goldMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Destinataire *</label>
                 <input value={emailForm.to} onChange={e => setEmailForm(prev => ({ ...prev, to: e.target.value }))}
                   placeholder="email@fournisseur.com" type="email" required
-                  style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none' }} />
+                  style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontFamily: f.mono, fontSize: '9px', color: c.goldMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Objet *</label>
                 <input value={emailForm.subject} onChange={e => setEmailForm(prev => ({ ...prev, subject: e.target.value }))}
                   placeholder="Demande de cotation — CARAXES" required
-                  style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none' }} />
+                  style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontFamily: f.mono, fontSize: '9px', color: c.goldMuted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Message</label>
                 <textarea value={emailForm.body} onChange={e => setEmailForm(prev => ({ ...prev, body: e.target.value }))}
                   rows={8}
-                  style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgSurface, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', resize: 'vertical', lineHeight: 1.6 }} />
+                  style={{ width: '100%', padding: `${sp[1]} ${sp[2]}`, background: c.bgCard, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: size.sm, outline: 'none', resize: 'vertical', lineHeight: 1.6 }} />
               </div>
               <div style={{ display: 'flex', gap: sp[2], marginTop: sp[1] }}>
                 <button onClick={() => {
-                  if (!emailForm.to || !emailForm.subject) { toast.error('Remplissez le destinataire et l\'objet'); return }
+                  if (!emailForm.to || !emailForm.subject) { toast.error(t('toast.emailFieldsRequired')); return }
                   const mailtoUrl = `mailto:${emailForm.to}?subject=${encodeURIComponent(emailForm.subject)}&body=${encodeURIComponent(emailForm.body)}`
                   window.open(mailtoUrl)
-                  toast.success('Client email ouvert')
+                  toast.success(t('toast.clientEmailOpened'))
                   setShowEmailModal(false)
                 }} style={{
                   flex: 1, padding: `${sp[2]} ${sp[3]}`, background: c.gold, color: c.bg,
@@ -7847,17 +8130,17 @@ export default function Admin({ user, profile, onSignOut }) {
                   <Icon d={icons.send} size={14} color={c.bg} /> Ouvrir dans Mail
                 </button>
                 <button onClick={async () => {
-                  if (!emailForm.to || !emailForm.subject) { toast.error('Remplissez le destinataire et l\'objet'); return }
+                  if (!emailForm.to || !emailForm.subject) { toast.error(t('toast.emailFieldsRequired')); return }
                   setEmailSending(true)
                   try {
-                    await fetch('https://caraxes13.app.n8n.cloud/webhook/send-email', {
+                    await fetch(`${N8N_WEBHOOK_URL}/send-email`, {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ to: emailForm.to, subject: emailForm.subject, body: emailForm.body, from: 'contact@caraxes.fr', supplierName: emailForm.supplierName, timestamp: new Date().toISOString() }),
                     })
-                    toast.success('Email envoyé via N8N')
+                    toast.success(t('toast.emailSentN8N'))
                     setShowEmailModal(false)
                   } catch (err) {
-                    toast.warning('Envoi N8N non confirmé — utilisez Mail')
+                    toast.warning(t('toast.n8nNotConfirmedMail'))
                   }
                   setEmailSending(false)
                 }} disabled={emailSending} style={{

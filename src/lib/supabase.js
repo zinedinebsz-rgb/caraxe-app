@@ -34,6 +34,10 @@ export async function resetPassword(email) {
   })
 }
 
+export async function adminSetPassword(userId, newPassword) {
+  return supabase.auth.admin.updateUserById(userId, { password: newPassword })
+}
+
 export async function updateUserPassword(newPassword) {
   return supabase.auth.updateUser({ password: newPassword })
 }
@@ -50,7 +54,14 @@ export async function resendConfirmationEmail(email) {
 export async function signInWithGoogle() {
   return supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: {
+      redirectTo: `${window.location.origin}/`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account',
+      },
+      skipBrowserRedirect: false,
+    },
   })
 }
 
@@ -76,25 +87,47 @@ export async function getProfile(userId) {
     return null
   }
 
-  // If no profile exists, auto-create one
+  // If no profile exists, auto-create one (useful for OAuth signups where no profile is pre-created)
   if (!data) {
     const { data: session } = await supabase.auth.getSession()
-    const email = session?.session?.user?.email || ''
+    const user = session?.session?.user
+    const email = user?.email || ''
+    // Extract full name from OAuth metadata (Google returns name in user_metadata)
+    const meta = user?.user_metadata || {}
+    const fullName = meta.full_name || meta.name || meta.given_name || (email ? email.split('@')[0] : 'Client')
+    const avatarUrl = meta.avatar_url || meta.picture || null
+
+    const profilePayload = {
+      id: userId,
+      email,
+      full_name: fullName,
+      role: 'client',
+      client_tier: 'detaillant',
+      onboarding_done: false,
+    }
+    // Only add avatar_url if present (some schemas may not have this column)
+    if (avatarUrl) profilePayload.avatar_url = avatarUrl
+
     const { data: newProfile, error: insertError } = await supabase
       .from('profiles')
-      .insert({
-        id: userId,
-        email,
-        full_name: email.split('@')[0],
-        role: 'client',
-        client_tier: 'detaillant',
-        onboarding_done: false,
-      })
+      .insert(profilePayload)
       .select()
       .maybeSingle()
 
     if (insertError) {
       console.error('Auto-create profile error:', insertError)
+      // If avatar_url column doesn't exist or RLS issue with extra field, retry without it
+      if (avatarUrl && insertError.message && insertError.message.includes('avatar_url')) {
+        const { data: retry2 } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId, email, full_name: fullName,
+            role: 'client', client_tier: 'detaillant', onboarding_done: false,
+          })
+          .select()
+          .maybeSingle()
+        if (retry2) return retry2
+      }
       // Profile might already exist (race condition) — retry fetch
       const { data: retryData } = await supabase
         .from('profiles')

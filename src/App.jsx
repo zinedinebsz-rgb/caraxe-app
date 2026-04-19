@@ -4,6 +4,8 @@ import { supabase, getProfile } from './lib/supabase'
 import { c, f, size, sp, ease } from './lib/theme'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
+import { I18nProvider } from './lib/i18n.jsx'
+import CookieBanner from './components/CookieBanner'
 import Login from './pages/Login'
 
 /* ── LAZY LOADED PAGES ── */
@@ -13,6 +15,10 @@ const Onboarding = lazy(() => import('./pages/Onboarding'))
 const Settings = lazy(() => import('./pages/Settings'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Catalogue = lazy(() => import('./pages/Catalogue'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const MentionsLegales = lazy(() => import('./pages/MentionsLegales'))
+const PolitiqueConfidentialite = lazy(() => import('./pages/PolitiqueConfidentialite'))
+const CGV = lazy(() => import('./pages/CGV'))
 
 /* ── SCROLL TO TOP ON ROUTE CHANGE ── */
 function ScrollToTop() {
@@ -45,43 +51,6 @@ const Loader = ({ text = 'Chargement…' }) => (
     }}>{text}</span>
   </div>
 )
-
-/* ── 404 PAGE ── */
-const NotFound = () => {
-  const navigate = useNavigate()
-  return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: c.bg, fontFamily: f.body, color: c.text, flexDirection: 'column',
-      gap: sp[3], padding: sp[4], textAlign: 'center',
-    }}>
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.5 }}>
-        <path d="M20 3L12 11Q7 16 7 22Q7 29 12 33L16 36Q18 38 20 38Q22 38 24 36L28 33Q33 29 33 22Q33 16 28 11L20 3Z" fill={c.red} opacity="0.6"/>
-        <circle cx="16" cy="19" r="2" fill={c.gold} opacity="0.8"/>
-        <circle cx="24" cy="19" r="2" fill={c.gold} opacity="0.8"/>
-      </svg>
-      <div style={{ fontFamily: f.display, fontSize: '48px', fontWeight: 700, color: c.gold, letterSpacing: '-0.02em' }}>
-        404
-      </div>
-      <p style={{ fontSize: size.sm, color: c.textSecondary, margin: 0, maxWidth: 320, lineHeight: 1.6 }}>
-        Cette page n'existe pas ou a ete deplacee.
-      </p>
-      <button
-        onClick={() => navigate('/')}
-        style={{
-          padding: `${sp[2]} ${sp[4]}`, background: c.red, border: 'none',
-          color: c.text, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
-          fontFamily: f.body, transition: `all 0.2s ${ease.smooth}`,
-          marginTop: sp[1],
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}
-      >
-        Retour a l'accueil
-      </button>
-    </div>
-  )
-}
 
 /* ── PROTECTED ROUTE ── */
 function ProtectedRoute({ session, profile, loading, children, requiredRole, onRetry }) {
@@ -180,9 +149,11 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+    <I18nProvider>
     <ToastProvider>
     <BrowserRouter>
       <ScrollToTop />
+      <CookieBanner />
       <Routes>
         <Route path="/login" element={
           session ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />
@@ -194,6 +165,18 @@ export default function App() {
 
         <Route path="/catalogue" element={
           <Suspense fallback={<Loader />}><Catalogue /></Suspense>
+        } />
+
+        <Route path="/mentions-legales" element={
+          <Suspense fallback={<Loader />}><MentionsLegales /></Suspense>
+        } />
+
+        <Route path="/politique-confidentialite" element={
+          <Suspense fallback={<Loader />}><PolitiqueConfidentialite /></Suspense>
+        } />
+
+        <Route path="/cgv" element={
+          <Suspense fallback={<Loader />}><CGV /></Suspense>
         } />
 
         <Route path="/settings" element={
@@ -231,10 +214,13 @@ export default function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={
+          <Suspense fallback={<Loader />}><NotFound /></Suspense>
+        } />
       </Routes>
     </BrowserRouter>
     </ToastProvider>
+    </I18nProvider>
     </ErrorBoundary>
   )
 }

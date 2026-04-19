@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { c, f, size, sp, shadow, ease } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, gradient, radius } from '../lib/theme'
 import { TIERS, getTierByKey } from '../lib/clientTiers'
 import { getCatalog } from '../lib/catalogsByProfile'
 
@@ -109,6 +109,7 @@ export default function Catalogue() {
         {/* CTA */}
         <button onClick={handleCTA} style={{
           padding:'14px 32px', background:c.red, border:`1px solid ${c.red}`,
+          borderRadius:radius.md,
           color:c.white, fontSize:14, fontWeight:600, cursor:'pointer',
           fontFamily:f.body, letterSpacing:'0.02em',
           transition:`all 0.25s ${ease.out}`,
@@ -140,6 +141,7 @@ export default function Catalogue() {
                   style={{
                     padding:'10px 20px', cursor:'pointer', fontFamily:f.body,
                     fontSize:13, fontWeight: sel ? 700 : 500,
+                    borderRadius:radius.md,
                     background: sel ? c.bgElevated : 'transparent',
                     border:`1.5px solid ${sel ? t.color : c.border}`,
                     color: sel ? t.color : c.textSecondary,
@@ -159,8 +161,9 @@ export default function Catalogue() {
         {/* Tier summary bar */}
         <div style={{
           display:'flex', alignItems:'center', justifyContent:'space-between',
-          padding:'14px 20px', background:c.bgSurface,
-          border:`1px solid ${c.border}`, marginBottom:20,
+          padding:'14px 20px', background:c.bgCard,
+          border:`1px solid ${c.border}`, borderRadius:radius.md,
+          boxShadow:shadow.card, marginBottom:20,
           flexWrap:'wrap', gap:12,
         }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -188,8 +191,9 @@ export default function Catalogue() {
         <div className="cat-grid">
           {catalog.map((cat, i) => (
             <div key={cat.id} style={{
-              background:c.bgSurface, border:`1px solid ${c.border}`,
-              padding:0, overflow:'hidden',
+              background:c.bgCard, border:`1px solid ${c.border}`,
+              borderRadius:radius.lg, padding:0, overflow:'hidden',
+              boxShadow:shadow.card,
               transition:`all 0.25s ${ease.luxury}`,
               animation:`scaleIn 0.35s ease-out ${i * 40}ms both`,
               cursor:'default',
@@ -221,7 +225,8 @@ export default function Catalogue() {
                 {/* Stats */}
                 <div style={{
                   display:'flex', gap:0, background:c.bg,
-                  border:`1px solid ${c.borderSubtle}`, marginBottom:12,
+                  border:`1px solid ${c.borderSubtle}`, borderRadius:radius.sm,
+                  marginBottom:12,
                 }}>
                   <div style={{ flex:1, textAlign:'center', padding:'9px 6px', borderRight:`1px solid ${c.borderSubtle}` }}>
                     <div style={miniLabel}>Prix Chine</div>
@@ -244,6 +249,7 @@ export default function Catalogue() {
                     {cat.topProducts.slice(0, 4).map((p, j) => (
                       <span key={j} style={{
                         fontSize:9, padding:'3px 8px', fontFamily:f.mono,
+                        borderRadius:radius.xs,
                         background:c.bg, border:`1px solid ${c.borderSubtle}`,
                         color:c.textTertiary, letterSpacing:'0.01em',
                       }}>{p}</span>
@@ -259,7 +265,8 @@ export default function Catalogue() {
         <div style={{
           textAlign:'center', marginTop:48,
           padding:'32px 24px',
-          background:c.bgSurface, border:`1px solid ${c.border}`,
+          background:gradient.card, border:`1px solid ${c.border}`,
+          borderRadius:radius.lg, boxShadow:shadow.card,
         }}>
           <h3 style={{
             fontFamily:f.display, fontSize:size.lg, fontWeight:700,
@@ -277,6 +284,7 @@ export default function Catalogue() {
           <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
             <button onClick={handleCTA} style={{
               padding:'14px 28px', background:c.red, border:`1px solid ${c.red}`,
+              borderRadius:radius.md,
               color:c.white, fontSize:14, fontWeight:600, cursor:'pointer',
               fontFamily:f.body, transition:`all 0.25s ${ease.out}`,
             }}
@@ -286,7 +294,8 @@ export default function Catalogue() {
             </button>
             <a href="/login" style={{
               padding:'14px 28px', background:'transparent',
-              border:`1px solid ${c.border}`, color:c.textSecondary,
+              border:`1px solid ${c.border}`, borderRadius:radius.md,
+              color:c.textSecondary,
               fontSize:14, cursor:'pointer', fontFamily:f.body,
               textDecoration:'none', display:'inline-block',
               transition:`all 0.2s ${ease.smooth}`,
