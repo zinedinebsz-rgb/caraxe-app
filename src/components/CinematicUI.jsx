@@ -6,7 +6,7 @@ import { c, f, size, sp } from '../lib/theme'
 export function DragonMark({ s = 40, glow = true }) {
   return (
     <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{
-      filter: glow ? `drop-shadow(0 0 12px oklch(55% 0.22 25 / 0.25))` : 'none',
+      filter: glow ? `drop-shadow(0 0 12px rgba(196, 58, 47, 0.25))` : 'none',
       transition: 'filter 0.3s ease',
     }}>
       <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill={c.red} opacity="0.9"/>
@@ -355,7 +355,7 @@ export const sharedKeyframes = `
 @keyframes fadeSlideIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
 @keyframes fadeSlideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
 @keyframes spin { to { transform:rotate(360deg) } }
-@keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 oklch(55% 0.22 25 / 0) } 50% { box-shadow: 0 0 12px 2px oklch(55% 0.22 25 / 0.15) } }
+@keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(196, 58, 47, 0) } 50% { box-shadow: 0 0 12px 2px rgba(196, 58, 47, 0.15) } }
 @keyframes barReveal { from { transform: scaleX(0) } to { transform: scaleX(1) } }
 @keyframes cardReveal { from { opacity:0; transform:translateY(12px) scale(0.98) } to { opacity:1; transform:translateY(0) scale(1) } }
 `
@@ -364,6 +364,6 @@ export const sharedKeyframes = `
 export const scrollbarCSS = `
 .caraxes-scroll::-webkit-scrollbar { width:5px }
 .caraxes-scroll::-webkit-scrollbar-track { background:transparent }
-.caraxes-scroll::-webkit-scrollbar-thumb { background:oklch(22% 0.008 50); border-radius:0 }
-.caraxes-scroll::-webkit-scrollbar-thumb:hover { background:oklch(30% 0.008 50) }
+.caraxes-scroll::-webkit-scrollbar-thumb { background:#3a3733; border-radius:0 }
+.caraxes-scroll::-webkit-scrollbar-thumb:hover { background:#4d4a46 }
 `

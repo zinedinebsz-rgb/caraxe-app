@@ -5,7 +5,7 @@ import { useI18n } from '../lib/i18n'
 
 /* ── Dragon mark — refined CARAXES fierce dragon ── */
 const DragonMark = ({ s = 44 }) => (
-  <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{ filter: `drop-shadow(0 0 18px oklch(76% 0.13 85 / 0.3))` }}>
+  <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{ filter: 'none' }}>
     <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill={c.red} opacity="0.85"/>
     <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill="none" stroke={c.gold} strokeWidth="0.5" opacity="0.3"/>
     <path d="M13 12L7 5M31 12L37 5" stroke={c.gold} strokeWidth="1.2" opacity="0.6"/>
@@ -51,7 +51,7 @@ const FeatureItem = ({ icon, label, delay }) => {
       <div style={{
         width: 40, height: 40, flexShrink: 0,
         borderRadius: radius.sm,
-        background: hovered ? 'oklch(14% 0.009 50 / 0.8)' : 'oklch(11% 0.008 50 / 0.6)',
+        background: hovered ? 'rgba(28, 26, 24, 0.8)' : 'rgba(22, 20, 19, 0.6)',
         border: `1px solid ${hovered ? c.goldLine : c.borderSubtle}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: transition.normal,
@@ -98,7 +98,7 @@ const PremiumInput = ({ label, type = 'text', value, onChange, placeholder, focu
           color: c.text, fontSize: size.sm, fontFamily: f.body,
           outline: 'none', boxSizing: 'border-box',
           transition: `border-color 0.3s ${ease.luxury}, background 0.3s ${ease.luxury}, box-shadow 0.3s ${ease.luxury}`,
-          boxShadow: focused ? `0 2px 8px oklch(76% 0.13 85 / 0.08)` : 'none',
+          boxShadow: focused ? `0 2px 8px rgba(196, 163, 90, 0.08)` : 'none',
           letterSpacing: '0.01em',
         }}
       />
@@ -111,6 +111,7 @@ export default function Login() {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -252,7 +253,7 @@ export default function Login() {
         position: 'absolute', top: sp[3], right: sp[3], zIndex: 100,
         display: 'flex', gap: 2, padding: 2,
         borderRadius: radius.sm,
-        background: 'oklch(10% 0.006 50 / 0.6)',
+        background: 'rgba(18, 16, 14, 0.6)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         border: `1px solid ${c.borderSubtle}`,
@@ -300,14 +301,14 @@ export default function Login() {
         {/* Atmospheric red glow from top */}
         <div style={{
           position: 'absolute', width: '140%', height: '60%',
-          background: `radial-gradient(ellipse at 30% 0%, oklch(55% 0.22 25 / 0.07) 0%, transparent 65%)`,
+          background: `radial-gradient(ellipse at 30% 0%, rgba(196, 58, 47, 0.07) 0%, transparent 65%)`,
           top: '-10%', left: '-20%', pointerEvents: 'none',
         }} />
 
         {/* Subtle gold glow bottom-right */}
         <div style={{
           position: 'absolute', width: '400px', height: '400px',
-          background: `radial-gradient(ellipse, oklch(76% 0.13 85 / 0.03) 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse, rgba(196, 163, 90, 0.03) 0%, transparent 70%)`,
           bottom: '-100px', right: '-50px', pointerEvents: 'none',
         }} />
 
@@ -373,14 +374,14 @@ export default function Login() {
               <>منتجاتك من الصين —{' '}
                 <em style={{
                   fontStyle: 'italic', color: c.red,
-                  textShadow: `0 0 40px oklch(55% 0.22 25 / 0.15)`,
+                  textShadow: 'none',
                 }}>نبحث، نفحص، نسلم.</em>
               </>
             ) : (
               <>Vos produits depuis la Chine —{' '}
                 <em style={{
                   fontStyle: 'italic', color: c.red,
-                  textShadow: `0 0 40px oklch(55% 0.22 25 / 0.15)`,
+                  textShadow: 'none',
                 }}>trouvés, inspectés, livrés.</em>
               </>
             )}
@@ -469,7 +470,7 @@ export default function Login() {
         {/* Subtle radial glow top-right */}
         <div style={{
           position: 'absolute', top: 0, right: 0, width: '200px', height: '200px',
-          background: `radial-gradient(circle at top right, oklch(76% 0.13 85 / 0.03) 0%, transparent 70%)`,
+          background: `radial-gradient(circle at top right, rgba(196, 163, 90, 0.03) 0%, transparent 70%)`,
           pointerEvents: 'none',
         }} />
 
@@ -483,7 +484,7 @@ export default function Login() {
               <div style={{
                 width: 64, height: 64,
                 background: c.greenSoft,
-                border: `1px solid oklch(72% 0.16 155 / 0.15)`,
+                border: `1px solid rgba(90, 170, 106, 0.15)`,
                 borderRadius: radius.lg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: `0 auto ${sp[3]}`,
@@ -546,15 +547,14 @@ export default function Login() {
                 }}>{locale === 'ar' ? 'وكيل الاستيراد من الصين' : 'Agent de Sourcing Chine'}</span>
               </div>
 
-              {/* Glass form card */}
+              {/* Form card — Cinematic Noir */}
               <div style={{
-                background: 'oklch(10.5% 0.007 50 / 0.7)',
-                backdropFilter: 'blur(16px) saturate(1.15)',
-                WebkitBackdropFilter: 'blur(16px) saturate(1.15)',
-                border: `1px solid ${c.borderSubtle}`,
-                borderRadius: radius.lg,
+                background: c.bgCard,
+                border: 'none',
+                borderTop: `2px solid ${c.gold}`,
+                borderRadius: radius.md,
                 padding: `${sp[5]} ${sp[4]}`,
-                boxShadow: shadow.glass,
+                boxShadow: shadow.lg,
                 position: 'relative',
                 overflow: 'hidden',
               }}>
@@ -562,7 +562,7 @@ export default function Login() {
                 <div style={{
                   position: 'absolute', inset: 0,
                   background: gradient.goldShine,
-                  pointerEvents: 'none', opacity: 0.5,
+                  pointerEvents: 'none', opacity: 0.6,
                 }} />
 
                 <div style={{ position: 'relative', zIndex: 1 }}>
@@ -581,9 +581,9 @@ export default function Login() {
                   </div>
 
                   <h2 style={{
-                    fontFamily: f.display, fontSize: size['2xl'], fontWeight: 400,
-                    margin: `0 0 ${sp[1]} 0`, color: c.text, letterSpacing: '-0.02em',
-                    lineHeight: 1.15,
+                    fontFamily: f.display, fontSize: size.xl, fontWeight: 400,
+                    margin: `0 0 ${sp[1]} 0`, color: c.text, letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
                   }}>{titles[mode]}</h2>
                   <p style={{
                     fontSize: size.sm, color: c.textSecondary, margin: `0 0 ${sp[4]} 0`,
@@ -611,16 +611,59 @@ export default function Login() {
                       onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
 
                     {(mode === 'login' || mode === 'signup') && (
-                      <PremiumInput label={t('auth.password')} type="password" value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={mode === 'signup' ? t('auth.passwordSignupPlaceholder') : t('auth.passwordPlaceholder')}
-                        minLength={mode === 'signup' ? 6 : undefined}
-                        focused={focused === 'pass'}
-                        onFocus={() => setFocused('pass')} onBlur={() => setFocused(null)} />
+                      <div style={{ position: 'relative' }}>
+                        <PremiumInput label={t('auth.password')} type={showPassword ? 'text' : 'password'} value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={mode === 'signup' ? t('auth.passwordSignupPlaceholder') : t('auth.passwordPlaceholder')}
+                          minLength={mode === 'signup' ? 6 : undefined}
+                          focused={focused === 'pass'}
+                          onFocus={() => setFocused('pass')} onBlur={() => setFocused(null)} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
+                          style={{
+                            position: 'absolute', right: '12px', top: '38px',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: c.textTertiary, padding: '4px',
+                            transition: 'color 0.2s',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = c.textSecondary}
+                          onMouseLeave={(e) => e.currentTarget.style.color = c.textTertiary}
+                          title={showPassword ? 'Masquer' : 'Afficher'}
+                        >
+                          {showPassword ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                              <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                              <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     )}
 
                     {mode === 'login' && (
-                      <div style={{ textAlign: locale === 'ar' ? 'left' : 'right', marginBottom: sp[3], marginTop: `-${sp[1]}` }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        marginBottom: sp[3], marginTop: `-${sp[1]}`,
+                      }}>
+                        <label style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          cursor: 'pointer', userSelect: 'none',
+                        }}>
+                          <input type="checkbox" defaultChecked style={{
+                            width: 14, height: 14, accentColor: c.gold,
+                            cursor: 'pointer',
+                          }} />
+                          <span style={{
+                            fontFamily: f.body, fontSize: size.xs, color: c.textTertiary,
+                          }}>
+                            {locale === 'ar' ? 'تذكرني' : 'Rester connecté'}
+                          </span>
+                        </label>
                         {linkBtn(t('auth.forgotPassword'), () => switchMode('forgot'), true)}
                       </div>
                     )}
@@ -655,33 +698,39 @@ export default function Login() {
                       </div>
                     )}
 
+                    {/* Gold divider */}
+                    <div style={{
+                      height: '1px', margin: `${sp[3]} 0`,
+                      background: gradient.goldLine,
+                    }} />
+
                     {/* Submit button — gold CTA */}
                     <button type="submit" disabled={loading || !active} style={{
-                      width: '100%', padding: '16px', marginTop: sp[1],
+                      width: '100%', padding: '18px 16px', marginTop: '0',
                       background: active ? c.gold : c.bgElevated,
                       color: active ? c.black : c.textTertiary,
                       border: active ? 'none' : `1px solid ${c.border}`,
                       borderRadius: radius.sm,
                       fontSize: size.sm, fontWeight: 700,
-                      fontFamily: f.body, letterSpacing: '0.06em',
+                      fontFamily: f.mono, letterSpacing: '0.12em',
                       cursor: active ? 'pointer' : 'default',
                       transition: `all 0.35s ${ease.luxury}`,
                       opacity: loading ? 0.7 : 1,
-                      boxShadow: active ? `0 4px 20px oklch(76% 0.13 85 / 0.2)` : 'none',
+                      boxShadow: active ? `0 4px 20px rgba(196, 163, 90, 0.2)` : 'none',
                       textTransform: 'uppercase',
                       position: 'relative', overflow: 'hidden',
                     }}
                       onMouseEnter={(e) => {
                         if (active && !loading) {
                           e.target.style.background = c.goldBright
-                          e.target.style.boxShadow = `0 6px 28px oklch(76% 0.13 85 / 0.3)`
+                          e.target.style.boxShadow = `0 6px 28px rgba(196, 163, 90, 0.3)`
                           e.target.style.transform = 'translateY(-1px)'
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (active && !loading) {
                           e.target.style.background = c.gold
-                          e.target.style.boxShadow = `0 4px 20px oklch(76% 0.13 85 / 0.2)`
+                          e.target.style.boxShadow = `0 4px 20px rgba(196, 163, 90, 0.2)`
                           e.target.style.transform = 'translateY(0)'
                         }
                       }}
@@ -741,7 +790,7 @@ export default function Login() {
                           fontWeight: 500, cursor: 'pointer', letterSpacing: '0.01em',
                           transition: `all 0.25s ${ease.luxury}`,
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textTertiary; e.currentTarget.style.background = 'oklch(12% 0.007 50 / 0.5)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.textTertiary; e.currentTarget.style.background = 'rgba(22, 20, 17, 0.5)' }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.borderLight; e.currentTarget.style.background = 'transparent' }}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24">
@@ -781,6 +830,29 @@ export default function Login() {
                   linkBtn(locale === 'ar' ? 'العودة إلى تسجيل الدخول' : 'Retour à la connexion', () => switchMode('login'), true)
                 )}
               </div>
+
+              {/* ── Support WhatsApp ── */}
+              <div style={{
+                marginTop: sp[6], textAlign: 'center', paddingTop: sp[3],
+                borderTop: `1px solid ${c.borderSubtle}`,
+              }}>
+                <a href="https://wa.me/33612345678?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20me%20connecter"
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    color: c.textTertiary, fontSize: size.xs, fontFamily: f.body,
+                    textDecoration: 'none', letterSpacing: '0.02em',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = c.green}
+                  onMouseLeave={(e) => e.currentTarget.style.color = c.textTertiary}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  {locale === 'ar' ? 'مساعدة للوصول إلى خزنتك' : 'Besoin d\'aide pour accéder à votre coffre-fort ?'}
+                </a>
+              </div>
             </div>
           )}
         </div>
@@ -808,8 +880,8 @@ export default function Login() {
           to { opacity: 1; transform: scale(1); }
         }
         @keyframes confirmPulse {
-          0%, 100% { box-shadow: 0 0 0 0 oklch(72% 0.16 155 / 0.15); }
-          50% { box-shadow: 0 0 0 8px oklch(72% 0.16 155 / 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(90, 170, 106, 0.15); }
+          50% { box-shadow: 0 0 0 8px rgba(90, 170, 106, 0); }
         }
         @keyframes shakeError {
           0%, 100% { transform: translateX(0); }
@@ -824,6 +896,10 @@ export default function Login() {
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes statusPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
         }
         @media (max-width: 900px) {
           .login-left { display: none !important; }

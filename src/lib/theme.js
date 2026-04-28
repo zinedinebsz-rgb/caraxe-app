@@ -1,69 +1,71 @@
-// ─── CARAXES Design System v6 — Cinematic Noir + Art Deco Moderne (OKLCH) ───
-// Direction: Art Deco premium × modern editorial. Jamais "IA-generated".
+// ─── CARAXES Design System v8 — Cinematic Noir · Art Deco Premium ───
+// Direction: Warm dark luxury × editorial type × selective gold richness.
+// Depth through subtle shadows. Cinematic through restrained gradients.
 
 export const c = {
-  // Backgrounds — layered warm noir with depth
-  bg:         'oklch(6.5% 0.006 50)',
-  bgWarm:     'oklch(8.5% 0.007 50)',
-  bgSurface:  'oklch(11% 0.008 50)',
-  bgElevated: 'oklch(14% 0.009 50)',
-  bgHover:    'oklch(17% 0.010 50)',
-  bgOverlay:  'oklch(4% 0.005 50 / 0.85)',
-  bgGlass:    'oklch(10% 0.006 50 / 0.55)',
-  bgCard:     'oklch(10.5% 0.007 50)',
-  bgInput:    'oklch(8% 0.006 50)',
+  // Backgrounds — warm noir with perceptible layering
+  bg:         '#0c0b09',
+  bgWarm:     '#121110',
+  bgSurface:  '#1a1816',
+  bgElevated: '#221f1c',
+  bgHover:    '#2a2724',
+  bgOverlay:  'rgba(6, 5, 4, 0.92)',
+  bgGlass:    'rgba(18, 17, 14, 0.75)',
+  bgCard:     '#161413',
+  bgInput:    '#100f0d',
 
-  // Brand — Dragon Red (cinema rouge profond)
-  red:        'oklch(55% 0.22 25)',
-  redDeep:    'oklch(42% 0.20 25)',
-  redSoft:    'oklch(55% 0.22 25 / 0.08)',
-  redGlow:    'oklch(55% 0.22 25 / 0.12)',
-  redMuted:   'oklch(38% 0.12 25)',
-  redVivid:   'oklch(60% 0.25 25)',
+  // Brand — Dragon Red
+  red:        '#c43a2f',
+  redDeep:    '#8b2920',
+  redSoft:    'rgba(196, 58, 47, 0.10)',
+  redGlow:    'rgba(196, 58, 47, 0.15)',
+  redMuted:   '#6b3530',
+  redVivid:   '#d94535',
 
-  // Brand — Art Deco Gold (warm luxe)
-  gold:       'oklch(76% 0.13 85)',
-  goldDim:    'oklch(64% 0.10 85)',
-  goldSoft:   'oklch(76% 0.13 85 / 0.08)',
-  goldGlow:   'oklch(76% 0.13 85 / 0.10)',
-  goldMuted:  'oklch(52% 0.08 85)',
-  goldBright: 'oklch(82% 0.14 85)',
-  goldLine:   'oklch(76% 0.13 85 / 0.15)',
+  // Brand — Art Deco Gold
+  gold:       '#c4a35a',
+  goldDim:    '#9a7e45',
+  goldSoft:   'rgba(196, 163, 90, 0.10)',
+  goldGlow:   'rgba(196, 163, 90, 0.15)',
+  goldMuted:  '#6e5c38',
+  goldBright: '#d4b46a',
+  goldLine:   'rgba(196, 163, 90, 0.18)',
 
-  // Semantic — status pipeline (légèrement désaturés, plus élégants)
-  blue:       'oklch(68% 0.13 250)',
-  blueSoft:   'oklch(68% 0.13 250 / 0.08)',
-  purple:     'oklch(62% 0.15 300)',
-  purpleSoft: 'oklch(62% 0.15 300 / 0.08)',
-  amber:      'oklch(78% 0.13 80)',
-  amberSoft:  'oklch(78% 0.13 80 / 0.08)',
-  teal:       'oklch(72% 0.10 180)',
-  tealSoft:   'oklch(72% 0.10 180 / 0.08)',
-  green:      'oklch(72% 0.14 155)',
-  greenSoft:  'oklch(72% 0.14 155 / 0.08)',
+  // Semantic — pipeline
+  blue:       '#5a8ac4',
+  blueSoft:   'rgba(90, 138, 196, 0.10)',
+  purple:     '#8a6ac4',
+  purpleSoft: 'rgba(138, 106, 196, 0.10)',
+  amber:      '#c4a35a',
+  amberSoft:  'rgba(196, 163, 90, 0.10)',
+  teal:       '#5aaa8a',
+  tealSoft:   'rgba(90, 170, 138, 0.10)',
+  green:      '#5aaa6a',
+  greenSoft:  'rgba(90, 170, 106, 0.10)',
 
-  // Text — warm cream hierarchy, plus contrasté
-  text:          'oklch(94% 0.008 70)',
-  textSecondary: 'oklch(60% 0.012 60)',
-  textTertiary:  'oklch(42% 0.010 55)',
-  textGhost:     'oklch(30% 0.008 55)',
+  // Text — warm cream with better contrast range
+  text:          '#f5f0e8',
+  textSecondary: '#998f82',
+  textTertiary:  '#80796f',
+  textGhost:     '#5a554e',
 
-  // Borders — warm, refined
-  border:       'oklch(20% 0.008 50)',
-  borderSubtle: 'oklch(16% 0.006 50)',
-  borderFocus:  'oklch(55% 0.22 25)',
-  borderGold:   'oklch(76% 0.13 85 / 0.18)',
-  borderLight:  'oklch(25% 0.008 50)',
+  // Borders — warm with visible gold option
+  border:       '#2e2a26',
+  borderSubtle: '#221f1c',
+  borderFocus:  '#c43a2f',
+  borderGold:   'rgba(196, 163, 90, 0.22)',
+  borderLight:  '#3a3632',
+  borderAccent: 'rgba(196, 163, 90, 0.15)',
 
   // Utility
-  white:     'oklch(97% 0.005 70)',
-  black:     'oklch(5% 0.005 50)',
+  white:     '#f5f0e8',
+  black:     '#0c0b09',
 }
 
 export const f = {
-  display: "'Playfair Display', Georgia, serif",
-  body:    "'DM Sans', 'Helvetica Neue', sans-serif",
-  mono:    "'JetBrains Mono', 'SF Mono', monospace",
+  display: "'Playfair Display', 'Instrument Serif', Georgia, serif",
+  body:    "'DM Sans', 'Plus Jakarta Sans', 'Helvetica Neue', sans-serif",
+  mono:    "'Geist Mono', 'JetBrains Mono', 'SF Mono', monospace",
 }
 
 export const size = {
@@ -79,47 +81,47 @@ export const size = {
   hero:  'clamp(3rem, 2rem + 2.5vw, 4.5rem)',
 }
 
-// 8px spatial grid
+// 8px spatial grid with extra half-steps for premium rhythm
 export const sp = {
-  0.5: '0.25rem', // 4px
-  1: '0.5rem',    // 8px
-  1.5: '0.75rem', // 12px
-  2: '1rem',      // 16px
-  3: '1.5rem',    // 24px
-  4: '2rem',      // 32px
-  5: '2.5rem',    // 40px
-  6: '3rem',      // 48px
-  8: '4rem',      // 64px
-  10: '5rem',     // 80px
-  12: '6rem',     // 96px
-  16: '8rem',     // 128px
+  0.5: '0.25rem',
+  0.75: '0.375rem',
+  1: '0.5rem',
+  1.5: '0.75rem',
+  2: '1rem',
+  2.5: '1.25rem',
+  3: '1.5rem',
+  4: '2rem',
+  5: '2.5rem',
+  6: '3rem',
+  8: '4rem',
+  10: '5rem',
+  12: '6rem',
+  16: '8rem',
 }
 
 export const radius = {
   none: '0px',
   xs:   '2px',
-  sm:   '4px',
-  md:   '6px',
-  lg:   '10px',
-  xl:   '14px',
-  '2xl': '20px',
+  sm:   '3px',
+  md:   '4px',
+  lg:   '6px',
+  xl:   '8px',
+  '2xl': '12px',
   pill: '9999px',
 }
 
 export const shadow = {
-  xs:    '0 1px 2px oklch(5% 0.005 50 / 0.20)',
-  sm:    '0 1px 3px oklch(5% 0.005 50 / 0.25), 0 1px 2px oklch(5% 0.005 50 / 0.15)',
-  md:    '0 4px 16px oklch(5% 0.005 50 / 0.20), 0 1px 4px oklch(5% 0.005 50 / 0.10)',
-  lg:    '0 8px 32px oklch(5% 0.005 50 / 0.30), 0 2px 8px oklch(5% 0.005 50 / 0.15)',
-  xl:    '0 16px 48px oklch(5% 0.005 50 / 0.35), 0 4px 12px oklch(5% 0.005 50 / 0.10)',
-  glow:  '0 0 20px oklch(55% 0.22 25 / 0.12)',
-  gold:  '0 0 16px oklch(76% 0.13 85 / 0.08)',
-  inner: 'inset 0 1px 2px oklch(5% 0.005 50 / 0.20)',
-  // Premium layered — subtler, more refined
-  card:  '0 1px 2px oklch(5% 0.005 50 / 0.12), 0 4px 16px oklch(5% 0.005 50 / 0.08)',
-  cardHover: '0 2px 4px oklch(5% 0.005 50 / 0.15), 0 8px 32px oklch(5% 0.005 50 / 0.12)',
-  // Glass panel shadow
-  glass: '0 8px 32px oklch(5% 0.005 50 / 0.25), inset 0 1px 0 oklch(98% 0.005 70 / 0.03)',
+  xs:    '0 1px 2px rgba(6,5,4,0.3)',
+  sm:    '0 1px 3px rgba(6,5,4,0.35), 0 1px 2px rgba(6,5,4,0.25)',
+  md:    '0 4px 16px rgba(6,5,4,0.3), 0 1px 4px rgba(6,5,4,0.2)',
+  lg:    '0 8px 32px rgba(6,5,4,0.4), 0 2px 8px rgba(6,5,4,0.25)',
+  xl:    '0 16px 48px rgba(6,5,4,0.45), 0 4px 12px rgba(6,5,4,0.2)',
+  glow:  '0 0 20px rgba(196, 58, 47, 0.12)',
+  gold:  '0 0 24px rgba(196, 163, 90, 0.10)',
+  inner: 'inset 0 1px 2px rgba(6,5,4,0.3)',
+  card:  '0 2px 12px rgba(6,5,4,0.35)',
+  cardHover: '0 4px 20px rgba(6,5,4,0.4), 0 0 0 1px rgba(196, 163, 90, 0.08)',
+  glass: '0 8px 32px rgba(6,5,4,0.25)',
 }
 
 export const ease = {
@@ -134,31 +136,32 @@ export const transition = {
   fast:    'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
   normal:  'all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1)',
   slow:    'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-  color:   'color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-  lift:    'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+  color:   'color 0.2s ease, border-color 0.2s ease',
+  lift:    'transform 0.25s ease, box-shadow 0.25s ease',
 }
 
-// Glass effect presets
+// Glass — subtle depth, not flat
 export const glass = {
-  panel:   `background: oklch(10% 0.006 50 / 0.55); backdrop-filter: blur(20px) saturate(1.2); -webkit-backdrop-filter: blur(20px) saturate(1.2);`,
-  surface: `background: oklch(12% 0.007 50 / 0.65); backdrop-filter: blur(12px) saturate(1.1); -webkit-backdrop-filter: blur(12px) saturate(1.1);`,
-  card:    `background: oklch(11% 0.008 50 / 0.70); backdrop-filter: blur(16px) saturate(1.15); -webkit-backdrop-filter: blur(16px) saturate(1.15);`,
-  subtle:  `background: oklch(8% 0.006 50 / 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);`,
+  panel:   `background: ${c.bgCard}; box-shadow: 0 2px 12px rgba(6,5,4,0.3);`,
+  surface: `background: ${c.bgSurface}; box-shadow: 0 1px 4px rgba(6,5,4,0.2);`,
+  card:    `background: ${c.bgCard}; box-shadow: 0 2px 8px rgba(6,5,4,0.25);`,
+  subtle:  `background: ${c.bgInput};`,
 }
 
-// Gradient presets (art deco + modern)
+// Gradients — selective cinematic richness
 export const gradient = {
-  goldLine:  `linear-gradient(90deg, transparent, oklch(76% 0.13 85 / 0.3), transparent)`,
-  redFade:   `linear-gradient(135deg, oklch(55% 0.22 25 / 0.08), transparent)`,
-  surface:   `linear-gradient(180deg, oklch(12% 0.008 50), oklch(8% 0.006 50))`,
-  hero:      `radial-gradient(ellipse 80% 60% at 50% 0%, oklch(55% 0.22 25 / 0.06), transparent)`,
-  sidebar:   `linear-gradient(180deg, oklch(9% 0.007 50), oklch(7% 0.005 50))`,
-  card:      `linear-gradient(160deg, oklch(12% 0.008 50), oklch(10% 0.007 50))`,
-  goldShine: `linear-gradient(105deg, oklch(76% 0.13 85 / 0), oklch(76% 0.13 85 / 0.05) 40%, oklch(76% 0.13 85 / 0) 60%)`,
+  goldLine:  `linear-gradient(90deg, transparent, ${c.goldLine}, transparent)`,
+  redFade:   `linear-gradient(135deg, ${c.redSoft}, transparent)`,
+  surface:   `linear-gradient(180deg, ${c.bgSurface}, ${c.bgInput})`,
+  hero:      `linear-gradient(180deg, ${c.bgSurface} 0%, ${c.bg} 100%)`,
+  sidebar:   `linear-gradient(180deg, ${c.bgSurface}, ${c.bg})`,
+  card:      `linear-gradient(160deg, ${c.bgCard} 0%, ${c.bg} 100%)`,
+  goldShine: `linear-gradient(105deg, rgba(196,163,90,0.03) 0%, rgba(196,163,90,0.10) 50%, rgba(196,163,90,0.03) 100%)`,
+  warmVeil:  `linear-gradient(180deg, rgba(196,163,90,0.03) 0%, transparent 60%)`,
 }
 
 export const STATUSES = [
-  { key: 'pending',     label: 'En attente',             color: c.textSecondary, bg: 'oklch(62% 0.015 60 / 0.08)' },
+  { key: 'pending',     label: 'En attente',             color: c.textSecondary, bg: 'rgba(100, 95, 88, 0.10)' },
   { key: 'sourcing',    label: 'Recherche fournisseur',  color: c.blue,          bg: c.blueSoft },
   { key: 'negotiation', label: 'Négociation',             color: c.purple,        bg: c.purpleSoft },
   { key: 'sample',      label: 'Échantillon',             color: c.amber,         bg: c.amberSoft },

@@ -1,56 +1,230 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CARAXES — Sourcing Platform</title>
-    <meta name="description" content="CARAXES — Votre agent de sourcing Chine premium. Suivi commandes, messagerie, documents.">
-    <link rel="icon" href="/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>CARAXES — Agent de Sourcing Chine pour Commerçants | Yiwu, Guangzhou, Shenzhen</title>
+    <meta name="description" content="CARAXES, votre agent de sourcing en Chine. Importez vos produits depuis Yiwu, Guangzhou et Shenzhen. Suivi commandes en temps réel, sourcing halal, e-commerce. Devis gratuit.">
+    <meta name="keywords" content="sourcing chine, agent achat chine, import chine france, fournisseur chine, yiwu, guangzhou, shenzhen, sourcing halal, grossiste chine, e-commerce chine">
+    <meta name="author" content="CARAXES">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://app.caraxes.fr" />
 
-    <!-- Open Graph / WhatsApp / LinkedIn -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="CARAXES — Agent de Sourcing Chine Premium">
-    <meta property="og:description" content="Sourcez vos produits directement depuis la Chine. Suivi en temps reel, messagerie, documents. Yiwu, Guangzhou, Shenzhen.">
-    <meta property="og:url" content="https://app.caraxes.fr">
-    <meta property="og:site_name" content="CARAXES">
-    <meta property="og:locale" content="fr_FR">
+    <!-- Geo targeting -->
+    <meta name="geo.region" content="FR" />
+    <meta name="geo.placename" content="France" />
+    <meta name="geo.position" content="48.8566;2.3522" />
+    <meta name="ICBM" content="48.8566, 2.3522" />
+
+    <!-- Language alternates -->
+    <link rel="alternate" hreflang="fr" href="https://app.caraxes.fr" />
+    <link rel="alternate" hreflang="x-default" href="https://app.caraxes.fr" />
+
+    <!-- Favicons -->
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Open Graph / WhatsApp / LinkedIn / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CARAXES — Agent de Sourcing Chine Premium" />
+    <meta property="og:description" content="Importez vos produits depuis la Chine avec un agent dédié. Sourcing, suivi commandes, contrôle qualité, logistique. Yiwu, Guangzhou, Shenzhen." />
+    <meta property="og:url" content="https://app.caraxes.fr" />
+    <meta property="og:site_name" content="CARAXES" />
+    <meta property="og:locale" content="fr_FR" />
     <meta property="og:image" content="https://app.caraxes.fr/og-image.jpg" />
+    <meta property="og:image:alt" content="CARAXES — Agent de Sourcing Chine" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CARAXES — Sourcing Chine Premium">
-    <meta name="twitter:description" content="Votre agent de sourcing depuis Yiwu, Guangzhou et Shenzhen. Suivi commandes en temps reel.">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CARAXES — Sourcing Chine Premium" />
+    <meta name="twitter:description" content="Votre agent de sourcing depuis Yiwu, Guangzhou et Shenzhen. Suivi commandes en temps réel, sourcing halal, e-commerce." />
     <meta name="twitter:image" content="https://app.caraxes.fr/og-image.jpg" />
+    <meta name="twitter:image:alt" content="CARAXES — Agent de Sourcing Chine" />
 
-    <!-- Google Analytics 4 — Replace G-XXXXXXXXXX with your Measurement ID -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
-
-    <!-- JSON-LD Structured Data -->
+    <!-- JSON-LD Structured Data — Organization -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
+      "@type": "ProfessionalService",
       "name": "CARAXES",
+      "alternateName": "CARAXES Sourcing",
       "url": "https://caraxes.fr",
-      "description": "Agent de sourcing Chine pour commerçants",
+      "logo": "https://app.caraxes.fr/icons/icon-512.png",
+      "image": "https://app.caraxes.fr/og-image.jpg",
+      "description": "Agent de sourcing professionnel en Chine pour commerçants et e-commerçants français. Sourcing produits, contrôle qualité, logistique import depuis Yiwu, Guangzhou et Shenzhen.",
+      "telephone": "+33-contact",
+      "email": "contact@caraxes.fr",
+      "priceRange": "$$",
+      "currenciesAccepted": "EUR",
+      "paymentAccepted": "Virement bancaire, Carte bancaire, Stripe",
+      "areaServed": [
+        { "@type": "Country", "name": "France" },
+        { "@type": "Country", "name": "China" }
+      ],
+      "serviceType": [
+        "Sourcing produits en Chine",
+        "Agent d'achat Chine",
+        "Import Chine France",
+        "Sourcing halal",
+        "Création boutique e-commerce",
+        "Contrôle qualité",
+        "Logistique import"
+      ],
+      "knowsAbout": [
+        "Import-export Chine France",
+        "Sourcing Yiwu",
+        "Sourcing Guangzhou",
+        "Sourcing Shenzhen",
+        "Canton Fair",
+        "Alibaba sourcing",
+        "Dropshipping Chine"
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Services CARAXES",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Sourcing Produits",
+              "description": "Recherche et négociation de fournisseurs en Chine"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Création Boutique E-commerce",
+              "description": "Conception et lancement de boutiques en ligne Shopify, WooCommerce, PrestaShop"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Logistique Import",
+              "description": "Gestion complète de l'import depuis la Chine vers la France"
+            }
+          }
+        ]
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Zinédine",
+        "jobTitle": "Fondateur & Agent de Sourcing"
+      },
+      "foundingDate": "2024",
       "sameAs": []
     }
     </script>
 
+    <!-- JSON-LD — WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "CARAXES Dashboard",
+      "url": "https://app.caraxes.fr",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "description": "Accès au dashboard de suivi des commandes"
+      },
+      "featureList": [
+        "Suivi commandes en temps réel",
+        "Messagerie client-agent",
+        "Gestion documents",
+        "Suivi expéditions",
+        "Gestion stock",
+        "Catalogue fournisseurs vérifiés"
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD — FAQ (common questions for SEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Comment fonctionne un agent de sourcing en Chine ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Un agent de sourcing comme CARAXES recherche, négocie et contrôle les fournisseurs en Chine pour votre compte. Vous passez commande via le dashboard, nous gérons tout : sourcing, contrôle qualité, logistique et livraison en France."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quels types de produits peut-on sourcer depuis la Chine ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CARAXES source tous types de produits : textile, alimentaire halal, cosmétique, électronique, décoration, sport. Nous opérons depuis Yiwu, Guangzhou et Shenzhen pour couvrir toutes les catégories."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Combien coûte un agent de sourcing ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Les tarifs varient selon le volume et le service. CARAXES propose des packs à partir de 5% de commission. Le devis est gratuit et personnalisé selon vos besoins."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "CARAXES propose-t-il du sourcing halal ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui, CARAXES est spécialisé dans le sourcing halal depuis la Chine. Nous vérifions les certifications, les processus de fabrication et garantissons la conformité halal de vos produits."
+          }
+        }
+      ]
+    }
+    </script>
+
     <!-- Theme color (mobile browsers) -->
-    <meta name="theme-color" content="#1a1412">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1412" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CARAXES" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="application-name" content="CARAXES" />
+    <meta name="msapplication-TileColor" content="#1a1412" />
+
+    <!-- GA4 Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4CF503MJ7G"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-4CF503MJ7G', {
+        page_title: document.title,
+        send_page_view: true,
+        cookie_flags: 'SameSite=None;Secure',
+      });
+    </script>
+
+    <!-- DNS prefetch for external services -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <!-- Preconnect for critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Font loading with display=swap for CLS — preload critical fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..700&display=swap" as="style" />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
     <style>
       *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
       html {
@@ -80,9 +254,7 @@
       ::-webkit-scrollbar-thumb:hover { background: oklch(30% 0.010 50); }
       input, textarea, button, select { font-family: inherit; }
       a { color: inherit; text-decoration: none; }
-      /* Premium focus ring */
       :focus-visible { outline: 1px solid oklch(55% 0.22 25 / 0.5); outline-offset: 2px; }
-      /* Smooth transitions globally */
       * { -webkit-tap-highlight-color: transparent; }
 
       @keyframes spin { to { transform: rotate(360deg); } }
@@ -92,6 +264,13 @@
     </style>
   </head>
   <body>
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: sans-serif; color: #c4a35a; background: #1a1412;">
+        <h1>CARAXES — Agent de Sourcing Chine</h1>
+        <p>JavaScript est requis pour utiliser l'application CARAXES. Veuillez activer JavaScript dans votre navigateur.</p>
+        <p><a href="https://caraxes.fr" style="color: #c4a35a; text-decoration: underline;">Visiter caraxes.fr</a></p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

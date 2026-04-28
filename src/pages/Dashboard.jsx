@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { c, f, size, sp, shadow, ease, transition, radius, gradient, glass, STATUSES } from '../lib/theme'
 import {
   getOrders, createOrder, getMessages, sendMessage,
   markMessagesRead, getDocuments, getDocumentUrl,
   subscribeToMessages, subscribeToOrders, subscribeToProducts, subscribeToShipments, subscribeToInventory, supabase,
-  getShipments, createShipment, getInventory, getActiveProducts, sendWelcomeMessage,
-  getShops, createEcomOrder, getEcomServices, getUnreadCounts,
+  getShipments, createShipment, getInventory, getActiveProducts,
+  getShops, createEcomOrder, getEcomServices, getUnreadCounts, playNotificationSound,
 } from '../lib/supabase'
 import { getCatalog, VERIFIED_SUPPLIERS } from '../lib/catalogsByProfile'
 import { FORMATION_CLIENT, FORMATION_ECOMMERCE, FORMATION_INTERNE, FORMATION_TOOLS, SERVICE_TYPES, FORMATION_STRATEGY } from '../lib/formationData'
@@ -71,36 +72,36 @@ function AnimCard({ children, delay = 0, style = {}, ...props }) {
   )
 }
 
-/* ─── Glass Card — editorial refinement ─── */
-function GlassCard({ children, style = {}, hoverLift = true, goldTop = true, onClick, ...props }) {
+/* ─── Cinematic Card — warm depth + gold accent ─── */
+function GlassCard({ children, style = {}, hoverLift = true, goldTop = false, onClick, ...props }) {
   return (
     <div
       onClick={onClick}
       style={{
-        background: c.bgCard,
-        border: `1px solid ${c.borderSubtle}`,
+        background: `linear-gradient(160deg, ${c.bgCard} 0%, ${c.bg} 100%)`,
+        border: `1px solid ${c.border}`,
+        borderTop: goldTop ? `2px solid ${c.goldDim}` : undefined,
         borderRadius: radius.md,
         padding: sp[4],
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: 'none',
-        transition: `transform 0.4s ${ease.luxury}, box-shadow 0.4s ${ease.luxury}, border-color 0.4s ${ease.luxury}`,
+        boxShadow: shadow.card,
+        transition: `all 0.35s ${ease.luxury}`,
         cursor: onClick ? 'pointer' : 'default',
         ...style,
       }}
       onMouseEnter={hoverLift ? (e) => {
+        e.currentTarget.style.borderColor = c.borderGold
+        e.currentTarget.style.boxShadow = shadow.cardHover
         e.currentTarget.style.transform = 'translateY(-1px)'
-        e.currentTarget.style.boxShadow = shadow.xs
-        e.currentTarget.style.borderColor = c.borderLight
       } : undefined}
       onMouseLeave={hoverLift ? (e) => {
+        e.currentTarget.style.borderColor = c.border
+        e.currentTarget.style.boxShadow = shadow.card
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
-        e.currentTarget.style.borderColor = c.borderSubtle
       } : undefined}
       {...props}
     >
-      {goldTop && <div style={{ position: 'absolute', top: 0, left: 0, width: '35%', height: '1px', background: gradient.goldLine, opacity: 0.5 }} />}
       {children}
     </div>
   )
@@ -108,67 +109,31 @@ function GlassCard({ children, style = {}, hoverLift = true, goldTop = true, onC
 
 function DragonMark({ s = 40 }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{
-      filter: `drop-shadow(0 0 10px oklch(55% 0.22 25 / 0.15))`,
-      transition: 'filter 0.4s ease',
-    }}>
-      <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill={c.red} opacity="0.85"/>
-      <circle cx="17.5" cy="21" r="2" fill={c.gold} opacity="0.9"/>
-      <circle cx="26.5" cy="21" r="2" fill={c.gold} opacity="0.9"/>
-      <path d="M22 27 Q20 30 18 32" stroke={c.gold} strokeWidth="0.7" opacity="0.5"/>
+    <svg width={s} height={s} viewBox="0 0 44 44" fill="none">
+      <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill={c.red} opacity="0.7"/>
+      <circle cx="17.5" cy="21" r="1.5" fill={c.gold} opacity="0.8"/>
+      <circle cx="26.5" cy="21" r="1.5" fill={c.gold} opacity="0.8"/>
     </svg>
   )
 }
 
-function FilmGrain() {
-  return (
-    <svg style={{
-      position: 'absolute', inset: 0, width: '100%', height: '100%',
-      pointerEvents: 'none', opacity: 0.03, mixBlendMode: 'overlay', zIndex: 1,
-    }}>
-      <defs>
-        <filter id="dashGrain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="5" stitchTiles="stitch" seed="2"/>
-        </filter>
-      </defs>
-      <rect width="100%" height="100%" filter="url(#dashGrain)"/>
-    </svg>
-  )
+function FilmGrain() { return null }
+
+function ArtDecoDivider() {
+  return <div style={{ height: '1px', background: gradient.goldLine, margin: `${sp[2]} 0` }} />
 }
 
-function ArtDecoDivider({ width = 80, opacity = 0.25 }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity, margin: `${sp[2]} 0` }}>
-      <div style={{ width: 5, height: 5, background: c.gold, transform: 'rotate(45deg)', opacity: 0.7, borderRadius: '1px' }} />
-      <div style={{ width, height: '1px', background: gradient.goldLine }} />
-    </div>
-  )
-}
-
-function DecoPattern({ color = c.gold, opacity = 0.04 }) {
-  return (
-    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity }} viewBox="0 0 200 200" preserveAspectRatio="none">
-      <defs>
-        <pattern id="deco-grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M20 0L40 20L20 40L0 20Z" fill="none" stroke={color} strokeWidth="0.5" opacity="0.4"/>
-          <circle cx="20" cy="20" r="1.5" fill={color} opacity="0.3"/>
-        </pattern>
-      </defs>
-      <rect width="200" height="200" fill="url(#deco-grid)"/>
-    </svg>
-  )
-}
+function DecoPattern() { return null }
 
 function SectionBanner({ title, subtitle, accentColor = c.gold }) {
   return (
     <div style={{
       marginBottom: sp[6], position: 'relative',
       paddingBottom: sp[3],
-      borderBottom: `1px solid ${c.borderSubtle}`,
+      borderBottom: `1px solid ${c.border}`,
     }}>
-      {subtitle && <p style={{ fontFamily: f.mono, fontSize: '9px', color: accentColor, letterSpacing: '0.18em', textTransform: 'uppercase', margin: `0 0 ${sp[1]}`, fontWeight: 600, opacity: 0.75 }}>{subtitle}</p>}
-      <h1 style={{ fontSize: size['2xl'], fontFamily: f.display, fontWeight: 700, color: c.text, margin: 0, letterSpacing: '-0.03em', lineHeight: 1.1 }}>{title}</h1>
-      <div style={{ position: 'absolute', bottom: -1, left: 0, width: 48, height: '2px', background: accentColor, opacity: 0.6 }} />
+      {subtitle && <p style={{ fontFamily: f.mono, fontSize: '10px', color: accentColor, letterSpacing: '0.14em', textTransform: 'uppercase', margin: `0 0 ${sp[1]}`, fontWeight: 600 }}>{subtitle}</p>}
+      <h1 style={{ fontSize: size['2xl'], fontFamily: f.display, fontWeight: 400, fontStyle: 'italic', color: c.text, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15 }}>{title}</h1>
     </div>
   )
 }
@@ -200,7 +165,7 @@ function PipelineVisualization({ orders }) {
           return (
             <div key={status.key} style={{
               flex: 1, padding: `${sp[2]} ${sp[1]}`, textAlign: 'center',
-              background: count > 0 ? `color-mix(in oklch, ${status.color} 6%, ${c.bgCard})` : c.bgCard,
+              background: count > 0 ? c.bgSurface : c.bgCard,
               borderBottom: `2px solid ${count > 0 ? status.color : c.borderSubtle}`,
               transition: `all 0.3s ${ease.luxury}`,
             }}>
@@ -222,14 +187,14 @@ function OrderCardGrid({ order, selected, onClick, unreadCount }) {
   return (
     <div onClick={onClick}
       style={{
-        background: selected ? c.bgElevated : c.bgCard,
+        background: selected ? c.bgElevated : `linear-gradient(160deg, ${c.bgCard} 0%, ${c.bg} 100%)`,
         border: `1px solid ${selected ? c.gold : c.borderSubtle}`,
-        borderRadius: radius.sm,
+        borderRadius: radius.md,
         padding: `${sp[3]} ${sp[3]} ${sp[2]}`,
         cursor: 'pointer',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: 'none',
+        boxShadow: selected ? shadow.cardHover : shadow.xs,
         transition: `all 0.4s ${ease.luxury}`,
         display: 'flex',
         flexDirection: 'column',
@@ -239,12 +204,14 @@ function OrderCardGrid({ order, selected, onClick, unreadCount }) {
         if (!selected) {
           e.currentTarget.style.background = c.bgElevated
           e.currentTarget.style.borderColor = c.borderLight
+          e.currentTarget.style.boxShadow = shadow.sm
         }
       }}
       onMouseLeave={(e) => {
         if (!selected) {
-          e.currentTarget.style.background = c.bgCard
+          e.currentTarget.style.background = `linear-gradient(160deg, ${c.bgCard} 0%, ${c.bg} 100%)`
           e.currentTarget.style.borderColor = c.borderSubtle
+          e.currentTarget.style.boxShadow = shadow.xs
         }
       }}>
 
@@ -297,8 +264,8 @@ function ChatBubble({ msg }) {
     }}>
       <div style={{
         maxWidth: '75%', padding: `${sp[1.5]} ${sp[2]}`,
-        background: isAgent ? c.bgSurface : 'oklch(55% 0.22 25 / 0.04)',
-        border: `1px solid ${isAgent ? c.borderSubtle : 'oklch(55% 0.22 25 / 0.08)'}`,
+        background: isAgent ? c.bgSurface : 'rgba(196, 58, 47, 0.04)',
+        border: `1px solid ${isAgent ? c.borderSubtle : 'rgba(196, 58, 47, 0.08)'}`,
         borderRadius: radius.sm,
         fontSize: size.sm, lineHeight: 1.65, color: c.text,
         position: 'relative',
@@ -352,7 +319,7 @@ function DocumentCard({ doc, onDownload }) {
       }}>
       <div style={{
         width: 40, height: 40, flexShrink: 0,
-        background: c.redSoft, border: `1px solid oklch(55% 0.22 25 / 0.12)`,
+        background: c.redSoft, border: `1px solid rgba(196, 58, 47, 0.12)`,
         borderRadius: radius.md,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -374,10 +341,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const navigate = useNavigate()
   const { addToast } = useToast()
   const { t } = useI18n()
+  const isMobile = useIsMobile()
 
   // ─── STATE ───
   const [viewMode, setViewMode] = useState('overview')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [orders, setOrders] = useState([])
   const [selectedOrderId, setSelectedOrderId] = useState(null)
   const [messages, setMessages] = useState([])
@@ -396,6 +364,12 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const [siteCreationForm, setSiteCreationForm] = useState({ shopName: '', platform: 'Shopify', category: '', branding: 'none' })
   const [ecomServices, setEcomServices] = useState([])
   const [formationMode, setFormationMode] = useState('mastery') // 'mastery' | 'express'
+
+  // ─── MEMOIZED COMPUTED VALUES ───
+  const activeOrders = useMemo(() => orders.filter(o => o.status !== 'delivered'), [orders])
+  const deliveredOrders = useMemo(() => orders.filter(o => o.status === 'delivered'), [orders])
+  const formationServices = useMemo(() => ecomServices.filter(s => s.service_type === 'formation'), [ecomServices])
+  const creationServices = useMemo(() => ecomServices.filter(s => s.service_type === 'creation'), [ecomServices])
 
   // ─── DATA FETCHING ───
   useEffect(() => {
@@ -461,10 +435,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
     })
 
     return () => {
-      unsubOrders?.()
-      unsubShipments?.()
-      unsubInventory?.()
-      unsubProducts?.()
+      if (unsubOrders) supabase.removeChannel(unsubOrders)
+      if (unsubShipments) supabase.removeChannel(unsubShipments)
+      if (unsubInventory) supabase.removeChannel(unsubInventory)
+      if (unsubProducts) supabase.removeChannel(unsubProducts)
     }
   }, [user?.id])
 
@@ -491,16 +465,19 @@ export default function Dashboard({ user, profile, onSignOut }) {
     }
 
     fetchOrderData()
-    const unsubMessages = subscribeToMessages(selectedOrderId, (newMsgs) => setMessages(newMsgs))
+    const unsubMessages = subscribeToMessages(selectedOrderId, (newMsg) => {
+      setMessages(prev => [...prev, newMsg])
+      if (newMsg.sender_role === 'admin') playNotificationSound()
+    })
 
-    return () => unsubMessages?.()
+    return () => { if (unsubMessages) supabase.removeChannel(unsubMessages) }
   }, [selectedOrderId, user?.id])
 
   // ─── HANDLERS ───
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedOrderId) return
     try {
-      await sendMessage(selectedOrderId, messageInput, user.id, 'client')
+      await sendMessage({ orderId: selectedOrderId, content: messageInput, senderId: user.id, senderRole: 'client' })
       setMessageInput('')
     } catch (err) {
       addToast('Erreur lors de l\'envoi', 'error')
@@ -509,7 +486,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
   const handleDownloadDocument = async (doc) => {
     try {
-      const url = await getDocumentUrl(doc.file_path)
+      const url = await getDocumentUrl(doc.storage_path)
       window.open(url, '_blank')
     } catch (err) {
       addToast('Erreur lors du téléchargement', 'error')
@@ -523,12 +500,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
     }
     try {
       await createOrder({
-        client_id: user.id,
+        clientId: user.id,
         product: newOrderForm.product,
         quantity: parseInt(newOrderForm.quantity),
         budget: newOrderForm.budget,
-        description: newOrderForm.description,
-        status: 'pending',
+        notes: newOrderForm.description,
       })
       setNewOrderForm({ product: '', quantity: '', budget: '', description: '' })
       setIsNewOrderOpen(false)
@@ -545,14 +521,12 @@ export default function Dashboard({ user, profile, onSignOut }) {
     }
     try {
       await createEcomOrder({
-        client_id: user.id,
+        clientId: user.id,
         serviceType: 'creation',
-        details: {
-          shopName: siteCreationForm.shopName,
-          platform: siteCreationForm.platform,
-          category: siteCreationForm.category,
-          branding: siteCreationForm.branding,
-        },
+        shopName: siteCreationForm.shopName,
+        platform: siteCreationForm.platform,
+        productCategory: siteCreationForm.category,
+        hasBranding: siteCreationForm.branding,
       })
 
       // Notify admin via N8N webhook (silent, client doesn't know)
@@ -592,25 +566,26 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const selectedOrder = orders.find(o => o.id === selectedOrderId)
   const catalog = getCatalog(profile?.tier_key || DEFAULT_TIER.key)
 
-  // ─── Shared input style — editorial ───
+  // ─── Shared input style — cinematic ───
   const inputStyle = {
     padding: `11px ${sp[2]}`,
     background: c.bgInput,
     border: `1px solid ${c.borderSubtle}`,
-    borderRadius: radius.xs,
+    borderRadius: radius.sm,
     color: c.text,
     fontFamily: f.body,
     fontSize: size.sm,
-    transition: `border-color 0.2s ${ease.luxury}`,
+    transition: `all 0.25s ${ease.luxury}`,
     outline: 'none',
     letterSpacing: '0.01em',
+    boxShadow: shadow.inner,
   }
 
   const btnPrimary = {
     padding: `10px ${sp[3]}`,
     background: c.gold,
     border: `1px solid ${c.gold}`,
-    borderRadius: radius.xs,
+    borderRadius: radius.sm,
     color: c.black,
     fontFamily: f.body,
     fontWeight: 600,
@@ -618,13 +593,14 @@ export default function Dashboard({ user, profile, onSignOut }) {
     cursor: 'pointer',
     letterSpacing: '0.03em',
     transition: `all 0.25s ${ease.luxury}`,
+    boxShadow: `0 2px 8px rgba(196, 163, 90, 0.2)`,
   }
 
   const btnSecondary = {
     padding: `10px ${sp[3]}`,
     background: 'transparent',
-    border: `1px solid ${c.borderSubtle}`,
-    borderRadius: radius.xs,
+    border: `1px solid ${c.border}`,
+    borderRadius: radius.sm,
     color: c.textSecondary,
     fontFamily: f.body,
     fontSize: size.sm,
@@ -651,26 +627,63 @@ export default function Dashboard({ user, profile, onSignOut }) {
         input:focus, textarea:focus, select:focus {
           outline: none;
           border-color: ${c.goldDim} !important;
-          box-shadow: 0 0 0 1px oklch(76% 0.13 85 / 0.05);
+          box-shadow: 0 0 0 1px rgba(196, 163, 90, 0.08);
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${c.borderSubtle}; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: ${c.borderLight}; }
+        @media (max-width: 768px) {
+          .dashboard-metrics-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .dashboard-content-area { padding: ${sp[3]} ${sp[2]} !important; }
+          .dashboard-orders-grid { grid-template-columns: 1fr !important; }
+          .dashboard-services-grid { grid-template-columns: 1fr !important; }
+          .dashboard-2col { grid-template-columns: 1fr !important; }
+          .dashboard-detail-info { grid-template-columns: 1fr 1fr !important; }
+          .dashboard-modal-inner {
+            max-width: 100% !important; width: 100% !important;
+            border-radius: 0 !important; min-height: 100vh !important;
+            padding: ${sp[4]} ${sp[3]} !important;
+          }
+          .dashboard-modal-overlay {
+            align-items: flex-start !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .dashboard-metrics-grid { grid-template-columns: 1fr !important; }
+          .dashboard-detail-info { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
-      {/* ─── SIDEBAR — minimal editorial ─── */}
+      {/* ─── MOBILE BACKDROP ─── */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.7)',
+            zIndex: 49, backdropFilter: 'blur(2px)',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        />
+      )}
+
+      {/* ─── SIDEBAR — cinematic noir ─── */}
       <div style={{
-        width: sidebarOpen ? 220 : 0,
-        background: c.bg,
-        borderRight: `1px solid ${c.borderSubtle}`,
+        width: isMobile ? 260 : (sidebarOpen ? 220 : 0),
+        background: gradient.sidebar,
+        borderRight: `1px solid ${c.border}`,
         overflow: 'hidden',
-        transition: `width 0.4s ${ease.luxury}`,
+        transition: isMobile ? `transform 0.35s ${ease.luxury}` : `width 0.4s ${ease.luxury}`,
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative',
-        zIndex: 10,
+        position: isMobile ? 'fixed' : 'relative',
+        top: isMobile ? 0 : undefined,
+        left: isMobile ? 0 : undefined,
+        height: isMobile ? '100vh' : undefined,
+        transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : undefined,
+        zIndex: isMobile ? 50 : 10,
         flexShrink: 0,
+        boxShadow: isMobile && sidebarOpen ? '8px 0 32px rgba(6, 5, 4, 0.5)' : '4px 0 16px rgba(6, 5, 4, 0.25)',
       }}>
         {/* Sidebar Header */}
         <div style={{
@@ -703,7 +716,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
           }).map(({ key, label, icon }) => (
             <button
               key={key}
-              onClick={() => { setViewMode(key); setSelectedOrderId(null) }}
+              onClick={() => { setViewMode(key); setSelectedOrderId(null); if (isMobile) setSidebarOpen(false) }}
               style={{
                 padding: `9px ${sp[2]}`,
                 background: viewMode === key ? c.bgSurface : 'transparent',
@@ -724,7 +737,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
               }}
               onMouseEnter={(e) => { if (viewMode !== key) e.currentTarget.style.color = c.textSecondary }}
               onMouseLeave={(e) => { if (viewMode !== key) e.currentTarget.style.color = c.textTertiary }}>
-              {viewMode === key && <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '2px', height: 14, background: c.gold, borderRadius: radius.pill }} />}
+              {viewMode === key && <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '2px', height: 16, background: c.gold, borderRadius: radius.pill, boxShadow: `0 0 8px rgba(196, 163, 90, 0.25)` }} />}
               <Icon d={icon} size={16} color={viewMode === key ? c.gold : 'currentColor'} sw={viewMode === key ? 1.8 : 1.3} />
               {label}
             </button>
@@ -782,11 +795,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
       {/* ─── MAIN CONTENT ─── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
-        {/* HEADER — clean, editorial */}
+        {/* HEADER — cinematic depth */}
         <div style={{
-          background: c.bg,
-          borderBottom: `1px solid ${c.borderSubtle}`,
-          padding: `0 ${sp[4]}`,
+          background: c.bgSurface,
+          borderBottom: `1px solid ${c.border}`,
+          padding: isMobile ? `0 ${sp[2]}` : `0 ${sp[4]}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -794,6 +807,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
           zIndex: 5,
           height: 52,
           flexShrink: 0,
+          boxShadow: '0 2px 8px rgba(6, 5, 4, 0.2)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
@@ -816,21 +830,21 @@ export default function Dashboard({ user, profile, onSignOut }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: sp[2], alignItems: 'center' }}>
-            <LocaleAndPwaControls compact />
+          <div style={{ display: 'flex', gap: isMobile ? sp[1] : sp[2], alignItems: 'center' }}>
+            {!isMobile && <LocaleAndPwaControls compact />}
 
-            {orders.filter(o => o.status !== 'delivered').length > 0 && (
+            {!isMobile && activeOrders.length > 0 && (
               <span style={{
                 padding: `3px 8px`, borderRadius: radius.xs,
                 background: c.redSoft, color: c.red,
                 fontSize: '9px', fontWeight: 600, fontFamily: f.mono, letterSpacing: '0.06em',
               }}>
-                {orders.filter(o => o.status !== 'delivered').length} en cours
+                {activeOrders.length} en cours
               </span>
             )}
 
             <button onClick={() => setIsNewOrderOpen(true)} style={{
-              padding: `6px 14px`,
+              padding: isMobile ? '6px 10px' : `6px 14px`,
               background: 'transparent',
               border: `1px solid ${c.borderLight}`,
               borderRadius: radius.xs,
@@ -846,13 +860,13 @@ export default function Dashboard({ user, profile, onSignOut }) {
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.color = c.gold }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.borderLight; e.currentTarget.style.color = c.text }}>
               <Icon d={icons.plus} size={13} color="currentColor" sw={1.8} />
-              {t('dashboard.newOrder')}
+              {!isMobile && t('dashboard.newOrder')}
             </button>
           </div>
         </div>
 
         {/* CONTENT AREA */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: `${sp[4]} ${sp[5]}`, position: 'relative', zIndex: 1 }}>
+        <div className="dashboard-content-area" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? `${sp[3]} ${sp[2]}` : `${sp[4]} ${sp[5]}`, position: 'relative', zIndex: 1 }}>
           {viewMode === 'overview' ? (
             <div style={{ maxWidth: 1080, margin: '0 auto' }}>
               {/* Hero welcome — editorial */}
@@ -864,13 +878,13 @@ export default function Dashboard({ user, profile, onSignOut }) {
                 />
               </AnimCard>
 
-              {/* Metric Row — flat, editorial */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', marginBottom: sp[6], background: c.borderSubtle, borderRadius: radius.sm, overflow: 'hidden' }}>
+              {/* Metric Row — cinematic depth */}
+              <div className="dashboard-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1px', marginBottom: sp[6], background: c.borderSubtle, borderRadius: radius.md, overflow: 'hidden', boxShadow: shadow.sm }}>
                 {[
-                  { label: t('dashboard.activeOrders'), value: orders.filter(o => o.status !== 'delivered').length, accent: c.red },
+                  { label: t('dashboard.activeOrders'), value: activeOrders.length, accent: c.red },
                   { label: t('dashboard.shipments'), value: shipments.length, accent: c.teal },
                   { label: t('dashboard.activeServices'), value: ecomServices.length, accent: c.purple },
-                  { label: t('nav.formation'), value: ecomServices.filter(s => s.service_type === 'formation').length > 0 ? t('dashboard.active') : '\u2014', accent: c.gold },
+                  { label: t('nav.formation'), value: formationServices.length > 0 ? t('dashboard.active') : '\u2014', accent: c.gold },
                 ].map(({ label, value, accent }, idx) => (
                   <AnimCard key={label} delay={idx * 60}>
                     <div style={{ padding: `${sp[3]} ${sp[3]}`, background: c.bg }}>
@@ -880,6 +894,54 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   </AnimCard>
                 ))}
               </div>
+
+              {/* Économies cumulées — ROI widget */}
+              {deliveredOrders.length > 0 && (
+                <AnimCard delay={300}>
+                  <div style={{
+                    marginBottom: sp[6], padding: `${sp[4]} ${sp[5]}`,
+                    background: `linear-gradient(160deg, ${c.bgCard} 0%, ${c.bg} 100%)`, border: `1px solid ${c.borderGold}`,
+                    borderRadius: radius.md, position: 'relative', overflow: 'hidden',
+                    boxShadow: `${shadow.md}, ${shadow.gold}`,
+                  }}>
+                    <div style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+                      background: `linear-gradient(90deg, ${c.gold}, ${c.red})`,
+                    }} />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: sp[3] }}>
+                      <div>
+                        <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.goldDim, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: sp[1], fontWeight: 600 }}>
+                          Économies cumulées avec CARAXES
+                        </div>
+                        <div style={{ fontFamily: f.display, fontSize: size['3xl'], fontWeight: 700, color: c.gold, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                          {(() => {
+                            const totalBudget = deliveredOrders.reduce((sum, o) => sum + (typeof o.budget === 'number' ? o.budget : parseFloat(String(o.budget || '0').replace(/[^\d.]/g, '')) || 0), 0)
+                            const savings = Math.round(totalBudget * 0.35)
+                            return savings > 0 ? savings.toLocaleString('fr-FR') + '\u00A0€' : '—'
+                          })()}
+                        </div>
+                        <div style={{ fontFamily: f.body, fontSize: size.xs, color: c.textTertiary, marginTop: sp[1] }}>
+                          ~35% d'économie moyenne vs achat direct
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: sp[4], flexWrap: 'wrap' }}>
+                        <div>
+                          <div style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: c.text, letterSpacing: '-0.02em' }}>
+                            {deliveredOrders.length}
+                          </div>
+                          <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Commandes livrées</div>
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: f.display, fontSize: size.xl, fontWeight: 700, color: c.green, letterSpacing: '-0.02em' }}>
+                            100%
+                          </div>
+                          <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Conformité qualité</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </AnimCard>
+              )}
 
               {/* Active Services Summary */}
               {ecomServices.length > 0 && (
@@ -981,7 +1043,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
               </AnimCard>
             </div>
           ) : viewMode === 'orders' ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[4], maxWidth: 1300, margin: '0 auto' }}>
+            <div className="dashboard-orders-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: sp[4], maxWidth: 1300, margin: '0 auto' }}>
               {/* Orders List */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: sp[1.5], marginBottom: sp[3] }}>
@@ -1003,19 +1065,41 @@ export default function Dashboard({ user, profile, onSignOut }) {
                 )}
               </div>
 
-              {/* Order Detail Panel */}
+              {/* Order Detail Panel — fullscreen modal on mobile */}
+              {isMobile && selectedOrderId && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.7)', zIndex: 100, backdropFilter: 'blur(2px)' }} onClick={() => setSelectedOrderId(null)} />
+              )}
               <GlassCard hoverLift={false} goldTop={true} style={{
                 padding: sp[3],
-                maxHeight: 'calc(100vh - 260px)',
+                maxHeight: isMobile ? '85vh' : 'calc(100vh - 260px)',
                 overflowY: 'auto',
-                position: 'sticky',
-                top: 0,
-                borderRadius: radius.lg,
+                position: isMobile ? 'fixed' : 'sticky',
+                top: isMobile ? 'auto' : 0,
+                bottom: isMobile ? 0 : undefined,
+                left: isMobile ? 0 : undefined,
+                right: isMobile ? 0 : undefined,
+                borderRadius: isMobile ? `${radius.lg} ${radius.lg} 0 0` : radius.lg,
+                zIndex: isMobile ? 101 : undefined,
+                transform: isMobile && !selectedOrderId ? 'translateY(100%)' : 'translateY(0)',
+                transition: `transform 0.35s ${ease.luxury}`,
+                display: isMobile && !selectedOrderId ? 'none' : undefined,
               }}>
+                {/* Mobile close handle */}
+                {isMobile && selectedOrderId && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: sp[2] }}>
+                    <div onClick={() => setSelectedOrderId(null)} style={{ width: 40, height: 4, background: c.borderLight, borderRadius: radius.pill, cursor: 'pointer' }} />
+                  </div>
+                )}
                 {!selectedOrder ? (
                   <DragonEmptyState text="Sélectionnez une commande" sub="pour voir les détails, messages et documents" />
                 ) : (
                   <>
+                    {isMobile && (
+                      <button onClick={() => setSelectedOrderId(null)} style={{
+                        position: 'absolute', top: sp[2], right: sp[2], background: 'none', border: 'none',
+                        color: c.textTertiary, cursor: 'pointer', padding: sp[0.5], zIndex: 2,
+                      }}><Icon d={icons.close} size={18} /></button>
+                    )}
                     <div style={{ marginBottom: sp[3] }}>
                       <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.goldDim, marginBottom: sp[1], letterSpacing: '0.1em', fontWeight: 600 }}>{selectedOrder.ref}</div>
                       <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.text, margin: `0 0 ${sp[2]}` }}>{selectedOrder.product}</h3>
@@ -1025,7 +1109,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     <ArtDecoDivider />
 
                     {/* Info */}
-                    <div style={{ marginTop: sp[3], marginBottom: sp[3], display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
+                    <div className="dashboard-detail-info" style={{ marginTop: sp[3], marginBottom: sp[3], display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
                       <div style={{ padding: sp[2], background: c.bgInput, borderRadius: radius.lg }}>
                         <div style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[0.5] }}>QUANTITE</div>
                         <div style={{ fontSize: size.md, fontWeight: 600, color: c.text }}>{fmtQty(selectedOrder.quantity)}</div>
@@ -1098,7 +1182,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                     {/* Documents */}
                     {documents.length > 0 && (
                       <div>
-                        <h4 style={{ fontFamily: f.display, fontSize: size.base, color: c.text, marginBottom: sp[2], fontWeight: 600 }}>Documents</h4>
+                        <h4 style={{ fontFamily: f.display, fontSize: size.base, color: c.text, marginBottom: sp[2], fontWeight: 600 }}>Certificats & Conformité</h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1.5] }}>
                           {documents.map(doc => (
                             <DocumentCard key={doc.id} doc={doc} onDownload={() => handleDownloadDocument(doc)} />
@@ -1617,11 +1701,11 @@ export default function Dashboard({ user, profile, onSignOut }) {
               )}
 
               {/* ─── MES BOUTIQUES ─── */}
-              {ecomServices.filter(s => s.service_type === 'creation').length > 0 && (
+              {creationServices.length > 0 && (
                 <div style={{ marginTop: sp[5] }}>
                   <h2 style={{ fontFamily: f.display, fontSize: size.lg, color: c.text, marginBottom: sp[3], fontWeight: 600, letterSpacing: '-0.01em' }}>Mes boutiques</h2>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
-                    {ecomServices.filter(s => s.service_type === 'creation').map(svc => {
+                    {creationServices.map(svc => {
                       const svcType = SERVICE_TYPES.creation
                       const stepIdx = Math.max(0, svcType.steps.findIndex(s => s.key === svc.status))
                       return (
@@ -1655,13 +1739,16 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
       {/* ─── NEW ORDER MODAL ─── */}
       {isNewOrderOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
+        <div className="dashboard-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsNewOrderOpen(false) }}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.borderSubtle}`,
-            borderRadius: radius.sm, padding: sp[5], maxWidth: 440, width: '90%',
+          <div className="dashboard-modal-inner" style={{
+            background: `linear-gradient(180deg, ${c.bgElevated} 0%, ${c.bgCard} 100%)`, border: `1px solid ${c.border}`,
+            borderTop: `2px solid ${c.goldDim}`,
+            borderRadius: isMobile ? 0 : radius.lg, padding: isMobile ? `${sp[4]} ${sp[3]}` : sp[5], maxWidth: isMobile ? '100%' : 440, width: isMobile ? '100%' : '90%',
+            minHeight: isMobile ? '100vh' : undefined,
             animation: `cardReveal 0.3s ${ease.luxury}`,
             position: 'relative',
+            boxShadow: shadow.xl,
           }}>
             <button onClick={() => setIsNewOrderOpen(false)} style={{
               position: 'absolute', top: sp[2], right: sp[2], background: 'none', border: 'none',
@@ -1685,13 +1772,16 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
       {/* ─── SITE CREATION MODAL ─── */}
       {isEcomSiteCreationOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'oklch(4% 0.003 50 / 0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
+        <div className="dashboard-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) { setIsEcomSiteCreationOpen(false); setEcomStep(1) } }}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.borderSubtle}`,
-            borderRadius: radius.sm, padding: sp[5], maxWidth: 440, width: '90%',
+          <div className="dashboard-modal-inner" style={{
+            background: `linear-gradient(180deg, ${c.bgElevated} 0%, ${c.bgCard} 100%)`, border: `1px solid ${c.border}`,
+            borderTop: `2px solid ${c.goldDim}`,
+            borderRadius: isMobile ? 0 : radius.lg, padding: isMobile ? `${sp[4]} ${sp[3]}` : sp[5], maxWidth: isMobile ? '100%' : 440, width: isMobile ? '100%' : '90%',
+            minHeight: isMobile ? '100vh' : undefined,
             animation: `cardReveal 0.3s ${ease.luxury}`,
             position: 'relative',
+            boxShadow: shadow.xl,
           }}>
             <button onClick={() => { setIsEcomSiteCreationOpen(false); setEcomStep(1) }} style={{
               position: 'absolute', top: sp[2], right: sp[2], background: 'none', border: 'none',
@@ -1744,7 +1834,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
       {/* ─── FLOATING WHATSAPP BUTTON ─── */}
       <a href="https://wa.me/message/CARAXES" target="_blank" rel="noopener noreferrer" style={{
-        position: 'fixed', bottom: 20, right: 20, width: 44, height: 44,
+        position: 'fixed', bottom: isMobile ? 16 : 20, right: isMobile ? 16 : 20, width: 44, height: 44,
         background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center',
         borderRadius: radius.sm,
         zIndex: 999, boxShadow: '0 2px 8px rgba(37, 211, 102, 0.2)',

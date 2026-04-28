@@ -6,6 +6,7 @@ import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import { I18nProvider } from './lib/i18n.jsx'
 import CookieBanner from './components/CookieBanner'
+import { useSEO } from './hooks/useSEO'
 import Login from './pages/Login'
 
 /* ── LAZY LOADED PAGES ── */
@@ -20,9 +21,10 @@ const MentionsLegales = lazy(() => import('./pages/MentionsLegales'))
 const PolitiqueConfidentialite = lazy(() => import('./pages/PolitiqueConfidentialite'))
 const CGV = lazy(() => import('./pages/CGV'))
 
-/* ── SCROLL TO TOP ON ROUTE CHANGE ── */
+/* ── SCROLL TO TOP + DYNAMIC SEO ON ROUTE CHANGE ── */
 function ScrollToTop() {
   const { pathname } = useLocation()
+  useSEO()
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])

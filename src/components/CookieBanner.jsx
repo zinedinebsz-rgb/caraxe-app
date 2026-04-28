@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { c, f, size, sp } from '../lib/theme'
+import { c, f, size, sp, ease } from '../lib/theme'
 
 export default function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false)
@@ -22,7 +22,8 @@ export default function CookieBanner() {
     // Google Analytics tracking code
     const script1 = document.createElement('script')
     script1.async = true
-    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX'
+    const gaId = import.meta.env.VITE_GA_ID || 'G-4CF503MJ7G'
+    script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
     document.head.appendChild(script1)
 
     window.dataLayer = window.dataLayer || []
@@ -31,7 +32,7 @@ export default function CookieBanner() {
     }
     window.gtag = gtag
     gtag('js', new Date())
-    gtag('config', 'G-XXXXXXXXXX')
+    gtag('config', gaId)
   }
 
   const handleAccept = () => {
@@ -111,7 +112,7 @@ export default function CookieBanner() {
               fontWeight: 600,
               fontFamily: f.body,
               cursor: 'pointer',
-              transition: `all 0.2s ${c.ease}`,
+              transition: `all 0.2s ${ease.smooth}`,
               borderRadius: '2px',
             }}
             onMouseEnter={(e) => {

@@ -9,12 +9,12 @@ const keyframes = `
 @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
 @keyframes slideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
 
-.set-root { height:100vh; display:flex; flex-direction:column; background:oklch(7% 0.005 50); font-family:'DM Sans',sans-serif; color:oklch(93% 0.01 70) }
+.set-root { height:100vh; display:flex; flex-direction:column; background:#0a0908; font-family:'DM Sans',sans-serif; color:#ede9e5 }
 .set-root *,:after,:before { box-sizing:border-box }
 .set-scroll { flex:1; overflow-y:auto; min-height:0 }
 .set-scroll::-webkit-scrollbar { width:4px }
 .set-scroll::-webkit-scrollbar-track { background:transparent }
-.set-scroll::-webkit-scrollbar-thumb { background:oklch(22% 0.008 50) }
+.set-scroll::-webkit-scrollbar-thumb { background:#3a3733 }
 
 .set-input { width:100%; padding:12px 14px; font-size:14px; font-family:'DM Sans',sans-serif; background:${c.bgInput}; border:none; border-bottom:1.5px solid ${c.border}; border-radius:${radius.xs} ${radius.xs} 0 0; color:${c.text}; outline:none; transition:all 0.25s cubic-bezier(0.22,0.61,0.36,1); letter-spacing:0.01em }
 .set-input:focus { border-bottom-color:${c.gold}; box-shadow:0 1px 0 0 ${c.gold} }
@@ -96,7 +96,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
       await updateProfile(user.id, formData)
       setSaved(true)
       if (onUpdate) onUpdate()
-      toast.success('Profil sauvegarde')
+      toast.success('Profil sauvegardé')
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde.')
     }

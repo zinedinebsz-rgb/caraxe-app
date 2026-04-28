@@ -29,9 +29,9 @@ const ICONS = {
 }
 
 const COLORS = {
-  success: { bg: 'oklch(72% 0.16 155 / 0.12)', border: 'oklch(72% 0.16 155 / 0.25)', color: 'oklch(72% 0.16 155)' },
-  error:   { bg: 'oklch(55% 0.22 25 / 0.12)', border: 'oklch(55% 0.22 25 / 0.25)', color: 'oklch(55% 0.22 25)' },
-  info:    { bg: 'oklch(68% 0.15 250 / 0.12)', border: 'oklch(68% 0.15 250 / 0.25)', color: 'oklch(68% 0.15 250)' },
+  success: { bg: 'rgba(90, 170, 106, 0.12)', border: 'rgba(90, 170, 106, 0.25)', color: '#5aaa6a' },
+  error:   { bg: 'rgba(196, 58, 47, 0.12)', border: 'rgba(196, 58, 47, 0.25)', color: '#c43a2f' },
+  info:    { bg: 'rgba(90, 138, 196, 0.12)', border: 'rgba(90, 138, 196, 0.25)', color: '#5a8ac4' },
 }
 
 function ToastItem({ toast, onDismiss }) {

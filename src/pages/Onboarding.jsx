@@ -19,7 +19,7 @@ const keyframes = `
 .ob-root { position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
 .ob-root::-webkit-scrollbar { width:4px }
 .ob-root::-webkit-scrollbar-track { background:transparent }
-.ob-root::-webkit-scrollbar-thumb { background:oklch(22% 0.008 50); border-radius:2px }
+.ob-root::-webkit-scrollbar-thumb { background:#2a2825; border-radius:2px }
 
 .ob-tier-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:16px }
 .ob-catalog-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px }
@@ -40,21 +40,21 @@ const keyframes = `
 
 .ob-input { width:100%; padding:14px 16px; font-size:14px; font-family:'DM Sans',sans-serif; background:${c.bgInput}; border:1px solid ${c.borderSubtle}; border-bottom:2px solid ${c.border}; border-radius:${radius.sm}; color:${c.text}; outline:none; transition:all 0.2s cubic-bezier(0.4,0,0.2,1); box-sizing:border-box; letter-spacing:0.01em }
 .ob-input:focus { border-color:${c.borderSubtle}; border-bottom-color:${c.gold}; box-shadow:none }
-.ob-input::placeholder { color:oklch(35% 0.01 55) }
+.ob-input::placeholder { color:#59524a }
 
-.ob-btn-primary { padding:14px 32px; background:oklch(55% 0.22 25); border:1px solid oklch(55% 0.22 25); border-radius:${radius.md}; color:oklch(98% 0.005 70); font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
-.ob-btn-primary:hover { background:oklch(45% 0.20 25); box-shadow:0 0 24px oklch(55% 0.22 25 / 0.15) }
+.ob-btn-primary { padding:14px 32px; background:#c43a2f; border:1px solid #c43a2f; border-radius:${radius.md}; color:#fdfcfa; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
+.ob-btn-primary:hover { background:#a33229; box-shadow:0 0 24px rgba(196, 58, 47, 0.15) }
 .ob-btn-primary:active { transform:scale(0.98) }
 
-.ob-btn-gold { padding:14px 32px; background:oklch(75% 0.12 85); border:1px solid oklch(75% 0.12 85); border-radius:${radius.md}; color:oklch(5% 0.005 50); font-size:14px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
-.ob-btn-gold:hover { background:oklch(65% 0.10 85); box-shadow:0 0 20px oklch(75% 0.12 85 / 0.12) }
+.ob-btn-gold { padding:14px 32px; background:#c4a35a; border:1px solid #c4a35a; border-radius:${radius.md}; color:#0f0e0d; font-size:14px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:0.02em; transition:all 0.25s cubic-bezier(0.16,1,0.3,1) }
+.ob-btn-gold:hover { background:#ad8e4a; box-shadow:0 0 20px rgba(196, 163, 90, 0.12) }
 .ob-btn-gold:active { transform:scale(0.98) }
 .ob-btn-gold:disabled { opacity:0.4; cursor:not-allowed }
 
-.ob-btn-secondary { padding:14px 24px; background:transparent; border:1px solid oklch(22% 0.008 50); border-radius:${radius.md}; color:oklch(62% 0.015 60); font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:500; transition:all 0.2s cubic-bezier(0.4,0,0.2,1) }
-.ob-btn-secondary:hover { border-color:oklch(45% 0.01 55); color:oklch(93% 0.01 70) }
+.ob-btn-secondary { padding:14px 24px; background:transparent; border:1px solid #2a2825; border-radius:${radius.md}; color:#7a7268; font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:500; transition:all 0.2s cubic-bezier(0.4,0,0.2,1) }
+.ob-btn-secondary:hover { border-color:#6b614f; color:#ede6dc }
 
-.ob-nav { position:fixed; bottom:0; left:0; right:0; z-index:100; padding:16px 24px; background:oklch(7% 0.005 50 / 0.92); backdrop-filter:blur(16px); border-top:1px solid oklch(22% 0.008 50 / 0.5); border-radius:${radius.xl} ${radius.xl} 0 0; display:flex; justify-content:space-between; align-items:center }
+.ob-nav { position:fixed; bottom:0; left:0; right:0; z-index:100; padding:16px 24px; background:rgba(12, 11, 10, 0.92); backdrop-filter:blur(16px); border-top:1px solid rgba(42, 40, 37, 0.5); border-radius:${radius.xl} ${radius.xl} 0 0; display:flex; justify-content:space-between; align-items:center }
 `
 
 const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnees']

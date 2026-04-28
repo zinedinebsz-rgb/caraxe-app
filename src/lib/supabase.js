@@ -34,10 +34,6 @@ export async function resetPassword(email) {
   })
 }
 
-export async function adminSetPassword(userId, newPassword) {
-  return supabase.auth.admin.updateUserById(userId, { password: newPassword })
-}
-
 export async function updateUserPassword(newPassword) {
   return supabase.auth.updateUser({ password: newPassword })
 }
@@ -71,7 +67,8 @@ export async function signOut() {
 }
 
 export async function getSession() {
-  const { data } = await supabase.auth.getSession()
+  const { data, error } = await supabase.auth.getSession()
+  if (error) { console.error('getSession error:', error); return null }
   return data.session
 }
 
@@ -157,18 +154,20 @@ export async function getOrders(clientId = null) {
 }
 
 export async function createOrder({ clientId, product, quantity, budget, deadline, notes }) {
-  // Generate unique ref: CRX-XXXXXX (timestamp-based)
+  requireFields({ clientId, product }, ['clientId', 'product'])
+  maxLength(product, 500, 'Produit')
+  maxLength(notes, 5000, 'Notes')
   const ref = 'CRX-' + String(Date.now()).slice(-6) + String(Math.floor(Math.random() * 100)).padStart(2, '0')
   const { data, error } = await supabase
     .from('orders')
     .insert({
       client_id: clientId,
       ref,
-      product,
+      product: sanitize(product),
       quantity: parseInt(quantity) || 0,
-      budget: budget || 'À définir',
-      deadline: deadline || 'À définir',
-      notes,
+      budget: sanitize(budget) || 'À définir',
+      deadline: sanitize(deadline) || 'À définir',
+      notes: sanitize(notes),
       status: 0,
     })
     .select()
@@ -178,9 +177,10 @@ export async function createOrder({ clientId, product, quantity, budget, deadlin
 }
 
 export async function updateOrder(orderId, updates) {
+  if (!orderId) throw new Error('orderId requis')
   const { data, error } = await supabase
     .from('orders')
-    .update(updates)
+    .update(sanitizeObj(updates))
     .eq('id', orderId)
     .select()
     .single()
@@ -205,15 +205,17 @@ export async function getMessages(orderId) {
 }
 
 export async function sendMessage({ orderId, senderId, senderRole, content, attachmentUrl, attachmentName }) {
+  requireFields({ orderId, senderId, senderRole }, ['orderId', 'senderId', 'senderRole'])
+  maxLength(content, 10000, 'Message')
   const { data, error } = await supabase
     .from('messages')
     .insert({
       order_id: orderId,
       sender_id: senderId,
-      sender_role: senderRole,
-      content,
+      sender_role: sanitize(senderRole),
+      content: sanitize(content),
       attachment_url: attachmentUrl || null,
-      attachment_name: attachmentName || null,
+      attachment_name: sanitize(attachmentName) || null,
     })
     .select()
     .single()
@@ -255,6 +257,7 @@ export async function getDocuments(orderId) {
 }
 
 export async function uploadDocument(orderId, file, uploaderId) {
+  validateFile(file)
   const path = `${orderId}/${Date.now()}-${file.name}`
   const { error: uploadError } = await supabase.storage
     .from('documents')
@@ -375,6 +378,71 @@ export function subscribeToNewEcomServices(callback) {
     .subscribe()
 }
 
+// ─── VALIDATION & SANITIZATION ───
+
+/** Strip HTML tags to prevent XSS — keeps plain text only */
+function sanitize(str) {
+  if (typeof str !== 'string') return str
+  return str
+    .replace(/<[^>]*>/g, '')         // strip HTML tags
+    .replace(/javascript:/gi, '')     // strip JS protocol
+    .replace(/on\w+\s*=/gi, '')       // strip event handlers
+    .trim()
+}
+
+/** Sanitize all string values in an object (shallow) */
+function sanitizeObj(obj) {
+  if (!obj || typeof obj !== 'object') return obj
+  const clean = {}
+  for (const [k, v] of Object.entries(obj)) {
+    clean[k] = typeof v === 'string' ? sanitize(v) : v
+  }
+  return clean
+}
+
+/** Validate required fields — throws if any are missing/empty */
+function requireFields(obj, fields) {
+  for (const f of fields) {
+    if (obj[f] === undefined || obj[f] === null || obj[f] === '') {
+      throw new Error(`Champ requis manquant : ${f}`)
+    }
+  }
+}
+
+/** Validate string max length */
+function maxLength(str, max, fieldName) {
+  if (typeof str === 'string' && str.length > max) {
+    throw new Error(`${fieldName} dépasse la limite de ${max} caractères`)
+  }
+}
+
+/** Validate email format */
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+// ── File upload validation ──
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  // SVG removed — stored XSS risk (embedded <script> tags execute in browser)
+  'application/pdf',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv', 'text/plain',
+]
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
+export function validateFile(file) {
+  if (!file) throw new Error('Aucun fichier sélectionné')
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    throw new Error(`Type de fichier non autorisé : ${file.type}. Types acceptés : images, PDF, Word, Excel, CSV.`)
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`Fichier trop volumineux (${formatFileSize(file.size)}). Maximum : ${formatFileSize(MAX_FILE_SIZE)}.`)
+  }
+  return true
+}
+
 // ─── UTILS ───
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' o'
@@ -384,9 +452,10 @@ function formatFileSize(bytes) {
 
 // ─── UPDATE PROFILE ───
 export async function updateProfile(userId, updates) {
+  if (!userId) throw new Error('userId requis')
   const { data, error } = await supabase
     .from('profiles')
-    .update(updates)
+    .update(sanitizeObj(updates))
     .eq('id', userId)
     .select()
     .single()
@@ -395,10 +464,13 @@ export async function updateProfile(userId, updates) {
 }
 
 // ─── ALL PROFILES (admin) ───
+// Select only fields needed for admin views — no raw passwords or sensitive metadata
+const ADMIN_PROFILE_FIELDS = 'id, email, full_name, role, client_tier, phone, company, city, country, avatar_url, onboarding_done, created_at, updated_at'
+
 export async function getAllClients() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(ADMIN_PROFILE_FIELDS)
     .eq('role', 'client')
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -408,7 +480,7 @@ export async function getAllClients() {
 export async function getAllProfiles() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(ADMIN_PROFILE_FIELDS)
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []
@@ -424,13 +496,14 @@ export async function getShipments(clientId = null) {
 }
 
 export async function createShipment(shipment) {
-  const { data, error } = await supabase.from('shipments').insert(shipment).select().single()
+  const { data, error } = await supabase.from('shipments').insert(sanitizeObj(shipment)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateShipment(id, updates) {
-  const { data, error } = await supabase.from('shipments').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('shipment id requis')
+  const { data, error } = await supabase.from('shipments').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -450,13 +523,14 @@ export async function getInventory(clientId = null) {
 }
 
 export async function updateInventoryItem(id, updates) {
-  const { data, error } = await supabase.from('inventory').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('inventory id requis')
+  const { data, error } = await supabase.from('inventory').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
 
 export async function createInventoryItem(item) {
-  const { data, error } = await supabase.from('inventory').insert(item).select().single()
+  const { data, error } = await supabase.from('inventory').insert(sanitizeObj(item)).select().single()
   if (error) throw error
   return data
 }
@@ -474,13 +548,14 @@ export async function getSuppliers() {
 }
 
 export async function createSupplier(supplier) {
-  const { data, error } = await supabase.from('suppliers').insert(supplier).select().single()
+  const { data, error } = await supabase.from('suppliers').insert(sanitizeObj(supplier)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateSupplier(id, updates) {
-  const { data, error } = await supabase.from('suppliers').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('supplier id requis')
+  const { data, error } = await supabase.from('suppliers').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -522,13 +597,14 @@ export async function getActiveProducts() {
 }
 
 export async function createProduct(product) {
-  const { data, error } = await supabase.from('products').insert(product).select().single()
+  const { data, error } = await supabase.from('products').insert(sanitizeObj(product)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateProduct(id, updates) {
-  const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('product id requis')
+  const { data, error } = await supabase.from('products').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -540,6 +616,10 @@ export async function deleteProduct(id) {
 
 // ─── PRODUCT IMAGE UPLOAD ───
 export async function uploadProductImage(file, productId) {
+  // Validate image files specifically
+  const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!imageTypes.includes(file.type)) throw new Error('Seules les images sont autorisées (JPEG, PNG, WebP, GIF)')
+  if (file.size > 5 * 1024 * 1024) throw new Error('Image trop volumineuse (max 5 Mo)')
   const ext = file.name.split('.').pop()
   const path = `${productId}/${Date.now()}.${ext}`
   const { data, error } = await supabase.storage.from('products').upload(path, file, { cacheControl: '3600', upsert: false })
@@ -563,13 +643,14 @@ export async function getCategories() {
 }
 
 export async function createCategory(category) {
-  const { data, error } = await supabase.from('categories').insert(category).select().single()
+  const { data, error } = await supabase.from('categories').insert(sanitizeObj(category)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateCategory(id, updates) {
-  const { data, error } = await supabase.from('categories').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('category id requis')
+  const { data, error } = await supabase.from('categories').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -589,13 +670,14 @@ export async function getShops(clientId = null) {
 }
 
 export async function createShop(shop) {
-  const { data, error } = await supabase.from('shops').insert(shop).select().single()
+  const { data, error } = await supabase.from('shops').insert(sanitizeObj(shop)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateShop(id, updates) {
-  const { data, error } = await supabase.from('shops').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('shop id requis')
+  const { data, error } = await supabase.from('shops').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -615,13 +697,14 @@ export async function getEcomServices(clientId = null) {
 }
 
 export async function createEcomService(service) {
-  const { data, error } = await supabase.from('ecom_services').insert(service).select().single()
+  const { data, error } = await supabase.from('ecom_services').insert(sanitizeObj(service)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateEcomService(id, updates) {
-  const { data, error } = await supabase.from('ecom_services').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('ecom_service id requis')
+  const { data, error } = await supabase.from('ecom_services').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -636,7 +719,9 @@ export async function createEcomOrder({
   clientId, serviceType, pack, platform, shopName, productCategory,
   estimatedProducts, hasBranding, notes, paymentMethod, price, isRecurring, discountPct,
 }) {
-  // Generate virement reference if needed
+  requireFields({ clientId, serviceType }, ['clientId', 'serviceType'])
+  maxLength(shopName, 200, 'Nom de boutique')
+  maxLength(notes, 5000, 'Notes')
   const virementRef = paymentMethod === 'virement'
     ? 'CRX-ECOM-' + String(Date.now()).slice(-6) + String(Math.floor(Math.random() * 100)).padStart(2, '0')
     : null
@@ -645,15 +730,15 @@ export async function createEcomOrder({
     .from('ecom_services')
     .insert({
       client_id: clientId,
-      service_type: serviceType,
-      pack: pack || 'custom',
-      platform: platform || 'undecided',
-      shop_name: shopName || null,
-      product_category: productCategory || null,
+      service_type: sanitize(serviceType),
+      pack: sanitize(pack) || 'custom',
+      platform: sanitize(platform) || 'undecided',
+      shop_name: sanitize(shopName) || null,
+      product_category: sanitize(productCategory) || null,
       estimated_products: estimatedProducts ? parseInt(estimatedProducts) : null,
       has_branding: hasBranding || false,
-      notes: notes || null,
-      payment_method: paymentMethod,
+      notes: sanitize(notes) || null,
+      payment_method: sanitize(paymentMethod),
       payment_status: 'pending',
       price: price || 0,
       currency: 'EUR',
@@ -679,13 +764,14 @@ export async function getLeads() {
 }
 
 export async function createLead(lead) {
-  const { data, error } = await supabase.from('leads').insert(lead).select().single()
+  const { data, error } = await supabase.from('leads').insert(sanitizeObj(lead)).select().single()
   if (error) throw error
   return data
 }
 
 export async function updateLead(id, updates) {
-  const { data, error } = await supabase.from('leads').update(updates).eq('id', id).select().single()
+  if (!id) throw new Error('lead id requis')
+  const { data, error } = await supabase.from('leads').update(sanitizeObj(updates)).eq('id', id).select().single()
   if (error) throw error
   return data
 }
@@ -732,4 +818,98 @@ export function subscribeToNewLeads(callback) {
 export async function sendWelcomeMessage(userId) {
   // No-op — welcome info is shown in the onboarding UI.
   return
+}
+
+// ─── ADMIN INTERNAL CHAT ───
+// Uses the existing messages table with a special order_id = 'admin-internal'
+const ADMIN_CHANNEL_ID = 'admin-internal'
+
+export async function getAdminMessages() {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('order_id', ADMIN_CHANNEL_ID)
+    .order('created_at', { ascending: true })
+    .limit(200)
+  if (error) throw error
+  return data || []
+}
+
+export async function sendAdminMessage({ senderId, senderName, content }) {
+  requireFields({ senderId, content }, ['senderId', 'content'])
+  maxLength(content, 10000, 'Message admin')
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      order_id: ADMIN_CHANNEL_ID,
+      sender_id: senderId,
+      sender_role: 'admin',
+      content: sanitize(content),
+      attachment_url: null,
+      attachment_name: null,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export function subscribeToAdminMessages(callback) {
+  return supabase
+    .channel('admin-internal-chat')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `order_id=eq.${ADMIN_CHANNEL_ID}`,
+    }, (payload) => callback(payload.new))
+    .subscribe()
+}
+
+// ─── TYPING INDICATOR (presence-based) ───
+export function subscribeToTyping(channelName, onPresenceChange) {
+  const channel = supabase.channel(channelName, {
+    config: { presence: { key: 'typing' } },
+  })
+  channel
+    .on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState()
+      onPresenceChange(state.typing || [])
+    })
+    .subscribe()
+  return channel
+}
+
+export async function setTypingPresence(channel, userId, userName, isTyping) {
+  if (isTyping) {
+    await channel.track({ user_id: userId, user_name: userName, typing: true })
+  } else {
+    await channel.untrack()
+  }
+}
+
+// ─── NOTIFICATION SOUND ───
+let notifAudio = null
+export function playNotificationSound() {
+  try {
+    if (!notifAudio) {
+      // Create a short beep using AudioContext
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      const oscillator = ctx.createOscillator()
+      const gain = ctx.createGain()
+      oscillator.connect(gain)
+      gain.connect(ctx.destination)
+      oscillator.frequency.value = 880
+      oscillator.type = 'sine'
+      gain.gain.value = 0.15
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+      oscillator.start(ctx.currentTime)
+      oscillator.stop(ctx.currentTime + 0.3)
+      return
+    }
+    notifAudio.currentTime = 0
+    notifAudio.play().catch(() => {})
+  } catch (e) {
+    // Silent fail — audio not supported
+  }
 }

@@ -1,5 +1,117 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://caraxes.fr</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://app.caraxes.fr</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Main site (Squarespace) -->
+  <url>
+    <loc>https://caraxes.fr</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- App dashboard (Vercel) -->
+  <url>
+    <loc>https://app.caraxes.fr</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Login -->
+  <url>
+    <loc>https://app.caraxes.fr/login</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Catalogue public -->
+  <url>
+    <loc>https://app.caraxes.fr/catalogue</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Pages cibles (Vercel) -->
+  <url>
+    <loc>https://app.caraxes.fr/particuliers.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://app.caraxes.fr/commercants.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blog SEO articles (Vercel — canonicals match) -->
+  <url>
+    <loc>https://app.caraxes.fr/blog-import-chine-france.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://app.caraxes.fr/og-image.jpg</image:loc>
+      <image:title>Guide import Chine France — CARAXES</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://app.caraxes.fr/blog-sourcing-halal.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://app.caraxes.fr/og-image.jpg</image:loc>
+      <image:title>Sourcing halal Chine — CARAXES</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://app.caraxes.fr/blog-ecommerce-fournisseur-chine.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://app.caraxes.fr/og-image.jpg</image:loc>
+      <image:title>E-commerce fournisseur Chine — CARAXES</image:title>
+    </image:image>
+  </url>
+
+  <!-- Blog directory articles -->
+  <url>
+    <loc>https://app.caraxes.fr/blog/agent-sourcing-chine-pourquoi.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://app.caraxes.fr/blog/importer-de-chine-guide-complet.html</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Pages légales -->
+  <url>
+    <loc>https://app.caraxes.fr/mentions-legales</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://app.caraxes.fr/politique-confidentialite</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://app.caraxes.fr/cgv</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
 </urlset>

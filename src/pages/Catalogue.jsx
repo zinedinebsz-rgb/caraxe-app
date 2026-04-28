@@ -9,11 +9,11 @@ const keyframes = `
 @keyframes slideUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
 @keyframes scaleIn { from { opacity:0; transform:scale(0.96) } to { opacity:1; transform:scale(1) } }
 
-.cat-root { min-height:100vh; background:oklch(7% 0.005 50); font-family:'DM Sans',sans-serif; color:oklch(93% 0.01 70) }
+.cat-root { min-height:100vh; background:#0a0908; font-family:'DM Sans',sans-serif; color:#ede9e5 }
 .cat-root *,:after,:before { box-sizing:border-box }
 .cat-root::-webkit-scrollbar { width:4px }
 .cat-root::-webkit-scrollbar-track { background:transparent }
-.cat-root::-webkit-scrollbar-thumb { background:oklch(22% 0.008 50) }
+.cat-root::-webkit-scrollbar-thumb { background:#3a3733 }
 
 .cat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px }
 .cat-tabs { display:flex; gap:6px; flex-wrap:wrap; justify-content:center }
@@ -323,6 +323,6 @@ export default function Catalogue() {
 /* ── Styles ── */
 const miniLabel = {
   fontSize:9, fontFamily:"'JetBrains Mono','SF Mono',monospace",
-  color:'oklch(45% 0.01 55)', textTransform:'uppercase',
+  color:'#6d6b68', textTransform:'uppercase',
   letterSpacing:'0.04em', marginBottom:3,
 }

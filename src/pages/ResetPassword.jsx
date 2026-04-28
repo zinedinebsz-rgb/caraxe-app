@@ -5,7 +5,7 @@ import { c, f, size, sp, ease, shadow, transition, gradient, radius } from '../l
 
 /* Dragon Mark */
 const DragonMark = ({ s = 44 }) => (
-  <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{ filter: `drop-shadow(0 0 12px oklch(55% 0.22 25 / 0.25))` }}>
+  <svg width={s} height={s} viewBox="0 0 44 44" fill="none" style={{ filter: `drop-shadow(0 0 12px rgba(196, 58, 47, 0.25))` }}>
     <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill={c.red} opacity="0.85"/>
     <path d="M22 3L13 12Q7 18 7 24Q7 32 13 36L17 39Q19 41 22 41Q25 41 27 39L31 36Q37 32 37 24Q37 18 31 12L22 3Z" fill="none" stroke={c.gold} strokeWidth="0.5" opacity="0.3"/>
     <circle cx="17.5" cy="21" r="2.2" fill={c.gold} opacity="0.9"/>

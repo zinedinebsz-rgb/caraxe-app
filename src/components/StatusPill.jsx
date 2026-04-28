@@ -31,7 +31,7 @@ export function ProgressBar({ value, color, height = 3 }) {
   return (
     <div style={{
       width: '100%', height,
-      background: 'oklch(15% 0.008 50)',
+      background: '#1c1a18',
       overflow: 'hidden',
     }}>
       <div style={{
@@ -96,7 +96,7 @@ export function PipelineStepper({ currentStatus, compact = false }) {
               }}>
                 {isDone && (
                   <svg width={compact ? 8 : 10} height={compact ? 8 : 10} viewBox="0 0 24 24"
-                    fill="none" stroke={isDone && i < 6 ? 'oklch(10% 0.005 50)' : c.white}
+                    fill="none" stroke={isDone && i < 6 ? '#131211' : c.white}
                     strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                     style={{ transform: 'rotate(-45deg)' }}>
                     <path d="M20 6L9 17l-5-5" />

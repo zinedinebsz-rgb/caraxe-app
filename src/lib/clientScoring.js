@@ -84,8 +84,8 @@ export function scoreCohort(clients = [], orders = []) {
 }
 
 export const SCORE_BAND_COLOR = {
-  A: 'oklch(72% 0.16 155)',    // green
-  B: 'oklch(75% 0.12 85)',     // gold
-  C: 'oklch(68% 0.15 250)',    // blue
-  D: 'oklch(62% 0.015 60)',    // grey (textSecondary)
+  A: '#5aaa6a',    // green
+  B: '#c4a35a',     // gold
+  C: '#5a8ac4',    // blue
+  D: '#8a8681',    // grey (textSecondary)
 }

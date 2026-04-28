@@ -13,6 +13,29 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('[CARAXES] Crash caught:', error, errorInfo)
+
+    // Send error to N8N webhook for monitoring (fire-and-forget)
+    const webhookUrl = import.meta.env.VITE_N8N_ERROR_WEBHOOK
+    if (webhookUrl) {
+      try {
+        const payload = {
+          app: 'caraxes-dashboard',
+          timestamp: new Date().toISOString(),
+          error: error?.message || 'Unknown error',
+          stack: error?.stack?.slice(0, 1000) || '',
+          component: errorInfo?.componentStack?.slice(0, 500) || '',
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+        }
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).catch(() => {}) // silently fail if webhook is down
+      } catch (_) {
+        // Never let error reporting break the app
+      }
+    }
   }
 
   render() {
