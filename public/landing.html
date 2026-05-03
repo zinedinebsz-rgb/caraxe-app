@@ -1726,10 +1726,12 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 }
 </script>
 </head>
+
 <body>
 
 <!-- SCROLL PROGRESS -->
 <div class="scroll-progress" id="scrollProgress"></div>
+
 
 <!-- NAV -->
 <nav class="nav" id="nav">
@@ -1739,10 +1741,9 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <span class="nav-brand">CARAXES</span>
     </a>
     <ul class="nav-links" id="navLinks">
-      <li><a href="#process">Processus</a></li>
       <li><a href="#sourcing">Sourcing</a></li>
+      <li><a href="#ecommerce">E-commerce</a></li>
       <li><a href="#vehicules">V&eacute;hicules</a></li>
-      <li><a href="#pricing">Tarifs</a></li>
       <li><a href="#calculateur">Simulateur</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li style="display:none;" class="nav-mobile-cta-li"><a href="javascript:void(0)" onclick="openForm('formComparatif')" class="nav-mobile-cta">D&eacute;marrer &rarr;</a></li>
@@ -1822,7 +1823,6 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   </div>
 </div>
 
-<!-- LUMINOUS SEPARATOR -->
 <div class="lum-sep"></div>
 
 <!-- PROCESS -->
@@ -1855,7 +1855,14 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   </div>
 </section>
 
-<div class="lum-sep lum-sep--green"></div>
+
+<div style="padding:var(--s12) 0 var(--s4); text-align:center;">
+  <div class="w" style="display:flex;align-items:center;gap:var(--s4);">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold), transparent);opacity:0.3;"></div>
+    <span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;">Sourcing Produits</span>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold), transparent);opacity:0.3;"></div>
+  </div>
+</div>
 
 <!-- SOURCING CATEGORIES -->
 <section class="section" id="sourcing">
@@ -2019,82 +2026,39 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   </div>
 </section>
 
-<div class="lum-sep"></div>
-
-<!-- VEHICLE EXPORT -->
-<section class="section" id="vehicules" style="position:relative; overflow:hidden;">
-  <div style="position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 40%, oklch(55% 0.22 25 / 0.04), transparent 60%), radial-gradient(ellipse 40% 50% at 20% 60%, oklch(75% 0.12 85 / 0.03), transparent 60%); pointer-events:none;"></div>
-  <div class="w" style="position:relative; z-index:2;">
-    <div class="section-tag rv" style="color:var(--red);">Nouveau service</div>
-    <h2 class="section-title rv rv-d1">Export de v&eacute;hicules, <em>vers le monde entier</em></h2>
-    <p class="section-sub rv rv-d2">Voitures neuves et d&rsquo;occasion, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. Surtout vers l&rsquo;Afrique, mais toute destination est possible.</p>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; margin-top:3rem;" class="rv rv-d3">
-      <!-- Card 1 -->
-      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--red); padding:2rem; position:relative;">
-        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--red); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">01 &mdash; Sourcing v&eacute;hicule</div>
-        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">S&eacute;lection sur place</h3>
-        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">On s&eacute;lectionne le v&eacute;hicule en personne dans les march&eacute;s auto chinois. Inspection m&eacute;canique, photos 360&deg;, historique v&eacute;rifi&eacute;.</p>
-      </div>
-      <!-- Card 2 -->
-      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--gold); padding:2rem; position:relative;">
-        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--gold); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">02 &mdash; Logistique</div>
-        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">Exp&eacute;dition RORO &amp; conteneur</h3>
-        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">Transport par navire roulier (RORO) ou conteneur ferm&eacute;. D&eacute;douanement export Chine et import destination g&eacute;r&eacute;s.</p>
-      </div>
-      <!-- Card 3 -->
-      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--emerald); padding:2rem; position:relative;">
-        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--emerald); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">03 &mdash; Destinations</div>
-        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">Afrique &amp; international</h3>
-        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">S&eacute;n&eacute;gal, C&ocirc;te d&rsquo;Ivoire, Congo, Cameroun, Maroc, Alg&eacute;rie&hellip; et toute autre destination sur demande.</p>
-      </div>
-    </div>
-    <!-- Types de véhicules -->
-    <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:2rem; justify-content:center;" class="rv rv-d4">
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Berlines</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">SUV</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Pick-up</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Utilitaires</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Mini-bus</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Pi&egrave;ces d&eacute;tach&eacute;es</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">&Eacute;lectriques</span>
-      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Camions</span>
-    </div>
-    <div style="text-align:center; margin-top:2.5rem;" class="rv rv-d5">
-      <a href="javascript:void(0)" onclick="openForm('formVehicule')" style="display:inline-block; font-size:var(--text-xs); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:var(--s3) var(--s8); background:var(--red); color:var(--text); text-decoration:none; box-shadow:0 0 16px oklch(55% 0.22 25 / 0.25); transition:background 0.3s, box-shadow 0.3s; cursor:pointer;">Demander un devis v&eacute;hicule &rarr;</a>
-    </div>
-  </div>
-</section>
-
 <div class="lum-sep lum-sep--green"></div>
 
-<!-- SHOWREEL -->
-<section class="showreel section" id="showreel">
-  <div class="w" style="text-align:center">
-    <div class="section-tag rv" style="justify-content:center">Le Dragon se r&eacute;veille</div>
-    <h2 class="section-title rv rv-d1" style="text-align:center">CARAXES arrive, <em>pr&eacute;parez-vous</em></h2>
-    <p class="section-sub rv rv-d2" style="margin-inline:auto">D&eacute;couvrez nos inspections usine en vid&eacute;o. Chaque lot est contr&ocirc;l&eacute; avant exp&eacute;dition.</p>
-    <div class="showreel-frame rv-scale rv-d3">
-      <video id="showreelVideo" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;z-index:1;">
-        <source src="https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Ff8e42dd5-fdd0-448e-a5e9-91e03303e2d5_seed1054894379.mp4" type="video/mp4">
-      </video>
-      <div class="showreel-inner" id="playVideo" role="button" tabindex="0" aria-label="Lancer la vid&eacute;o" style="position:relative;z-index:2;background:oklch(0% 0 0 / 0.35);">
-        <div class="play-btn">
-          <div class="play-arrow"></div>
-        </div>
-      </div>
-      <p style="font-size:0.7rem; color:var(--text-mid); margin-top:var(--s3); letter-spacing:0.04em;">CARAXES &mdash; Bient&ocirc;t sur vos &eacute;crans</p>
+<!-- COMPARISON -->
+<section class="section" id="compare">
+  <div class="w">
+    <div class="section-tag rv">Pourquoi un agent</div>
+    <h2 class="section-title rv rv-d1">Seul sur Alibaba vs <em>avec CARAXES</em></h2>
+    <p class="section-sub rv rv-d2">Alibaba c&rsquo;est bien pour chercher. Mais sans pr&eacute;sence terrain, vous payez le prix &laquo;&nbsp;export&nbsp;&raquo; et vous priez pour la qualit&eacute;.</p>
+    <div class="rv rv-d3" style="max-width:720px;">
+      <table class="compare-table">
+        <thead><tr><th></th><th>Seul sur Alibaba</th><th>Avec CARAXES</th></tr></thead>
+        <tbody>
+          <tr><td>V&eacute;rification fournisseur</td><td><span class="compare-cross">&times;</span> Photos en ligne</td><td><span class="compare-check">&check;</span> Visite usine film&eacute;e</td></tr>
+          <tr><td>N&eacute;gociation prix</td><td><span class="compare-cross">&times;</span> Prix &laquo;&nbsp;export&nbsp;&raquo;</td><td><span class="compare-check">&check;</span> Tarif local n&eacute;goci&eacute; sur place</td></tr>
+          <tr><td>Contr&ocirc;le qualit&eacute;</td><td><span class="compare-cross">&times;</span> Aucun avant envoi</td><td><span class="compare-check">&check;</span> Inspection syst&eacute;matique + vid&eacute;o</td></tr>
+          <tr><td>Risque arnaque</td><td><span class="compare-cross">&times;</span> &Eacute;lev&eacute; sans pr&eacute;sence</td><td><span class="compare-check">&check;</span> Fournisseur v&eacute;rifi&eacute; en personne</td></tr>
+          <tr><td>Logistique</td><td><span class="compare-cross">&times;</span> &Agrave; g&eacute;rer soi-m&ecirc;me</td><td><span class="compare-check">&check;</span> <abbr title="Free On Board">FOB</abbr>, <abbr title="Cost, Insurance &amp; Freight">CIF</abbr> ou <abbr title="Delivered Duty Paid &mdash; tout compris">DDP</abbr> cl&eacute; en main</td></tr>
+          <tr><td>D&eacute;douanement</td><td><span class="compare-cross">&times;</span> Complexe, risque de blocage</td><td><span class="compare-check">&check;</span> G&eacute;r&eacute; de A &agrave; Z</td></tr>
+          <tr><td>Interlocuteur</td><td><span class="compare-cross">&times;</span> Chat avec l&rsquo;usine (d&eacute;calage, langue)</td><td><span class="compare-check">&check;</span> Agent francophone, r&eacute;ponse sous 24h</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
 <div class="lum-sep"></div>
 
-<!-- PRICING -->
+<!-- SOURCING PRICING -->
 <section class="section" id="pricing">
   <div class="w">
-    <div class="section-tag rv">Tarifs</div>
+    <div class="section-tag rv">Tarifs Sourcing</div>
     <h2 class="section-title rv rv-d1">Transparent. <em>Vous payez au r&eacute;sultat.</em></h2>
-    <p class="section-sub rv rv-d2">Premier devis gratuit. Commission uniquement si vous commandez. Z&eacute;ro frais cach&eacute;, z&eacute;ro abonnement.</p>
+    <p class="section-sub rv rv-d2">Premier devis gratuit. Commission uniquement si vous commandez. Z&eacute;ro frais cach&eacute;s.</p>
     <div class="pricing-grid rv rv-d3">
       <div class="price-card">
         <div class="price-name">Comparatif</div>
@@ -2152,8 +2116,27 @@ abbr[title]:hover::after, abbr[title]:focus::after {
         <a href="https://caraxes.as.me/?appointmentType=91750360" target="_blank" rel="noopener" class="price-cta-secondary" style="display:block; margin-top:0.5rem; font-size:0.6rem; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; text-align:center; color:var(--text-dim); text-decoration:none; transition:color 0.3s;">ou r&eacute;server une consultation &rarr;</a>
       </div>
     </div>
+
+  </div>
+</section>
+
+
+<div id="ecommerce-anchor" style="padding:var(--s12) 0 var(--s4); text-align:center;">
+  <div class="w" style="display:flex;align-items:center;gap:var(--s4);">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--emerald), transparent);opacity:0.3;"></div>
+    <span style="font-family:var(--mono);font-size:0.7rem;color:var(--emerald);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;">Services E-commerce</span>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--emerald), transparent);opacity:0.3;"></div>
+  </div>
+</div>
+
+<!-- E-COMMERCE SERVICES -->
+<section class="section" id="ecommerce" style="background:var(--bg-warm);">
+  <div class="w">
+    <div class="section-tag rv" style="color:var(--gold);">Services E-commerce</div>
+    <h2 class="section-title rv rv-d1">Votre boutique en ligne, <em>cl&eacute; en main.</em></h2>
+    <p class="section-sub rv rv-d2">On cr&eacute;e votre boutique, on la g&egrave;re, on vous forme. Shopify ou WooCommerce, connect&eacute; &agrave; votre sourcing.</p>
     <!-- E-commerce à la carte -->
-    <div class="ecom-addons rv rv-d4" id="ecom" style="margin-top:4rem; padding:2.5rem 2rem; border:1px solid oklch(35% 0.02 25); background:oklch(12% 0.005 25); position:relative; overflow:hidden;">
+    <div class="ecom-addons rv rv-d4" id="ecom" style="margin-top:2rem; padding:2.5rem 2rem; border:1px solid oklch(35% 0.02 25); background:oklch(12% 0.005 25); position:relative; overflow:hidden;">
       <div style="position:absolute; top:0; left:0; right:0; height:2px; background:var(--gold); opacity:0.5;"></div>
       <div style="text-align:center; margin-bottom:2.5rem;">
         <span class="section-tag" style="color:var(--gold);">Nouveau</span>
@@ -2246,6 +2229,121 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       </div>
       <p style="text-align:center; font-size:0.75rem; color:oklch(55% 0.02 25); margin-top:1.5rem;">Bundling sourcing + e-com&nbsp;: &minus;10 &agrave; &minus;15&thinsp;%</p>
       <p style="text-align:center; font-size:var(--text-sm); color:var(--text-mid); margin-top:var(--s6); max-width:50ch; margin-inline:auto; line-height:1.7;">Comparatif gratuit, sans engagement. Si nos prix ne battent pas les v&ocirc;tres, vous ne payez rien.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<div style="padding:var(--s12) 0 var(--s4); text-align:center;">
+  <div class="w" style="display:flex;align-items:center;gap:var(--s4);">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--red), transparent);opacity:0.3;"></div>
+    <span style="font-family:var(--mono);font-size:0.7rem;color:var(--red);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;">Export V&eacute;hicules</span>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--red), transparent);opacity:0.3;"></div>
+  </div>
+</div>
+
+<!-- VEHICLE EXPORT -->
+<section class="section" id="vehicules" style="position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 40%, oklch(55% 0.22 25 / 0.04), transparent 60%), radial-gradient(ellipse 40% 50% at 20% 60%, oklch(75% 0.12 85 / 0.03), transparent 60%); pointer-events:none;"></div>
+  <div class="w" style="position:relative; z-index:2;">
+    <div class="section-tag rv" style="color:var(--red);">Nouveau service</div>
+    <h2 class="section-title rv rv-d1">Export de v&eacute;hicules, <em>vers le monde entier</em></h2>
+    <p class="section-sub rv rv-d2">Voitures neuves et d&rsquo;occasion, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. Surtout vers l&rsquo;Afrique, mais toute destination est possible.</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; margin-top:3rem;" class="rv rv-d3">
+      <!-- Card 1 -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--red); padding:2rem; position:relative;">
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--red); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">01 &mdash; Sourcing v&eacute;hicule</div>
+        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">S&eacute;lection sur place</h3>
+        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">On s&eacute;lectionne le v&eacute;hicule en personne dans les march&eacute;s auto chinois. Inspection m&eacute;canique, photos 360&deg;, historique v&eacute;rifi&eacute;.</p>
+      </div>
+      <!-- Card 2 -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--gold); padding:2rem; position:relative;">
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--gold); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">02 &mdash; Logistique</div>
+        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">Exp&eacute;dition RORO &amp; conteneur</h3>
+        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">Transport par navire roulier (RORO) ou conteneur ferm&eacute;. D&eacute;douanement export Chine et import destination g&eacute;r&eacute;s.</p>
+      </div>
+      <!-- Card 3 -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--emerald); padding:2rem; position:relative;">
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--emerald); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">03 &mdash; Destinations</div>
+        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">Afrique &amp; international</h3>
+        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">S&eacute;n&eacute;gal, C&ocirc;te d&rsquo;Ivoire, Congo, Cameroun, Maroc, Alg&eacute;rie&hellip; et toute autre destination sur demande.</p>
+      </div>
+    </div>
+    <!-- Types de véhicules -->
+    <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:2rem; justify-content:center;" class="rv rv-d4">
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Berlines</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">SUV</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Pick-up</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Utilitaires</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Mini-bus</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Pi&egrave;ces d&eacute;tach&eacute;es</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">&Eacute;lectriques</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Camions</span>
+    </div>
+    <div style="text-align:center; margin-top:2.5rem;" class="rv rv-d5">
+      <a href="javascript:void(0)" onclick="openForm('formVehicule')" style="display:inline-block; font-size:var(--text-xs); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:var(--s3) var(--s8); background:var(--red); color:var(--text); text-decoration:none; box-shadow:0 0 16px oklch(55% 0.22 25 / 0.25); transition:background 0.3s, box-shadow 0.3s; cursor:pointer;">Demander un devis v&eacute;hicule &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<div class="lum-sep lum-sep--green"></div>
+
+<!-- SHOWREEL -->
+<section class="showreel section" id="showreel">
+  <div class="w" style="text-align:center">
+    <div class="section-tag rv" style="justify-content:center">Le Dragon se r&eacute;veille</div>
+    <h2 class="section-title rv rv-d1" style="text-align:center">CARAXES arrive, <em>pr&eacute;parez-vous</em></h2>
+    <p class="section-sub rv rv-d2" style="margin-inline:auto">D&eacute;couvrez nos inspections usine en vid&eacute;o. Chaque lot est contr&ocirc;l&eacute; avant exp&eacute;dition.</p>
+    <div class="showreel-frame rv-scale rv-d3">
+      <video id="showreelVideo" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;z-index:1;">
+        <source src="https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Ff8e42dd5-fdd0-448e-a5e9-91e03303e2d5_seed1054894379.mp4" type="video/mp4">
+      </video>
+      <div class="showreel-inner" id="playVideo" role="button" tabindex="0" aria-label="Lancer la vid&eacute;o" style="position:relative;z-index:2;background:oklch(0% 0 0 / 0.35);">
+        <div class="play-btn">
+          <div class="play-arrow"></div>
+        </div>
+      </div>
+      <p style="font-size:0.7rem; color:var(--text-mid); margin-top:var(--s3); letter-spacing:0.04em;">CARAXES &mdash; Bient&ocirc;t sur vos &eacute;crans</p>
+    </div>
+  </div>
+</section>
+
+<div class="lum-sep"></div>
+
+<!-- CALCULATOR -->
+<section class="section" id="calculateur" style="background: var(--bg-warm);">
+  <div class="w">
+    <div class="section-tag rv-blur">&#9670; Simulateur</div>
+    <h2 class="section-title rv-blur rv-d1">Estimez vos &eacute;conomies <em>en 30 secondes</em></h2>
+    <p class="section-sub rv-blur rv-d2">Entrez votre volume et votre cat&eacute;gorie produit. On calcule combien vous &eacute;conomisez avec un agent terrain vs un import direct.</p>
+    <div class="calc-wrap rv-blur rv-d3">
+      <div class="calc-field">
+        <label>Cat&eacute;gorie de produit</label>
+        <select id="calcCategory">
+          <option value="textile">Textile &amp; mode</option>
+          <option value="cosmetique">Cosm&eacute;tique &amp; soins</option>
+          <option value="alimentaire">Alimentaire &amp; &eacute;picerie</option>
+          <option value="electronique">&Eacute;lectronique &amp; gadgets</option>
+          <option value="mobilier">Mobilier &amp; d&eacute;co</option>
+          <option value="packaging">Packaging &amp; emballage</option>
+          <option value="bijoux">Bijouterie &amp; accessoires</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="calc-field">
+        <label>Volume annuel estim&eacute; (&euro;)</label>
+        <input type="number" id="calcVolume" placeholder="Ex : 15000" min="500" step="500">
+      </div>
+      <button class="calc-btn" onclick="runCalc()">Calculer mes &eacute;conomies &rarr;</button>
+      <div class="calc-result" id="calcResult">
+        <div class="calc-result-val" id="calcSaving">0 &euro;</div>
+        <div class="calc-result-sub" id="calcDetail">par an en &eacute;conomies estim&eacute;es avec CARAXES</div>
+        <a id="calcWhatsApp" href="https://wa.me/8613819652960" target="_blank" rel="noopener" style="display:inline-block;margin-top:var(--s4);color:var(--emerald);font-size:var(--text-sm);text-decoration:underline;text-underline-offset:3px;">Discutons-en sur WhatsApp &rarr;</a>
+        <div style="margin-top:var(--s4);">
+          <a href="javascript:void(0)" onclick="openForm('formComparatif')" class="btn-primary" style="font-size:var(--text-sm);">Obtenir un devis pr&eacute;cis &rarr;</a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -2351,70 +2449,6 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 </section>
 
 <div class="lum-sep lum-sep--green"></div>
-
-<!-- COMPARISON -->
-<section class="section" id="compare">
-  <div class="w">
-    <div class="section-tag rv">Pourquoi un agent</div>
-    <h2 class="section-title rv rv-d1">Seul sur Alibaba vs <em>avec CARAXES</em></h2>
-    <p class="section-sub rv rv-d2">Alibaba c&rsquo;est bien pour chercher. Mais sans pr&eacute;sence terrain, vous payez le prix &laquo;&nbsp;export&nbsp;&raquo; et vous priez pour la qualit&eacute;.</p>
-    <div class="rv rv-d3" style="max-width:720px;">
-      <table class="compare-table">
-        <thead><tr><th></th><th>Seul sur Alibaba</th><th>Avec CARAXES</th></tr></thead>
-        <tbody>
-          <tr><td>V&eacute;rification fournisseur</td><td><span class="compare-cross">&times;</span> Photos en ligne</td><td><span class="compare-check">&check;</span> Visite usine film&eacute;e</td></tr>
-          <tr><td>N&eacute;gociation prix</td><td><span class="compare-cross">&times;</span> Prix &laquo;&nbsp;export&nbsp;&raquo;</td><td><span class="compare-check">&check;</span> Tarif local n&eacute;goci&eacute; sur place</td></tr>
-          <tr><td>Contr&ocirc;le qualit&eacute;</td><td><span class="compare-cross">&times;</span> Aucun avant envoi</td><td><span class="compare-check">&check;</span> Inspection syst&eacute;matique + vid&eacute;o</td></tr>
-          <tr><td>Risque arnaque</td><td><span class="compare-cross">&times;</span> &Eacute;lev&eacute; sans pr&eacute;sence</td><td><span class="compare-check">&check;</span> Fournisseur v&eacute;rifi&eacute; en personne</td></tr>
-          <tr><td>Logistique</td><td><span class="compare-cross">&times;</span> &Agrave; g&eacute;rer soi-m&ecirc;me</td><td><span class="compare-check">&check;</span> <abbr title="Free On Board">FOB</abbr>, <abbr title="Cost, Insurance &amp; Freight">CIF</abbr> ou <abbr title="Delivered Duty Paid &mdash; tout compris">DDP</abbr> cl&eacute; en main</td></tr>
-          <tr><td>D&eacute;douanement</td><td><span class="compare-cross">&times;</span> Complexe, risque de blocage</td><td><span class="compare-check">&check;</span> G&eacute;r&eacute; de A &agrave; Z</td></tr>
-          <tr><td>Interlocuteur</td><td><span class="compare-cross">&times;</span> Chat avec l&rsquo;usine (d&eacute;calage, langue)</td><td><span class="compare-check">&check;</span> Agent francophone, r&eacute;ponse sous 24h</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<div class="lum-sep"></div>
-
-<!-- CALCULATOR -->
-<section class="section" id="calculateur" style="background: var(--bg-warm);">
-  <div class="w">
-    <div class="section-tag rv-blur">&#9670; Simulateur</div>
-    <h2 class="section-title rv-blur rv-d1">Estimez vos &eacute;conomies <em>en 30 secondes</em></h2>
-    <p class="section-sub rv-blur rv-d2">Entrez votre volume et votre cat&eacute;gorie produit. On calcule combien vous &eacute;conomisez avec un agent terrain vs un import direct.</p>
-    <div class="calc-wrap rv-blur rv-d3">
-      <div class="calc-field">
-        <label>Cat&eacute;gorie de produit</label>
-        <select id="calcCategory">
-          <option value="textile">Textile &amp; mode</option>
-          <option value="cosmetique">Cosm&eacute;tique &amp; soins</option>
-          <option value="alimentaire">Alimentaire &amp; &eacute;picerie</option>
-          <option value="electronique">&Eacute;lectronique &amp; gadgets</option>
-          <option value="mobilier">Mobilier &amp; d&eacute;co</option>
-          <option value="packaging">Packaging &amp; emballage</option>
-          <option value="bijoux">Bijouterie &amp; accessoires</option>
-          <option value="autre">Autre</option>
-        </select>
-      </div>
-      <div class="calc-field">
-        <label>Volume annuel estim&eacute; (&euro;)</label>
-        <input type="number" id="calcVolume" placeholder="Ex : 15000" min="500" step="500">
-      </div>
-      <button class="calc-btn" onclick="runCalc()">Calculer mes &eacute;conomies &rarr;</button>
-      <div class="calc-result" id="calcResult">
-        <div class="calc-result-val" id="calcSaving">0 &euro;</div>
-        <div class="calc-result-sub" id="calcDetail">par an en &eacute;conomies estim&eacute;es avec CARAXES</div>
-        <a id="calcWhatsApp" href="https://wa.me/8613819652960" target="_blank" rel="noopener" style="display:inline-block;margin-top:var(--s4);color:var(--emerald);font-size:var(--text-sm);text-decoration:underline;text-underline-offset:3px;">Discutons-en sur WhatsApp &rarr;</a>
-        <div style="margin-top:var(--s4);">
-          <a href="javascript:void(0)" onclick="openForm('formComparatif')" class="btn-primary" style="font-size:var(--text-sm);">Obtenir un devis pr&eacute;cis &rarr;</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="lum-sep"></div>
 
 <!-- FAQ -->
 <section class="section" id="faq">
@@ -2534,9 +2568,6 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
-   FORMULAIRES CONTEXTUELS (MODALS)
-   ═══════════════════════════════════════ -->
 
 <!-- 1. COMPARATIF GRATUIT -->
 <div class="form-overlay" id="formComparatif">
@@ -2781,6 +2812,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     </div>
   </div>
 </div>
+
 
 <script>
 /* ═══════════════════════════════════════
@@ -3180,6 +3212,7 @@ window.togglePay = togglePay;
 window.showVirement = showVirement;
 window.showCrypto = showCrypto;
 </script>
+
 
 <!-- Sticky CTA bar — mobile only -->
 <div id="stickyCta" style="
