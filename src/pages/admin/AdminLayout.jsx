@@ -366,7 +366,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
                 { label: 'Créer boutique', key: 'boutiques', icon: icons.link, shortcut: '⌘3', action: () => setMainTab('boutiques') },
                 { label: 'Ajouter expédition', key: 'expedition', icon: icons.send, shortcut: '⌘4', action: () => setMainTab('expedition') },
                 { label: 'Nouveau service e-com', key: 'services', icon: icons.shield, shortcut: '⌘5', action: () => setMainTab('services') },
-                { label: 'Export backup JSON', key: 'backup', icon: icons.download, shortcut: '⌘6', action: async () => { toast.success(t('toast.exportJSONStart')); await exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices) } },
+                { label: 'Export backup JSON', key: 'backup', icon: icons.download, shortcut: '⌘6', action: async () => { toast.success(t('toast.exportJSONStart')); await exportFullBackupJSON() } },
               ].filter(a => !cmdSearch || a.label.toLowerCase().includes(cmdSearch.toLowerCase())).map((act, i) => (
                 <div key={act.label} onClick={() => { act.action(); setShowCommandBar(false); setCmdSearch('') }}
                   style={{
@@ -563,14 +563,9 @@ export default function AdminLayout({ children, commandesSidebar }) {
           <div style={{ padding: `${sp[2]}`, position: 'relative', zIndex: 1 }}>
             <div style={{ fontFamily: f.mono, fontSize: '8px', letterSpacing: '0.06em', color: c.textTertiary, marginBottom: sp[1], padding: `0 ${sp[1]}` }}>OUTILS</div>
             <div style={{ display: 'flex', gap: sp[1], marginBottom: sp[1] }}>
-              <button onClick={() => {
-                const data = exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices)
-                const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }))
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `caraxes-backup-${new Date().toISOString().split('T')[0]}.json`
-                a.click()
-                URL.revokeObjectURL(url)
+              <button onClick={async () => {
+                toast.success('Export JSON en cours…')
+                try { await exportFullBackupJSON() } catch (e) { toast.error('Erreur export JSON') }
               }} style={{
                 flex: 1, padding: `6px ${sp[1]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
                 color: c.textSecondary, fontSize: '9px', fontFamily: f.mono, cursor: 'pointer',
@@ -580,14 +575,9 @@ export default function AdminLayout({ children, commandesSidebar }) {
               onMouseEnter={e => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.color = c.gold }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}
               ><Icon d={icons.download} size={10} color="currentColor" /> JSON</button>
-              <button onClick={() => {
-                const data = exportBackupCSVs(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices)
-                const url = URL.createObjectURL(new Blob([data], { type: 'text/csv' }))
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `caraxes-backup-${new Date().toISOString().split('T')[0]}.csv`
-                a.click()
-                URL.revokeObjectURL(url)
+              <button onClick={async () => {
+                toast.success('Export CSV en cours…')
+                try { await exportBackupCSVs() } catch (e) { toast.error('Erreur export CSV') }
               }} style={{
                 flex: 1, padding: `6px ${sp[1]}`, background: c.bgElevated, border: `1px solid ${c.border}`,
                 color: c.textSecondary, fontSize: '9px', fontFamily: f.mono, cursor: 'pointer',

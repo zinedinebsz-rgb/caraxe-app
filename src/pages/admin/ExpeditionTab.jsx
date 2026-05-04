@@ -3,9 +3,13 @@ import { useState } from 'react'
 import { c, f, size, sp, shadow, ease, radius } from '../../lib/theme'
 import { useAdmin } from './AdminContext'
 import { Icon, icons, ArtDecoDivider, inputStyle, labelStyle, focusGlow } from './AdminShared'
+import { Modal } from '../../components/Toast'
 
-const shipStatusToInt = { production: 0, QC: 1, douanes: 2, transit: 3, 'livré': 4 }
-const shipStatusToStr = ['production', 'QC', 'douanes', 'transit', 'livré']
+// Status labels — stored as strings in Supabase to match OverviewTab filters
+const SHIP_STATUSES = ['production', 'QC', 'douanes', 'transit', 'livré']
+// Legacy int → string converter for existing data that was stored as integers
+const shipStatusToStr = SHIP_STATUSES
+const normalizeStatus = (s) => typeof s === 'number' ? (SHIP_STATUSES[s] || 'production') : (s || 'production')
 
 export default function ExpeditionTab() {
   const {
@@ -36,7 +40,7 @@ export default function ExpeditionTab() {
         origin: createShipmentData.origin || 'Chine',
         weight_kg: createShipmentData.weight_kg ? parseFloat(createShipmentData.weight_kg) : null,
         notes: createShipmentData.notes || null,
-        status: shipStatusToInt[createShipmentData.status] ?? 0,
+        status: createShipmentData.status || 'production',
       })
       setCreateShipmentData({ client_id: '', order_id: '', product_name: '', tracking_number: '', method: 'maritime', destination: '', origin: 'Chine', weight_kg: '', notes: '', status: 'production' })
       setShowCreateShipment(false)
@@ -53,7 +57,7 @@ export default function ExpeditionTab() {
       if (editShipmentData.method != null) payload.method = editShipmentData.method
       if (editShipmentData.destination != null) payload.destination = editShipmentData.destination
       if (editShipmentData.weight_kg != null) payload.weight_kg = editShipmentData.weight_kg ? parseFloat(editShipmentData.weight_kg) : null
-      if (editShipmentData.status != null) payload.status = shipStatusToInt[editShipmentData.status] ?? (typeof editShipmentData.status === 'number' ? editShipmentData.status : 0)
+      if (editShipmentData.status != null) payload.status = normalizeStatus(editShipmentData.status)
       if (editShipmentData.notes != null) payload.notes = editShipmentData.notes
       if (editShipmentData.eta != null) payload.eta = editShipmentData.eta
       if (editShipmentData.origin != null) payload.origin = editShipmentData.origin
@@ -211,29 +215,7 @@ export default function ExpeditionTab() {
             </div>
 
       {/* ═══════ MODAL: Nouvel envoi ═══════ */}
-      {showCreateShipment && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
-        }} onClick={() => setShowCreateShipment(false)}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
-            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
-          }} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowCreateShipment(false)} style={{
-              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
-              color: c.textTertiary, cursor: 'pointer', padding: 0, width: '28px', height: '28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: `all 0.2s ${ease.smooth}`,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = c.teal }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.01em', color: c.teal }}>
-              Nouvel envoi
-            </h2>
+      <Modal open={showCreateShipment} onClose={() => setShowCreateShipment(false)} title="Nouvel envoi" maxWidth={480}>
             <ArtDecoDivider width={80} color={c.teal} />
 
             <form onSubmit={handleCreateShipment} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
@@ -352,30 +334,10 @@ export default function ExpeditionTab() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* ═══════ MODAL: Edit Shipment ═══════ */}
-      {editingShipment && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
-        }} onClick={() => setEditingShipment(null)}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
-            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
-          }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
-            <button onClick={() => setEditingShipment(null)} style={{
-              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
-              color: c.textTertiary, cursor: 'pointer', padding: 0,
-            }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', color: c.teal }}>
-              Modifier l'envoi
-            </h2>
+      <Modal open={!!editingShipment} onClose={() => setEditingShipment(null)} title="Modifier l'envoi" maxWidth={480}>
             <ArtDecoDivider width={80} />
             <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
               Client : {clientName(editingShipment.client_id)}
@@ -455,9 +417,7 @@ export default function ExpeditionTab() {
                 }}>Sauvegarder</button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </>
   )
 }

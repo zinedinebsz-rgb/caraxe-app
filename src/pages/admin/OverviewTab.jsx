@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import { useAdmin } from './AdminContext'
 import { Icon, icons, DragonMark, ArtDecoDivider, MiniSparkline, fmtDate, fmtMoney, parseBudget } from './AdminShared'
-import { c, f, size, sp, shadow, ease, radius, gradient, STATUSES } from '../../lib/theme'
-import { CATALOGS, VERIFIED_SUPPLIERS } from '../../lib/catalogsByProfile'
+import { c, f, size, sp, shadow, ease, radius, STATUSES } from '../../lib/theme'
+import { VERIFIED_SUPPLIERS } from '../../lib/catalogsByProfile'
 import { FORMATION_INTERNE, FORMATION_CLIENT } from '../../lib/formationData'
 import { exportFullBackupJSON, exportBackupCSVs } from '../../lib/backup'
 import StatusPill from '../../components/StatusPill'
@@ -43,9 +43,13 @@ export default function OverviewTab() {
   const [caMonth, setCaMonth] = useState(new Date().getMonth())
   const [caYear, setCaYear] = useState(new Date().getFullYear())
 
+  /* ── Helpers ── */
+  const SHIP_STATUSES = ['production', 'QC', 'douanes', 'transit', 'livré']
+  const normalizeShipStatus = (s) => typeof s === 'number' ? (SHIP_STATUSES[s] || 'production') : (s || 'production')
+
   /* ── Derived data ── */
-  const shipmentsInTransit = shipments.filter(s => s.status === 'transit')
-  const shipmentsWaiting = shipments.filter(s => s.status === 'production' || s.status === 'QC' || s.status === 'douanes')
+  const shipmentsInTransit = shipments.filter(s => normalizeShipStatus(s.status) === 'transit')
+  const shipmentsWaiting = shipments.filter(s => { const st = normalizeShipStatus(s.status); return st === 'production' || st === 'QC' || st === 'douanes' })
   const lowStockItems = inventory.filter(item => (item.quantity || 0) <= (item.alert_threshold || 0))
   const ecomClients = allProfiles.filter(p => p.client_tier === 'ecommerce')
   const stockClients = allProfiles.filter(p => (p.services_enabled || []).includes('stock'))
@@ -421,9 +425,9 @@ export default function OverviewTab() {
                     <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.textTertiary }}>{s.method || ''}</span>
                     <span style={{
                       padding: '2px 6px', fontSize: '9px', fontFamily: f.mono, fontWeight: 600,
-                      background: s.status === 'livré' ? `${c.green}15` : s.status === 'transit' ? `${c.gold}15` : `${c.red}15`,
-                      color: s.status === 'livré' ? c.green : s.status === 'transit' ? c.gold : c.red,
-                    }}>{s.status || '?'}</span>
+                      background: normalizeShipStatus(s.status) === 'livré' ? `${c.green}15` : normalizeShipStatus(s.status) === 'transit' ? `${c.gold}15` : `${c.red}15`,
+                      color: normalizeShipStatus(s.status) === 'livré' ? c.green : normalizeShipStatus(s.status) === 'transit' ? c.gold : c.red,
+                    }}>{normalizeShipStatus(s.status)}</span>
                   </div>
                 </div>
               ))}

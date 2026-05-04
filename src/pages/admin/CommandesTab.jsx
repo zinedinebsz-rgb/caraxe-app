@@ -7,8 +7,9 @@ import StatusPill, { ProgressBar } from '../../components/StatusPill'
 import { useAdmin } from './AdminContext'
 import {
   Icon, icons, fmtDate, DragonEmptyState, ArtDecoDivider,
-  focusGlow, inputStyle, labelStyle,
+  focusGlow, inputStyle, labelStyle, MAX_FILE_SIZE,
 } from './AdminShared'
+import { Modal } from '../../components/Toast'
 
 /* ── ORDER TRACKING TIMELINE ── */
 const OrderTrackingTimeline = ({ currentStatus, statuses = STATUSES }) => {
@@ -94,7 +95,7 @@ const filters = [
 /* ═══════════════════════════════════════════════
    COMMANDES SIDEBAR — order list with search/filters
    ═══════════════════════════════════════════════ */
-export function CommandesSidebar({ selectedId, setSelectedId, setTab, setEditMode, setMobileShowDetail, mobileShowDetail }) {
+export function CommandesSidebar({ selectedId, setSelectedId, setMobileShowDetail, mobileShowDetail }) {
   const {
     orders, clients, allProfiles, shipments,
     clientName, activeOrders, deliveredOrders,
@@ -200,7 +201,7 @@ export function CommandesSidebar({ selectedId, setSelectedId, setTab, setEditMod
               const statusObj = (typeof order.status === 'number' ? STATUSES[order.status] : STATUSES.find(s => s.key === order.status)) || STATUSES[0]
               return (
                 <div key={order.id}
-                  onClick={() => { setSelectedId(order.id); setTab('messages'); setEditMode(false); setMobileShowDetail(true) }}
+                  onClick={() => { if (setSelectedId) setSelectedId(order.id); if (setMobileShowDetail) setMobileShowDetail(true) }}
                   style={{
                     padding: `${sp[2]} ${sp[3]}`, cursor: 'pointer',
                     borderBottom: `1px solid ${c.borderSubtle}`,
@@ -241,30 +242,7 @@ export function CommandesSidebar({ selectedId, setSelectedId, setTab, setEditMod
       </aside>
 
       {/* ═══════ MODAL: Nouvelle commande ═══════ */}
-      {showCreateOrder && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-        }} onClick={() => setShowCreateOrder(false)}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
-            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative', borderRadius: radius.sm, boxShadow: shadow.xs,
-          }} onClick={(e) => e.stopPropagation()}>
-            {/* Close button */}
-            <button onClick={() => setShowCreateOrder(false)} style={{
-              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
-              color: c.textTertiary, cursor: 'pointer', padding: 0, width: '28px', height: '28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: `all 0.2s ${ease.smooth}`,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = c.red }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.01em' }}>
-              Nouvelle commande
-            </h2>
+      <Modal open={showCreateOrder} onClose={() => setShowCreateOrder(false)} title="Nouvelle commande" maxWidth={480}>
             <ArtDecoDivider width={80} />
 
             <form onSubmit={handleCreateOrder} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
@@ -342,9 +320,7 @@ export function CommandesSidebar({ selectedId, setSelectedId, setTab, setEditMod
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </>
   )
 }
@@ -378,6 +354,14 @@ export default function CommandesDetail({ selectedId, setMobileShowDetail }) {
   const fileInputRef = useRef(null)
 
   const selected = orders.find(o => o.id === selectedId)
+
+  // Reset internal state when switching orders
+  useEffect(() => {
+    setTab('messages')
+    setEditMode(false)
+    setEditData({})
+    setNewMsg('')
+  }, [selectedId])
 
   // Load messages & documents when selectedId changes
   useEffect(() => {
@@ -483,7 +467,6 @@ export default function CommandesDetail({ selectedId, setMobileShowDetail }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file || !selectedId || uploadingFile) return
-    const MAX_FILE_SIZE = 10 * 1024 * 1024
     if (file.size > MAX_FILE_SIZE) {
       toast.error(t('toast.fileTooLarge'))
       fileInputRef.current.value = ''

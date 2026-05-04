@@ -4,9 +4,10 @@
    This file was refactored from 8355 lines into modular components.
    Each tab is now its own file under /pages/admin/.
    ══════════════════════════════════════════════════════════════ */
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { AdminProvider, useAdmin } from './admin/AdminContext'
 import { ConfirmDialog } from '../components/Toast'
+import ErrorBoundary from '../components/ErrorBoundary'
 import AdminLayout from './admin/AdminLayout'
 import OverviewTab from './admin/OverviewTab'
 import { c, f, sp } from '../lib/theme'
@@ -37,24 +38,28 @@ const TabLoader = () => (
 function AdminContent() {
   const { mainTab, confirmDialog, setConfirmDialog } = useAdmin()
 
+  // ── Commandes tab shared state (sidebar ↔ detail) ──
+  const [selectedOrderId, setSelectedOrderId] = useState(null)
+  const [mobileShowDetail, setMobileShowDetail] = useState(false)
+
   return (
     <AdminLayout
-      commandesSidebar={mainTab === 'commandes' ? <Suspense fallback={null}><CommandesSidebarLazy /></Suspense> : null}
+      commandesSidebar={mainTab === 'commandes' ? <Suspense fallback={null}><CommandesSidebarLazy selectedId={selectedOrderId} setSelectedId={setSelectedOrderId} setMobileShowDetail={setMobileShowDetail} mobileShowDetail={mobileShowDetail} /></Suspense> : null}
     >
-      {mainTab === 'overview' && <OverviewTab />}
+      {mainTab === 'overview' && <ErrorBoundary name="Overview"><OverviewTab /></ErrorBoundary>}
       <Suspense fallback={<TabLoader />}>
-        {mainTab === 'commandes' && <CommandesTab />}
-        {mainTab === 'catalogue' && <CatalogueTab />}
-        {mainTab === 'expedition' && <ExpeditionTab />}
-        {mainTab === 'stock' && <StockTab />}
-        {mainTab === 'boutiques' && <BoutiquesTab />}
-        {mainTab === 'vehicules' && <VehiculesTab />}
-        {mainTab === 'formation' && <FormationTab />}
-        {mainTab === 'services' && <ServicesTab />}
-        {mainTab === 'pipeline' && <LeadsPipelineTab />}
-        {mainTab === 'orders_pipeline' && <OrdersPipelineTab />}
-        {mainTab === 'clients' && <ClientsTab />}
-        {mainTab === 'team_chat' && <TeamChatTab />}
+        {mainTab === 'commandes' && <ErrorBoundary name="Commandes"><CommandesTab selectedId={selectedOrderId} setMobileShowDetail={setMobileShowDetail} /></ErrorBoundary>}
+        {mainTab === 'catalogue' && <ErrorBoundary name="Catalogue"><CatalogueTab /></ErrorBoundary>}
+        {mainTab === 'expedition' && <ErrorBoundary name="Expédition"><ExpeditionTab /></ErrorBoundary>}
+        {mainTab === 'stock' && <ErrorBoundary name="Stock"><StockTab /></ErrorBoundary>}
+        {mainTab === 'boutiques' && <ErrorBoundary name="Boutiques"><BoutiquesTab /></ErrorBoundary>}
+        {mainTab === 'vehicules' && <ErrorBoundary name="Véhicules"><VehiculesTab /></ErrorBoundary>}
+        {mainTab === 'formation' && <ErrorBoundary name="Formation"><FormationTab /></ErrorBoundary>}
+        {mainTab === 'services' && <ErrorBoundary name="Services"><ServicesTab /></ErrorBoundary>}
+        {mainTab === 'pipeline' && <ErrorBoundary name="Pipeline"><LeadsPipelineTab /></ErrorBoundary>}
+        {mainTab === 'orders_pipeline' && <ErrorBoundary name="OrdersPipeline"><OrdersPipelineTab /></ErrorBoundary>}
+        {mainTab === 'clients' && <ErrorBoundary name="Clients"><ClientsTab /></ErrorBoundary>}
+        {mainTab === 'team_chat' && <ErrorBoundary name="TeamChat"><TeamChatTab /></ErrorBoundary>}
       </Suspense>
 
       {/* Global confirm dialog */}

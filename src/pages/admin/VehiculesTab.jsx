@@ -3,18 +3,24 @@ import { useState } from 'react'
 import { useAdmin } from './AdminContext'
 import { Icon, icons, fmtDate, fmtMoney, inputStyle, labelStyle } from './AdminShared'
 import { c, f, size, sp, shadow, ease, radius } from '../../lib/theme'
+import { Modal } from '../../components/Toast'
+import { createOrder } from '../../lib/supabase'
 
 const DecoPattern = () => null
 
 export default function VehiculesTab() {
   const {
-    allProfiles, toast, t, tToast, clientName,
+    orders, allProfiles, toast, t, tToast, clientName,
   } = useAdmin()
 
-  // ── Local state ──
-  const [vehicleRequests, setVehicleRequests] = useState([])
+  // ── Derive vehicle requests from orders (keyword match) ──
+  const vehicleRequests = (orders || []).filter(o => {
+    const txt = `${o.notes || ''} ${o.product || ''} ${o.ref || ''}`.toLowerCase()
+    return txt.includes('véhicule') || txt.includes('vehicule') || txt.includes('vehicle') || txt.includes('voiture') || txt.includes('camion') || txt.includes('pick-up') || txt.includes('suv') || txt.includes('berline') || txt.includes('mini-bus') || txt.includes('utilitaire')
+  })
   const [showVehicleModal, setShowVehicleModal] = useState(false)
-  const [vehicleForm, setVehicleForm] = useState({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '', status: 'demande' })
+  const [vehicleForm, setVehicleForm] = useState({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '' })
+  const [creating, setCreating] = useState(false)
 
   return (
     <>
@@ -49,9 +55,9 @@ export default function VehiculesTab() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: sp[2], marginBottom: sp[4] }}>
         {[
           { label: 'Demandes totales', value: vehicleRequests.length, color: c.red },
-          { label: 'En cours', value: vehicleRequests.filter(v => v.status === 'sourcing' || v.status === 'demande').length, color: c.amber },
+          { label: 'En cours', value: vehicleRequests.filter(v => v.status !== 'delivered' && v.status !== 'completed' && v.status !== 'cancelled').length, color: c.amber },
           { label: 'Budget total', value: fmtMoney(vehicleRequests.reduce((sum, v) => sum + (parseFloat(v.budget) || 0), 0)), color: c.gold },
-          { label: 'Destinations', value: [...new Set(vehicleRequests.map(v => v.destination))].length, color: c.teal },
+          { label: 'Clients', value: [...new Set(vehicleRequests.map(v => v.client_id))].length, color: c.teal },
         ].map((stat, i) => (
           <div key={i} style={{ padding: sp[3], background: c.bgCard, border: `1px solid ${c.border}`, borderTop: `2px solid ${stat.color}` }}>
             <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sp[1] }}>{stat.label}</div>
@@ -69,42 +75,37 @@ export default function VehiculesTab() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1] }}>
-            {vehicleRequests.map((req, idx) => {
+            {vehicleRequests.map((req) => {
               const statusColors = {
-                demande: { bg: c.amber, color: c.bg },
+                pending: { bg: c.amber, color: c.bg },
                 sourcing: { bg: c.blue, color: c.bg },
-                inspection: { bg: c.teal, color: c.bg },
-                transit: { bg: c.gold, color: c.bg },
-                livré: { bg: c.green, color: c.bg },
-                annulé: { bg: c.red, color: c.bg },
+                production: { bg: c.teal, color: c.bg },
+                shipped: { bg: c.gold, color: c.bg },
+                delivered: { bg: c.green, color: c.bg },
+                completed: { bg: c.green, color: c.bg },
+                cancelled: { bg: c.red, color: c.bg },
               }
               const statusStyle = statusColors[req.status] || { bg: c.textSecondary, color: c.bg }
               return (
-                <div key={idx} style={{
-                  display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 120px 100px 100px', gap: sp[2],
+                <div key={req.id} style={{
+                  display: 'grid', gridTemplateColumns: '80px 1fr 1.2fr 100px 90px', gap: sp[2],
                   alignItems: 'center', padding: sp[2], background: c.bg, border: `1px solid ${c.borderSubtle}`,
                 }}>
+                  <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary }}>{req.ref || '—'}</div>
                   <div>
                     <div style={{ fontSize: size.sm, fontWeight: 600, color: c.text }}>{clientName(req.client_id)}</div>
-                    <div style={{ fontSize: size.xs, color: c.textSecondary, marginTop: 2 }}>{fmtDate(new Date())}</div>
+                    <div style={{ fontSize: size.xs, color: c.textSecondary, marginTop: 2 }}>{fmtDate(req.created_at)}</div>
                   </div>
-                  <div style={{ fontSize: size.sm, color: c.text }}>{req.type}</div>
-                  <div style={{ fontSize: size.sm, color: c.text }}>{req.destination}</div>
-                  <div style={{ fontSize: size.sm, fontWeight: 600, color: c.gold }}>{req.budget}€</div>
+                  <div>
+                    <div style={{ fontSize: size.sm, color: c.text }}>{req.product || '—'}</div>
+                    {req.notes && <div style={{ fontSize: '10px', color: c.textTertiary, marginTop: 2 }}>{req.notes.slice(0, 60)}{req.notes.length > 60 ? '…' : ''}</div>}
+                  </div>
+                  <div style={{ fontSize: size.sm, fontWeight: 600, color: c.gold }}>{fmtMoney(req.budget)}</div>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <span style={{
                       padding: '4px 10px', fontSize: '9px', fontFamily: f.mono, fontWeight: 700,
                       background: statusStyle.bg, color: statusStyle.color, textTransform: 'uppercase', letterSpacing: '0.02em',
                     }}>{req.status}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: sp[1] }}>
-                    <button onClick={() => {
-                      setVehicleForm(req)
-                      setShowVehicleModal(true)
-                    }} style={{
-                      padding: '4px 8px', background: 'transparent', border: `1px solid ${c.border}`,
-                      color: c.textSecondary, cursor: 'pointer', fontSize: '9px', fontFamily: f.mono,
-                    }}>Edit</button>
                   </div>
                 </div>
               )
@@ -116,33 +117,34 @@ export default function VehiculesTab() {
     </div>
 
     {/* ── VEHICLE MODAL ── */}
-    {showVehicleModal && (
-      <div style={{
-        position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', zIndex: 1000,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-      }} onClick={() => { setShowVehicleModal(false); setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '', status: 'demande' }) }}>
-        <div style={{
-          background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
-          maxWidth: '520px', width: '90%', maxHeight: '85vh', overflowY: 'auto', borderRadius: radius.sm, boxShadow: shadow.xs,
-        }} onClick={e => e.stopPropagation()} className="admin-scroll">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700 }}>Nouvelle demande véhicule</h2>
-            <button onClick={() => { setShowVehicleModal(false); setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '', status: 'demande' }) }} style={{ background: 'none', border: 'none', color: c.textTertiary, cursor: 'pointer' }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-          </div>
+    <Modal open={showVehicleModal} onClose={() => { setShowVehicleModal(false); setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '' }) }} title="Nouvelle demande véhicule" maxWidth={520}>
 
-          <form onSubmit={(e) => {
+          <form onSubmit={async (e) => {
             e.preventDefault()
-            if (!vehicleForm.client_id || !vehicleForm.destination || !vehicleForm.budget) {
-              toast.error(t('toast.destinationAndBudgetRequired'))
+            if (!vehicleForm.client_id || !vehicleForm.budget) {
+              toast.error('Client et budget requis')
               return
             }
-            const newVehicle = { ...vehicleForm, id: Date.now() }
-            setVehicleRequests([...vehicleRequests, newVehicle])
-            setShowVehicleModal(false)
-            setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '', status: 'demande' })
-            toast.success(t('toast.requestCreated'))
+            setCreating(true)
+            try {
+              const product = `Véhicule ${vehicleForm.type}${vehicleForm.destination ? ` — Export ${vehicleForm.destination}` : ''}`
+              const notes = vehicleForm.notes || ''
+              await createOrder({
+                clientId: vehicleForm.client_id,
+                product,
+                quantity: 1,
+                budget: `${vehicleForm.budget}€`,
+                deadline: 'À définir',
+                notes: notes ? `[VÉHICULE] ${notes}` : '[VÉHICULE]',
+              })
+              setShowVehicleModal(false)
+              setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '' })
+              toast.success('Demande véhicule créée')
+            } catch (err) {
+              toast.error(err?.message || 'Erreur lors de la création')
+            } finally {
+              setCreating(false)
+            }
           }} style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
             <div>
               <label style={labelStyle}>Client</label>
@@ -157,14 +159,14 @@ export default function VehiculesTab() {
             <div>
               <label style={labelStyle}>Type de véhicule</label>
               <select value={vehicleForm.type} onChange={(e) => setVehicleForm({ ...vehicleForm, type: e.target.value })} style={{ ...inputStyle, width: '100%' }}>
-                {['Berline', 'SUV', 'Pick-up', 'Utilitaire', 'Mini-bus', 'Camion', 'Électrique', 'Pièces détachées'].map(t => (
-                  <option key={t} value={t}>{t}</option>
+                {['Berline', 'SUV', 'Pick-up', 'Utilitaire', 'Mini-bus', 'Camion', 'Électrique', 'Pièces détachées'].map(tp => (
+                  <option key={tp} value={tp}>{tp}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label style={labelStyle}>Destination</label>
+              <label style={labelStyle}>Destination export</label>
               <input type="text" value={vehicleForm.destination} onChange={(e) => setVehicleForm({ ...vehicleForm, destination: e.target.value })} style={inputStyle} placeholder="ex: Sénégal" />
             </div>
 
@@ -178,24 +180,13 @@ export default function VehiculesTab() {
               <textarea value={vehicleForm.notes} onChange={(e) => setVehicleForm({ ...vehicleForm, notes: e.target.value })} style={{ ...inputStyle, minHeight: 80, fontFamily: f.body }} placeholder="Détails supplémentaires…" />
             </div>
 
-            <div>
-              <label style={labelStyle}>Statut</label>
-              <select value={vehicleForm.status} onChange={(e) => setVehicleForm({ ...vehicleForm, status: e.target.value })} style={{ ...inputStyle, width: '100%' }}>
-                {['demande', 'sourcing', 'inspection', 'transit', 'livré', 'annulé'].map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-
-            <button type="submit" style={{
-              padding: `10px ${sp[3]}`, background: c.red, color: c.bg,
-              border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
-              marginTop: sp[2],
-            }}>Créer demande</button>
+            <button type="submit" disabled={creating} style={{
+              padding: `10px ${sp[3]}`, background: creating ? c.textTertiary : c.red, color: c.bg,
+              border: 'none', fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: creating ? 'wait' : 'pointer',
+              marginTop: sp[2], opacity: creating ? 0.7 : 1,
+            }}>{creating ? 'Création…' : 'Créer demande'}</button>
           </form>
-        </div>
-      </div>
-    )}
+    </Modal>
     </>
   )
 }
