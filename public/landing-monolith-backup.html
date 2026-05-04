@@ -31,7 +31,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
-   CARAXES GATE — Cinematic Dragon · Luminous Noir
+   CARAXES V10 — Cinematic Dragon · Luminous Noir
    Anti-slop · OKLCH · clamp() · 8px baseline
    ═══════════════════════════════════════════════════ */
 
@@ -147,17 +147,15 @@ h3 { font-size: var(--text-xl); }
 .rv-d5 { transition-delay: 0.5s; }
 .rv-d6 { transition-delay: 0.6s; }
 
+/* Slide from left */
 .rv-left { opacity: 1; transform: none; transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
 .rv-left.hide { opacity: 0; transform: translateX(-32px); }
 .rv-left.vis { opacity: 1; transform: none; }
 
+/* Scale up */
 .rv-scale { opacity: 1; transform: none; transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
 .rv-scale.hide { opacity: 0; transform: scale(0.95); }
 .rv-scale.vis { opacity: 1; transform: none; }
-
-.rv-blur { opacity: 1; filter: blur(0); transform: translateY(0); transition: opacity 0.9s var(--ease), filter 0.9s var(--ease), transform 0.9s var(--ease); will-change: filter, transform, opacity; }
-.rv-blur.hide { opacity: 0; filter: blur(8px); transform: translateY(20px); }
-.rv-blur.vis { opacity: 1; filter: blur(0); transform: translateY(0); }
 
 
 /* ═══════════════════
@@ -320,6 +318,8 @@ h3 { font-size: var(--text-xl); }
 }
 .hero.loaded .hero-actions { opacity: 1; transform: none; }
 
+/* slide-up keyframes removed — hero uses class-based transitions now */
+
 .btn-primary {
   font-size: var(--text-sm); font-weight: 600;
   letter-spacing: 0.05em;
@@ -391,7 +391,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   content: attr(title);
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
   background: oklch(15% 0.01 50); color: oklch(90% 0.01 70);
-  font-size: 0.7rem; font-family: var(--sans); font-style: normal;
+  font-size: 0.7rem; font-family: var(--body); font-style: normal;
   white-space: nowrap; padding: 6px 12px;
   border: 1px solid oklch(25% 0.01 50);
   pointer-events: none; z-index: 99;
@@ -433,163 +433,6 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 
 /* ═══════════════════
-   TRUST BAR
-   ═══════════════════ */
-.trust-bar {
-  background: var(--surface);
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: var(--s6) 0;
-}
-.trust-items {
-  display: flex; justify-content: center; gap: var(--s12);
-  flex-wrap: wrap;
-}
-.trust-item {
-  display: flex; align-items: center; gap: var(--s3);
-  font-family: var(--mono); font-size: var(--text-xs);
-  color: var(--text-mid); letter-spacing: 0.04em;
-}
-.trust-icon {
-  width: 36px; height: 36px;
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color 0.3s;
-}
-.trust-item:hover .trust-icon { border-color: var(--gold-dim); }
-.trust-icon svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.trust-val { font-family: var(--serif); font-size: var(--text-lg); font-weight: 700; color: var(--gold); display: block; line-height: 1; }
-.trust-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
-
-@media (max-width: 640px) {
-  .trust-items { gap: var(--s6); }
-}
-
-
-/* ═══════════════════
-   GATE CARDS — 3 services
-   ═══════════════════ */
-.gate-section {
-  padding: var(--s24) 0 var(--s32);
-  background:
-    radial-gradient(ellipse 50% 50% at 25% 50%, oklch(55% 0.22 25 / 0.03), transparent),
-    radial-gradient(ellipse 50% 50% at 75% 50%, oklch(72% 0.14 155 / 0.03), transparent),
-    var(--bg-warm);
-}
-.gate-intro {
-  text-align: center;
-  margin-bottom: var(--s16);
-}
-.gate-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s6);
-}
-@media (max-width: 900px) { .gate-grid { grid-template-columns: 1fr; gap: var(--s8); } }
-
-.gate-card {
-  position: relative;
-  padding: var(--s12) var(--s8) var(--s8);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  display: flex; flex-direction: column;
-  text-decoration: none;
-  color: var(--text);
-  transition: border-color 0.5s var(--ease), transform 0.5s var(--ease), box-shadow 0.5s;
-}
-.gate-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  opacity: 0; transition: opacity 0.5s;
-}
-.gate-card::after {
-  content: ''; position: absolute; top: 0; left: 0;
-  width: 140px; height: 140px;
-  opacity: 0; transition: opacity 0.5s;
-  pointer-events: none;
-}
-.gate-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 48px oklch(0% 0 0 / 0.4);
-}
-.gate-card:hover::before { opacity: 1; }
-.gate-card:hover::after { opacity: 1; }
-
-/* Card accent colors */
-.gate-card--sourcing::before { background: linear-gradient(90deg, var(--gold), var(--gold-dim), transparent); }
-.gate-card--sourcing::after { background: radial-gradient(circle at top left, var(--gold-glow) 0%, transparent 70%); }
-.gate-card--sourcing:hover { border-color: var(--gold-dim); }
-
-.gate-card--ecom::before { background: linear-gradient(90deg, var(--emerald), var(--emerald-dim), transparent); }
-.gate-card--ecom::after { background: radial-gradient(circle at top left, var(--emerald-glow) 0%, transparent 70%); }
-.gate-card--ecom:hover { border-color: var(--emerald-dim); }
-
-.gate-card--vehicules::before { background: linear-gradient(90deg, var(--red), var(--red-deep), transparent); }
-.gate-card--vehicules::after { background: radial-gradient(circle at top left, var(--red-glow) 0%, transparent 70%); }
-.gate-card--vehicules:hover { border-color: oklch(55% 0.15 25 / 0.5); }
-
-.gate-card-icon {
-  font-size: clamp(3rem, 5vw, 4.5rem);
-  margin-bottom: var(--s6);
-  line-height: 1;
-  opacity: 0.85;
-  transition: transform 0.5s var(--ease);
-}
-.gate-card:hover .gate-card-icon { transform: scale(1.08); }
-
-.gate-card-tag {
-  font-family: var(--mono); font-size: 0.6rem;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  margin-bottom: var(--s3);
-}
-.gate-card--sourcing .gate-card-tag { color: var(--gold); }
-.gate-card--ecom .gate-card-tag { color: var(--emerald); }
-.gate-card--vehicules .gate-card-tag { color: var(--red); }
-
-.gate-card h3 {
-  font-family: var(--serif); font-size: var(--text-xl); font-weight: 700;
-  margin-bottom: var(--s3);
-  line-height: 1.15;
-}
-.gate-card-desc {
-  font-size: var(--text-sm); color: var(--text-mid);
-  line-height: 1.75; flex: 1;
-  margin-bottom: var(--s8);
-}
-.gate-card-highlights {
-  display: flex; flex-direction: column; gap: var(--s2);
-  margin-bottom: var(--s8);
-}
-.gate-card-highlights span {
-  font-size: var(--text-xs); color: var(--text-mid);
-  display: flex; align-items: center; gap: var(--s2);
-}
-.gate-card-highlights span::before {
-  content: ''; width: 6px; height: 6px;
-  transform: rotate(45deg); flex-shrink: 0;
-}
-.gate-card--sourcing .gate-card-highlights span::before { background: var(--gold-dim); }
-.gate-card--ecom .gate-card-highlights span::before { background: var(--emerald-dim); }
-.gate-card--vehicules .gate-card-highlights span::before { background: oklch(55% 0.15 25 / 0.6); }
-
-.gate-card-cta {
-  font-family: var(--mono); font-size: var(--text-xs);
-  letter-spacing: 0.08em; text-transform: uppercase;
-  padding: var(--s3) var(--s6);
-  text-align: center;
-  border: 1px solid var(--border);
-  color: var(--text-mid);
-  transition: all 0.3s;
-}
-.gate-card:hover .gate-card-cta {
-  color: var(--text);
-}
-.gate-card--sourcing:hover .gate-card-cta { border-color: var(--gold-dim); background: oklch(75% 0.12 85 / 0.06); }
-.gate-card--ecom:hover .gate-card-cta { border-color: var(--emerald-dim); background: oklch(72% 0.14 155 / 0.06); }
-.gate-card--vehicules:hover .gate-card-cta { border-color: oklch(55% 0.15 25 / 0.4); background: oklch(55% 0.22 25 / 0.06); }
-
-
-/* ═══════════════════
    PROCESS
    ═══════════════════ */
 .process { background: var(--bg-warm); }
@@ -607,11 +450,13 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   overflow: hidden;
   transition: border-color 0.5s var(--ease), transform 0.5s var(--ease), box-shadow 0.5s;
 }
+/* Luminous top line */
 .process-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
   background: linear-gradient(90deg, var(--gold), var(--emerald-dim), transparent);
   opacity: 0; transition: opacity 0.5s;
 }
+/* Corner glow */
 .process-card::after {
   content: ''; position: absolute; top: 0; left: 0;
   width: 100px; height: 100px;
@@ -655,20 +500,116 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 
 /* ═══════════════════
+   SOURCING CATEGORIES
+   ═══════════════════ */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border-subtle);
+}
+.cat-card {
+  background: var(--bg);
+  padding: var(--s12) var(--s6);
+  text-align: center; position: relative;
+  transition: background 0.4s var(--ease), border-color 0.4s;
+  cursor: default; overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+.cat-card::after {
+  content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 0; height: 2px;
+  background: var(--gold);
+  transition: width 0.5s var(--ease);
+}
+.cat-card:hover { background: var(--surface); border-color: var(--gold-line); }
+.cat-card:hover::after { width: 60%; }
+
+.cat-icon {
+  font-size: var(--text-2xl); margin-bottom: var(--s4); display: block;
+  transition: transform 0.4s var(--ease);
+}
+.cat-card:hover .cat-icon { transform: scale(1.12); }
+
+.cat-card h3 {
+  font-family: var(--serif); font-size: var(--text-base); font-weight: 700;
+  margin-bottom: var(--s2);
+}
+.cat-card p { font-size: var(--text-xs); color: var(--text-mid); }
+
+@media (max-width: 768px) {
+  .categories-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+
+/* ═══════════════════
+   DIFFERENTIATORS
+   ═══════════════════ */
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s12);
+}
+.diff-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s4);
+  padding-bottom: var(--s8);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: border-color 0.4s, transform 0.4s var(--ease);
+}
+.diff-item:hover {
+  border-color: var(--gold-dim);
+  transform: translateX(6px);
+}
+
+.diff-diamond {
+  width: 10px; height: 10px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  margin-top: 6px; flex-shrink: 0;
+  box-shadow: 0 0 8px var(--gold-glow);
+  transition: box-shadow 0.4s, background 0.4s, transform 0.4s;
+}
+.diff-item:hover .diff-diamond {
+  box-shadow: 0 0 20px oklch(75% 0.12 85 / 0.3);
+  transform: rotate(45deg) scale(1.4);
+}
+.diff-item:hover h3 { color: var(--gold); }
+
+.diff-item h3 {
+  font-family: var(--serif); font-size: var(--text-base); font-weight: 700;
+  margin-bottom: var(--s2);
+  transition: color 0.4s;
+}
+.diff-item p {
+  font-size: var(--text-sm); color: var(--text-mid); line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+  .diff-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ═══════════════════
    SHOWREEL
    ═══════════════════ */
 .showreel {
   background: var(--bg-warm); position: relative; overflow: hidden;
 }
+/* showreel glow removed — was causing compositing issues */
+
 .showreel-frame {
   aspect-ratio: 16/9; max-width: 900px;
   margin: 0 auto; position: relative;
   border: 1px solid var(--border);
   overflow: hidden;
 }
+/* Art deco corners with glow */
 .showreel-frame::before, .showreel-frame::after {
   content: ''; position: absolute; width: 48px; height: 48px;
   border-color: var(--gold); border-style: solid; z-index: 2;
+  /* drop-shadow removed — compositing trigger */
 }
 .showreel-frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
 .showreel-frame::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
@@ -683,9 +624,14 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   cursor: pointer; position: relative;
   overflow: hidden;
 }
+/* Animated scanline */
 .showreel-inner::before {
   content: ''; position: absolute; inset: 0;
-  background: repeating-linear-gradient(0deg, transparent 0, transparent 2px, oklch(0% 0 0 / 0.03) 2px, oklch(0% 0 0 / 0.03) 4px);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0, transparent 2px,
+    oklch(0% 0 0 / 0.03) 2px, oklch(0% 0 0 / 0.03) 4px
+  );
   pointer-events: none; z-index: 1;
 }
 
@@ -712,6 +658,160 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 }
 .play-btn:hover .play-arrow { border-left-color: var(--red); }
 
+
+/* ═══════════════════
+   PRICING
+   ═══════════════════ */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s4);
+}
+.price-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: var(--s8) var(--s6);
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+  transition: border-color 0.5s, transform 0.5s var(--ease), box-shadow 0.5s;
+}
+.price-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px oklch(0% 0 0 / 0.35);
+}
+
+.price-card.featured {
+  border-color: var(--gold-dim);
+  background: oklch(15% 0.01 50);
+  box-shadow: 0 0 40px oklch(75% 0.12 85 / 0.06);
+}
+.price-card.featured::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--red), var(--gold));
+}
+.price-card.featured::after {
+  content: 'Populaire'; position: absolute; top: var(--s4); right: var(--s4);
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); padding: 2px 8px;
+  border: 1px solid oklch(75% 0.12 85 / 0.25);
+}
+
+.price-name {
+  font-family: var(--mono); font-size: var(--text-xs);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: var(--s4);
+}
+.price-amount {
+  font-family: var(--serif);
+  font-size: var(--text-xl); font-weight: 900;
+  margin-bottom: var(--s1);
+}
+.price-card.featured .price-amount { color: var(--gold); }
+
+.price-period {
+  font-size: var(--text-xs); color: var(--text-dim);
+  margin-bottom: var(--s6);
+}
+.price-features {
+  list-style: none; flex: 1;
+  display: flex; flex-direction: column; gap: var(--s3);
+  margin-bottom: var(--s8);
+}
+.price-features li {
+  font-size: var(--text-sm); color: var(--text-mid);
+  padding-left: var(--s4); position: relative;
+}
+.price-features li::before {
+  content: ''; position: absolute; left: 0; top: 8px;
+  width: 6px; height: 6px;
+  background: var(--gold-dim);
+  transform: rotate(45deg);
+}
+
+.price-cta {
+  font-size: var(--text-xs); font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: var(--s3) var(--s6); text-align: center;
+  background: transparent; color: var(--text-mid);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.price-cta:hover { color: var(--text); border-color: var(--border-glow); }
+.price-card.featured .price-cta {
+  background: var(--red); color: var(--text); border-color: var(--red);
+  box-shadow: 0 0 16px oklch(55% 0.22 25 / 0.2);
+}
+.price-card.featured .price-cta:hover {
+  background: var(--red-hover);
+  box-shadow: 0 0 28px oklch(55% 0.22 25 / 0.35);
+}
+
+@media (max-width: 900px) { .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+/* ═══════════════════
+   PAYMENT PANEL
+   ═══════════════════ */
+.pay-panel {
+  display: none; margin-top: var(--s4);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--s4);
+}
+.pay-panel.open { display: block; }
+.pay-methods {
+  display: flex; flex-direction: column; gap: var(--s2);
+}
+.pay-method {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: oklch(12% 0.005 50);
+  border: 1px solid var(--border-subtle);
+  text-decoration: none; color: var(--text-mid);
+  font-size: var(--text-xs); font-weight: 500;
+  letter-spacing: 0.03em;
+  transition: all 0.25s;
+  cursor: pointer;
+}
+.pay-method:hover {
+  border-color: var(--border-glow);
+  color: var(--text);
+  background: oklch(15% 0.006 50);
+}
+.pay-method svg {
+  width: 18px; height: 18px; flex-shrink: 0;
+  stroke: currentColor; fill: none;
+  stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.pay-method .pm-label { flex: 1; }
+.pay-method .pm-arrow {
+  font-size: 0.7rem; opacity: 0.4;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.pay-method:hover .pm-arrow { opacity: 0.8; transform: translateX(2px); }
+.pay-toggle {
+  font-size: var(--text-xs); font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: var(--s3) var(--s6); text-align: center;
+  width: 100%;
+  background: var(--red); color: var(--text);
+  border: 1px solid var(--red);
+  text-decoration: none; cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 16px oklch(55% 0.22 25 / 0.15);
+}
+.pay-toggle:hover {
+  background: var(--red-hover);
+  box-shadow: 0 0 28px oklch(55% 0.22 25 / 0.3);
+}
+.pay-note {
+  font-size: 0.65rem; color: var(--text-dim);
+  margin-top: var(--s2); text-align: center;
+  line-height: 1.5;
+}
 
 /* ═══════════════════
    TESTIMONIALS
@@ -816,132 +916,6 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 
 /* ═══════════════════
-   CALCULATOR
-   ═══════════════════ */
-.calc-wrap {
-  max-width: 640px;
-  margin: var(--s8) auto 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: clamp(var(--s6), 4vw, var(--s12));
-  position: relative;
-  overflow: hidden;
-}
-.calc-wrap::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--red), var(--gold), var(--emerald));
-}
-.calc-field { margin-bottom: var(--s6); }
-.calc-field label {
-  display: block;
-  font-family: var(--mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: var(--s2);
-}
-.calc-field select,
-.calc-field input[type="number"] {
-  width: 100%;
-  padding: var(--s3) var(--s4);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: var(--text-base);
-  outline: none;
-  transition: border-color 0.3s;
-}
-.calc-field select:focus,
-.calc-field input[type="number"]:focus { border-color: var(--gold); }
-.calc-result {
-  text-align: center;
-  padding: var(--s6);
-  background: var(--bg-warm);
-  border: 1px solid var(--gold-line);
-  margin-top: var(--s6);
-  display: none;
-}
-.calc-result.show { display: block; }
-.calc-result-val {
-  font-family: var(--serif);
-  font-size: var(--text-2xl);
-  color: var(--emerald);
-  font-weight: 700;
-}
-.calc-result-sub {
-  font-size: var(--text-sm);
-  color: var(--text-mid);
-  margin-top: var(--s2);
-}
-.calc-btn {
-  width: 100%;
-  padding: var(--s4);
-  background: linear-gradient(135deg, var(--red), var(--red-deep));
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: var(--text-base);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s, box-shadow 0.3s;
-}
-.calc-btn:hover {
-  background: linear-gradient(135deg, var(--red-hover), var(--red));
-  box-shadow: 0 0 24px var(--red-glow);
-}
-@media (max-width: 640px) {
-  .calc-field select,
-  .calc-field input[type="number"] {
-    min-height: 52px;
-    font-size: var(--text-lg);
-    padding: var(--s3) var(--s4);
-  }
-  .calc-btn {
-    min-height: 56px;
-    font-size: var(--text-lg);
-  }
-}
-
-
-/* ═══════════════════
-   FAQ
-   ═══════════════════ */
-.faq-list { max-width: 720px; }
-.faq-item {
-  border-bottom: 1px solid var(--border-subtle);
-  transition: border-color 0.3s;
-}
-.faq-item:hover { border-color: var(--gold-dim); }
-.faq-q {
-  width: 100%; display: flex; justify-content: space-between; align-items: center;
-  padding: var(--s4) 0; text-align: left;
-  font-family: var(--serif); font-size: var(--text-base); font-weight: 600;
-  color: var(--text); cursor: pointer;
-  background: none; border: none;
-  transition: color 0.3s;
-}
-.faq-q:hover { color: var(--gold); }
-.faq-chevron {
-  width: 20px; height: 20px; flex-shrink: 0;
-  transition: transform 0.35s var(--ease);
-}
-.faq-item.open .faq-chevron { transform: rotate(180deg); }
-.faq-a {
-  max-height: 0; overflow: hidden;
-  transition: max-height 0.4s var(--ease), padding 0.3s;
-}
-.faq-item.open .faq-a { max-height: 300px; }
-.faq-a p {
-  padding-bottom: var(--s4);
-  font-size: var(--text-sm); color: var(--text-mid); line-height: 1.75;
-}
-
-
-/* ═══════════════════
    FINAL CTA
    ═══════════════════ */
 .final-cta {
@@ -1002,32 +976,6 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   box-shadow: 0 0 28px oklch(55% 0.22 25 / 0.35);
 }
 
-/* CTA channels */
-.cta-wa {
-  display: inline-flex; align-items: center; gap: var(--s2);
-  padding: var(--s3) var(--s6);
-  background: oklch(62% 0.18 155); color: #fff;
-  font-size: var(--text-sm); font-weight: 600;
-  letter-spacing: 0.03em; text-decoration: none;
-  transition: background 0.3s, box-shadow 0.3s, transform 0.15s;
-  box-shadow: 0 0 16px oklch(62% 0.18 155 / 0.2);
-}
-.cta-wa:hover {
-  background: oklch(67% 0.18 155);
-  box-shadow: 0 0 28px oklch(62% 0.18 155 / 0.35);
-}
-.cta-wa svg { width: 18px; height: 18px; fill: #fff; }
-.cta-email-link {
-  display: inline-flex; align-items: center; gap: var(--s2);
-  padding: var(--s3) var(--s6);
-  background: transparent; color: var(--text-mid);
-  border: 1px solid var(--border);
-  font-size: var(--text-sm); font-weight: 500;
-  letter-spacing: 0.03em; text-decoration: none;
-  transition: color 0.3s, border-color 0.3s;
-}
-.cta-email-link:hover { color: var(--text); border-color: var(--border-glow); }
-
 
 /* ═══════════════════
    FOOTER
@@ -1074,6 +1022,180 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 @media (max-width: 640px) {
   .footer-row { flex-direction: column; gap: var(--s3); text-align: center; }
+}
+
+
+/* ═══════════════════
+   PARALLAX SECTIONS
+   ═══════════════════ */
+.parallax-bg {
+  will-change: transform;
+}
+
+/* Art deco decorative elements */
+.deco-corner {
+  position: absolute; width: 60px; height: 60px;
+  border-color: var(--gold-line); border-style: solid;
+  pointer-events: none; z-index: 1;
+  /* drop-shadow removed — compositing trigger */
+}
+.deco-corner--tl { top: var(--s8); left: var(--s8); border-width: 1px 0 0 1px; }
+.deco-corner--br { bottom: var(--s8); right: var(--s8); border-width: 0 1px 1px 0; }
+
+/* Section label with green accent line */
+.section-tag {
+  font-family: var(--mono); font-size: var(--text-xs);
+  color: var(--gold-dim); letter-spacing: 0.14em; text-transform: uppercase;
+  margin-bottom: var(--s3);
+  display: flex; align-items: center; gap: var(--s3);
+}
+.section-tag::before {
+  content: ''; width: 24px; height: 1px;
+  background: var(--emerald-dim);
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: var(--text-2xl); font-weight: 900;
+  line-height: 1.08; letter-spacing: -0.015em;
+  margin-bottom: var(--s4);
+}
+.section-title em {
+  font-weight: 400;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-sub {
+  color: var(--text-mid); font-size: var(--text-base);
+  max-width: 50ch; line-height: 1.75;
+  margin-bottom: var(--s16);
+}
+
+
+/* ═══════════════════
+   WHATSAPP FLOATING
+   ═══════════════════ */
+.wa-float {
+  position: fixed; bottom: var(--s8); right: var(--s8); z-index: 90;
+  width: 56px; height: 56px;
+  background: oklch(62% 0.18 155); border: none;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px oklch(62% 0.18 155 / 0.35);
+  transition: transform 0.3s var(--ease), box-shadow 0.3s;
+  cursor: pointer;
+}
+.wa-float:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 28px oklch(62% 0.18 155 / 0.5);
+}
+.wa-float svg { width: 28px; height: 28px; fill: #fff; }
+.wa-float-label {
+  position: absolute; right: 68px; top: 50%; transform: translateY(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 6px 14px; font-family: var(--mono); font-size: 0.65rem;
+  color: var(--text); letter-spacing: 0.06em; white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.wa-float:hover .wa-float-label { opacity: 1; }
+@media (max-width: 768px) {
+  .wa-float { bottom: 80px; }
+}
+
+
+/* ═══════════════════
+   TRUST BAR
+   ═══════════════════ */
+.trust-bar {
+  background: var(--surface);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--s6) 0;
+}
+.trust-items {
+  display: flex; justify-content: center; gap: var(--s12);
+  flex-wrap: wrap;
+}
+.trust-item {
+  display: flex; align-items: center; gap: var(--s3);
+  font-family: var(--mono); font-size: var(--text-xs);
+  color: var(--text-mid); letter-spacing: 0.04em;
+}
+.trust-icon {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.3s;
+}
+.trust-item:hover .trust-icon { border-color: var(--gold-dim); }
+.trust-icon svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.trust-val { font-family: var(--serif); font-size: var(--text-lg); font-weight: 700; color: var(--gold); display: block; line-height: 1; }
+.trust-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; }
+
+@media (max-width: 640px) {
+  .trust-items { gap: var(--s6); }
+}
+
+
+/* ═══════════════════
+   COMPARISON TABLE
+   ═══════════════════ */
+.compare-table {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.compare-table th {
+  font-family: var(--mono); font-size: var(--text-xs);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: var(--s3) var(--s4);
+  text-align: left; color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+}
+.compare-table th:last-child { color: var(--gold); }
+.compare-table td {
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-mid);
+}
+.compare-table td:last-child { color: var(--text); font-weight: 500; }
+.compare-table tr:hover td { background: oklch(12% 0.006 50); }
+.compare-check { color: var(--emerald); }
+.compare-cross { color: oklch(55% 0.15 25 / 0.6); }
+
+
+/* ═══════════════════
+   FAQ
+   ═══════════════════ */
+.faq-list { max-width: 720px; }
+.faq-item {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: border-color 0.3s;
+}
+.faq-item:hover { border-color: var(--gold-dim); }
+.faq-q {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: var(--s4) 0; text-align: left;
+  font-family: var(--serif); font-size: var(--text-base); font-weight: 600;
+  color: var(--text); cursor: pointer;
+  background: none; border: none;
+  transition: color 0.3s;
+}
+.faq-q:hover { color: var(--gold); }
+.faq-chevron {
+  width: 20px; height: 20px; flex-shrink: 0;
+  transition: transform 0.35s var(--ease);
+}
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-a {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s var(--ease), padding 0.3s;
+}
+.faq-item.open .faq-a { max-height: 300px; }
+.faq-a p {
+  padding-bottom: var(--s4);
+  font-size: var(--text-sm); color: var(--text-mid); line-height: 1.75;
 }
 
 
@@ -1180,6 +1302,37 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   letter-spacing: 0.03em;
 }
 
+/* ═══════════════════
+   CTA IMPROVED
+   ═══════════════════ */
+.cta-channels {
+  display: flex; gap: var(--s4); justify-content: center;
+  margin-top: var(--s6); flex-wrap: wrap;
+}
+.cta-wa {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: var(--s3) var(--s6);
+  background: oklch(62% 0.18 155); color: #fff;
+  font-size: var(--text-sm); font-weight: 600;
+  letter-spacing: 0.03em; text-decoration: none;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.15s;
+  box-shadow: 0 0 16px oklch(62% 0.18 155 / 0.2);
+}
+.cta-wa:hover {
+  background: oklch(67% 0.18 155);
+  box-shadow: 0 0 28px oklch(62% 0.18 155 / 0.35);
+}
+.cta-wa svg { width: 18px; height: 18px; fill: #fff; }
+.cta-email-link {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  padding: var(--s3) var(--s6);
+  background: transparent; color: var(--text-mid);
+  border: 1px solid var(--border);
+  font-size: var(--text-sm); font-weight: 500;
+  letter-spacing: 0.03em; text-decoration: none;
+  transition: color 0.3s, border-color 0.3s;
+}
+.cta-email-link:hover { color: var(--text); border-color: var(--border-glow); }
 
 /* ═══════════════════
    SCROLL PROGRESS BAR
@@ -1193,80 +1346,217 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 }
 
 /* ═══════════════════
-   SECTION UTILITIES
+   TERRAIN MODULE — preuve de vie
    ═══════════════════ */
-.deco-corner {
-  position: absolute; width: 60px; height: 60px;
-  border-color: var(--gold-line); border-style: solid;
-  pointer-events: none; z-index: 1;
+.terrain-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s3);
+  margin-top: var(--s8);
 }
-.deco-corner--tl { top: var(--s8); left: var(--s8); border-width: 1px 0 0 1px; }
-.deco-corner--br { bottom: var(--s8); right: var(--s8); border-width: 0 1px 1px 0; }
+@media (max-width: 768px) { .terrain-grid { grid-template-columns: repeat(2, 1fr); } }
+.terrain-card {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: var(--s4);
+  transition: border-color 0.4s, transform 0.4s var(--ease);
+}
+.terrain-card:hover {
+  border-color: var(--gold-line);
+  transform: translateY(-4px);
+}
+.terrain-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, oklch(0% 0 0 / 0.7) 0%, transparent 60%);
+  z-index: 1;
+}
+.terrain-card-emoji {
+  font-size: clamp(2rem, 3vw, 3rem);
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -60%);
+  opacity: 0.15;
+  z-index: 0;
+}
+.terrain-card-title {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  position: relative; z-index: 2;
+}
+.terrain-card-desc {
+  font-size: var(--text-sm);
+  color: var(--text-mid);
+  margin-top: var(--s1);
+  position: relative; z-index: 2;
+  line-height: 1.5;
+}
+.terrain-live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: var(--emerald);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+  vertical-align: middle;
+  margin-right: var(--s2);
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 oklch(72% 0.14 155 / 0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px oklch(72% 0.14 155 / 0); }
+}
 
-.section-tag {
-  font-family: var(--mono); font-size: var(--text-xs);
-  color: var(--gold-dim); letter-spacing: 0.14em; text-transform: uppercase;
-  margin-bottom: var(--s3);
-  display: flex; align-items: center; gap: var(--s3);
+/* ═══════════════════
+   CALCULATOR — lead magnet
+   ═══════════════════ */
+.calc-wrap {
+  max-width: 640px;
+  margin: var(--s8) auto 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: clamp(var(--s6), 4vw, var(--s12));
+  position: relative;
+  overflow: hidden;
 }
-.section-tag::before {
-  content: ''; width: 24px; height: 1px;
-  background: var(--emerald-dim);
+.calc-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--red), var(--gold), var(--emerald));
 }
-
-.section-title {
+.calc-field {
+  margin-bottom: var(--s6);
+}
+.calc-field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: var(--s2);
+}
+.calc-field select,
+.calc-field input[type="number"] {
+  width: 100%;
+  padding: var(--s3) var(--s4);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  outline: none;
+  transition: border-color 0.3s;
+}
+.calc-field select:focus,
+.calc-field input[type="number"]:focus {
+  border-color: var(--gold);
+}
+.calc-result {
+  text-align: center;
+  padding: var(--s6);
+  background: var(--bg-warm);
+  border: 1px solid var(--gold-line);
+  margin-top: var(--s6);
+  display: none;
+}
+.calc-result.show { display: block; }
+.calc-result-val {
   font-family: var(--serif);
-  font-size: var(--text-2xl); font-weight: 900;
-  line-height: 1.08; letter-spacing: -0.015em;
-  margin-bottom: var(--s4);
+  font-size: var(--text-2xl);
+  color: var(--emerald);
+  font-weight: 700;
 }
-.section-title em {
-  font-weight: 400;
-  background: linear-gradient(135deg, var(--gold), var(--gold-dim));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+.calc-result-sub {
+  font-size: var(--text-sm);
+  color: var(--text-mid);
+  margin-top: var(--s2);
 }
-
-.section-sub {
-  color: var(--text-mid); font-size: var(--text-base);
-  max-width: 50ch; line-height: 1.75;
-  margin-bottom: var(--s16);
-}
-
-
-/* ═══════════════════
-   WHATSAPP FLOATING
-   ═══════════════════ */
-.wa-float {
-  position: fixed; bottom: var(--s8); right: var(--s8); z-index: 90;
-  width: 56px; height: 56px;
-  background: oklch(62% 0.18 155); border: none;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px oklch(62% 0.18 155 / 0.35);
-  transition: transform 0.3s var(--ease), box-shadow 0.3s;
+.calc-btn {
+  width: 100%;
+  padding: var(--s4);
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: none;
   cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
 }
-.wa-float:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 28px oklch(62% 0.18 155 / 0.5);
+.calc-btn:hover {
+  background: linear-gradient(135deg, var(--red-hover), var(--red));
+  box-shadow: 0 0 24px var(--red-glow);
 }
-.wa-float svg { width: 28px; height: 28px; fill: #fff; }
-.wa-float-label {
-  position: absolute; right: 68px; top: 50%; transform: translateY(-50%);
-  background: var(--surface); border: 1px solid var(--border);
-  padding: 6px 14px; font-family: var(--mono); font-size: 0.65rem;
-  color: var(--text); letter-spacing: 0.06em; white-space: nowrap;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.3s;
-}
-.wa-float:hover .wa-float-label { opacity: 1; }
-@media (max-width: 768px) {
-  .wa-float { bottom: 80px; }
-}
-
 
 /* ═══════════════════
-   BACK TO TOP
+   BLUR-IN SCROLL REVEAL
+   ═══════════════════ */
+.rv-blur { opacity: 1; filter: blur(0); transform: translateY(0); transition: opacity 0.9s var(--ease), filter 0.9s var(--ease), transform 0.9s var(--ease); will-change: filter, transform, opacity; }
+.rv-blur.hide { opacity: 0; filter: blur(8px); transform: translateY(20px); }
+.rv-blur.vis { opacity: 1; filter: blur(0); transform: translateY(0); }
+
+/* ═══════════════════
+   PRODUCT GALLERY
+   ═══════════════════ */
+.prod-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s4);
+  margin-top: var(--s8);
+}
+@media (max-width: 768px) { .prod-gallery { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .prod-gallery { grid-template-columns: 1fr; } }
+.prod-card {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: var(--s6);
+  transition: border-color 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.prod-card:hover {
+  border-color: var(--gold-line);
+  transform: translateY(-3px);
+}
+.prod-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, oklch(0% 0 0 / 0.75) 0%, oklch(0% 0 0 / 0.1) 100%);
+  z-index: 1;
+}
+.prod-card-icon {
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -55%);
+  opacity: 0.12;
+  z-index: 0;
+}
+.prod-card-name {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text);
+  position: relative; z-index: 2;
+}
+.prod-card-count {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: var(--s1);
+  position: relative; z-index: 2;
+}
+/* ═══════════════════
+   BACK TO TOP — golden arrow
    ═══════════════════ */
 .back-to-top {
   position: fixed; bottom: 6rem; right: 1.5rem; z-index: 150;
@@ -1290,6 +1580,21 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 }
 .back-to-top svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
+/* ═══════════════════
+   CALCULATOR — thumb-friendly mobile
+   ═══════════════════ */
+@media (max-width: 640px) {
+  .calc-field select,
+  .calc-field input[type="number"] {
+    min-height: 52px;
+    font-size: var(--text-lg);
+    padding: var(--s3) var(--s4);
+  }
+  .calc-btn {
+    min-height: 56px;
+    font-size: var(--text-lg);
+  }
+}
 
 </style>
 <script type="application/ld+json">
@@ -1318,8 +1623,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     "Sourcing halal",
     "Création boutique e-commerce",
     "Contrôle qualité",
-    "Logistique import",
-    "Export véhicules Chine Afrique"
+    "Logistique import"
   ],
   "knowsAbout": [
     "Import-export Chine France",
@@ -1354,8 +1658,8 @@ abbr[title]:hover::after, abbr[title]:focus::after {
         "@type": "Offer",
         "itemOffered": {
           "@type": "Service",
-          "name": "Export Véhicules",
-          "description": "Export de véhicules neufs et d'occasion depuis la Chine vers l'Afrique"
+          "name": "Logistique Import",
+          "description": "Gestion complète de l'import depuis la Chine vers la France"
         }
       }
     ]
@@ -1437,9 +1741,9 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <span class="nav-brand">CARAXES</span>
     </a>
     <ul class="nav-links" id="navLinks">
-      <li><a href="https://app.caraxes.fr/sourcing.html">Sourcing</a></li>
-      <li><a href="https://app.caraxes.fr/ecommerce.html">E-commerce</a></li>
-      <li><a href="https://app.caraxes.fr/vehicules.html">V&eacute;hicules</a></li>
+      <li><a href="#sourcing">Sourcing</a></li>
+      <li><a href="#ecommerce">E-commerce</a></li>
+      <li><a href="#vehicules">V&eacute;hicules</a></li>
       <li><a href="#calculateur">Simulateur</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li style="display:none;" class="nav-mobile-cta-li"><a href="javascript:void(0)" onclick="openForm('formComparatif')" class="nav-mobile-cta">D&eacute;marrer &rarr;</a></li>
@@ -1462,7 +1766,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     <p class="hero-sub">On n&eacute;gocie en mandarin, on filme chaque usine, on contr&ocirc;le chaque lot avant exp&eacute;dition. Nos clients &eacute;conomisent 20 &agrave; 40&thinsp;% vs un import en solo. On parle fran&ccedil;ais, arabe et mandarin.</p>
     <div class="hero-actions">
       <a href="javascript:void(0)" onclick="openForm('formComparatif')" class="btn-primary">Recevoir mon comparatif gratuit &rarr;</a>
-      <a href="#services" class="btn-ghost">Nos services</a>
+      <a href="#process" class="btn-ghost">Comment &ccedil;a marche</a>
     </div>
     <p style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-dim); font-family:var(--mono); letter-spacing:0.04em;">Z&eacute;ro engagement &middot; Comparatif sous 48h &middot; 100% gratuit</p>
     <div class="hero-stats">
@@ -1544,8 +1848,179 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <div class="process-card rv rv-d4">
         <div class="process-num">03</div>
         <h3>Exp&eacute;dition et suivi</h3>
-        <p>Maritime, a&eacute;rien ou express. On g&egrave;re la logistique de bout en bout, douanes comprises. Vous recevez, on garantit.</p>
-        <div class="process-detail">Tracking temps r&eacute;el</div>
+        <p>Maritime, a&eacute;rien ou express. Tracking temps r&eacute;el, d&eacute;douanement g&eacute;r&eacute;, livraison &agrave; votre entrep&ocirc;t.</p>
+        <div class="process-detail"><abbr title="Free On Board &mdash; prix d&eacute;part usine + port">FOB</abbr> &middot; <abbr title="Cost, Insurance &amp; Freight &mdash; livr&eacute; port fran&ccedil;ais">CIF</abbr> &middot; <abbr title="Delivered Duty Paid &mdash; livr&eacute; chez vous, tout compris">DDP</abbr></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<div style="padding:var(--s12) 0 var(--s4); text-align:center;">
+  <div class="w" style="display:flex;align-items:center;gap:var(--s4);">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold), transparent);opacity:0.3;"></div>
+    <span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;">Sourcing Produits</span>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold), transparent);opacity:0.3;"></div>
+  </div>
+</div>
+
+<!-- SOURCING CATEGORIES -->
+<section class="section" id="sourcing">
+  <div class="w">
+    <div class="section-tag rv">Ce qu&rsquo;on source</div>
+    <h2 class="section-title rv rv-d1">Du hijab au panneau solaire. <em>On source tout.</em></h2>
+    <p class="section-sub rv rv-d2">De 50 unit&eacute;s &agrave; 40 pieds. 12 cat&eacute;gories, un r&eacute;seau de fournisseurs audit&eacute;s sur les principaux hubs industriels chinois.</p>
+  </div>
+  <div class="w rv rv-d3">
+    <div class="categories-grid">
+      <div class="cat-card">
+        <span class="cat-icon">&#9775;</span>
+        <h3>Textile et mode</h3>
+        <p>Tissus, v&ecirc;tements, accessoires</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#9878;</span>
+        <h3>Cosm&eacute;tique</h3>
+        <p>Soins, packaging, formulation</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#9881;</span>
+        <h3>Alimentaire</h3>
+        <p>&Eacute;picerie, compl&eacute;ments, halal</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#10023;</span>
+        <h3>&Eacute;lectronique</h3>
+        <p>Gadgets, accessoires, LED</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#9856;</span>
+        <h3>Mobilier et d&eacute;co</h3>
+        <p>Meubles, luminaires, objets</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#9883;</span>
+        <h3>Packaging</h3>
+        <p>Bo&icirc;tes, flacons, &eacute;tiquettes</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#10070;</span>
+        <h3>Bijouterie</h3>
+        <p>Argent, plaqu&eacute; or, fantaisie</p>
+      </div>
+      <div class="cat-card">
+        <span class="cat-icon">&#9733;</span>
+        <h3>Sur mesure</h3>
+        <p>Produit custom, marque blanche</p>
+      </div>
+      <div class="cat-card" style="border-top:2px solid var(--red);">
+        <span class="cat-icon">&#9951;</span>
+        <h3>V&eacute;hicules</h3>
+        <p>Export voitures, utilitaires, pi&egrave;ces</p>
+      </div>
+      <div class="cat-card" style="border-top:2px solid oklch(65% 0.15 160);">
+        <span class="cat-icon">&#9764;</span>
+        <h3>M&eacute;dical &amp; Labo</h3>
+        <p>Consommables, &eacute;quipements h&ocirc;pitaux, diagnostics</p>
+      </div>
+      <div class="cat-card" style="border-top:2px solid oklch(65% 0.12 250);">
+        <span class="cat-icon">&#9962;</span>
+        <h3>&Eacute;quipement collectif</h3>
+        <p>Mobilier scolaire, &eacute;quipements sportifs, signalisation</p>
+      </div>
+      <div class="cat-card" style="border-top:2px solid oklch(70% 0.14 55);">
+        <span class="cat-icon">&#9889;</span>
+        <h3>&Eacute;nergie &amp; BTP</h3>
+        <p>Panneaux solaires, g&eacute;n&eacute;rateurs, mat&eacute;riaux construction</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="lum-sep"></div>
+
+<!-- DIFFERENTIATORS -->
+<section class="section">
+  <div class="deco-corner deco-corner--br"></div>
+  <div class="w">
+    <div class="section-tag rv">Pourquoi CARAXES</div>
+    <h2 class="section-title rv rv-d1">Pas un interm&eacute;diaire. <em>Votre homme sur place.</em></h2>
+    <p class="section-sub rv rv-d2">On vit en Chine, on n&eacute;gocie en mandarin, on refuse 15% des usines qu&rsquo;on audite. La diff&eacute;rence se compte en milliers d&rsquo;euros &eacute;conomis&eacute;s.</p>
+    <div class="diff-grid">
+      <div class="diff-item rv rv-d1">
+        <div class="diff-diamond"></div>
+        <div>
+          <h3>Bas&eacute; en Chine, pas derri&egrave;re un &eacute;cran</h3>
+          <p>Pr&eacute;sence physique &agrave; Guangzhou, Yiwu et Shenzhen. Visites usines en personne, pas depuis Alibaba.</p>
+        </div>
+      </div>
+      <div class="diff-item rv rv-d2">
+        <div class="diff-diamond"></div>
+        <div>
+          <h3>N&eacute;gociation terrain</h3>
+          <p>Les vrais prix se n&eacute;gocient face &agrave; face, en usine. On obtient les tarifs locaux, pas les prix &laquo;&thinsp;export&thinsp;&raquo;.</p>
+        </div>
+      </div>
+      <div class="diff-item rv rv-d3">
+        <div class="diff-diamond"></div>
+        <div>
+          <h3>Contr&ocirc;le qualit&eacute; film&eacute;</h3>
+          <p>Chaque inspection est document&eacute;e en vid&eacute;o. Vous voyez exactement ce qui part de l&rsquo;usine.</p>
+        </div>
+      </div>
+      <div class="diff-item rv rv-d4">
+        <div class="diff-diamond"></div>
+        <div>
+          <h3>Conformit&eacute; halal v&eacute;rifi&eacute;e</h3>
+          <p>Pour les produits alimentaires et cosm&eacute;tiques, on v&eacute;rifie les certifications halal directement.</p>
+        </div>
+      </div>
+      <div class="diff-item rv rv-d5">
+        <div class="diff-diamond"></div>
+        <div>
+          <h3>Logistique int&eacute;gr&eacute;e</h3>
+          <p>Du quai de chargement chinois &agrave; votre entrep&ocirc;t fran&ccedil;ais. Maritime, a&eacute;rien, ferroviaire.</p>
+        </div>
+      </div>
+      <div class="diff-item rv rv-d6">
+        <div class="diff-diamond"></div>
+        <div>
+          <h3>Transparence totale</h3>
+          <p>Dashboard client en temps r&eacute;el. Chaque &eacute;tape document&eacute;e, chaque co&ucirc;t d&eacute;taill&eacute;. Z&eacute;ro surprise.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="lum-sep"></div>
+
+<!-- DIRECT DU TERRAIN -->
+<section class="section" id="terrain" style="background: var(--bg-warm);">
+  <div class="w">
+    <div class="section-tag rv-blur"><span class="terrain-live-dot"></span>Direct du terrain</div>
+    <h2 class="section-title rv-blur rv-d1">On est en Chine. <em>En ce moment.</em></h2>
+    <p class="section-sub rv-blur rv-d2">Pas de bureau &agrave; Paris avec un logo chinois. On vit sur place, on visite les usines nous-m&ecirc;mes, on n&eacute;gocie en mandarin chaque jour.</p>
+    <div class="terrain-grid rv-blur rv-d3">
+      <div class="terrain-card">
+        <span class="terrain-card-emoji">&#127981;</span>
+        <span class="terrain-card-title">Audit usine</span>
+        <span class="terrain-card-desc">Inspection des lignes de production, v&eacute;rification des certifications, vid&eacute;o 4K envoy&eacute;e sous 24h</span>
+      </div>
+      <div class="terrain-card">
+        <span class="terrain-card-emoji">&#128270;</span>
+        <span class="terrain-card-title">Contr&ocirc;le QC</span>
+        <span class="terrain-card-desc">Chaque lot inspect&eacute; pi&egrave;ce par pi&egrave;ce avant exp&eacute;dition. 15% des usines ne passent pas nos tests.</span>
+      </div>
+      <div class="terrain-card">
+        <span class="terrain-card-emoji">&#129309;</span>
+        <span class="terrain-card-title">N&eacute;gociation</span>
+        <span class="terrain-card-desc">En mandarin, face &agrave; face. On obtient les prix locaux, pas les prix &laquo;&nbsp;export&nbsp;&raquo; pour &eacute;trangers.</span>
+      </div>
+      <div class="terrain-card">
+        <span class="terrain-card-emoji">&#128230;</span>
+        <span class="terrain-card-title">Exp&eacute;dition</span>
+        <span class="terrain-card-desc">Du colissage au conteneur, on supervise le chargement et on suit jusqu&rsquo;au port de destination.</span>
       </div>
     </div>
   </div>
@@ -1553,69 +2028,266 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 <div class="lum-sep lum-sep--green"></div>
 
-<!-- ═══════════════════════════════════════
-     GATE — 3 SERVICE CARDS
-     ═══════════════════════════════════════ -->
-<section class="gate-section" id="services">
+<!-- COMPARISON -->
+<section class="section" id="compare">
   <div class="w">
-    <div class="gate-intro">
-      <div class="section-tag rv" style="justify-content:center">Nos expertises</div>
-      <h2 class="section-title rv rv-d1" style="text-align:center">Trois m&eacute;tiers. <em>Un seul interlocuteur.</em></h2>
-      <p class="section-sub rv rv-d2" style="margin-inline:auto; text-align:center;">Sourcing produits, e-commerce cl&eacute; en main, export v&eacute;hicules. Choisissez votre univers.</p>
-    </div>
-
-    <div class="gate-grid">
-
-      <!-- SOURCING -->
-      <a href="https://app.caraxes.fr/sourcing.html" class="gate-card gate-card--sourcing rv rv-d2">
-        <div class="gate-card-icon">&#9775;</div>
-        <div class="gate-card-tag">Sourcing Chine</div>
-        <h3>Trouvez vos fournisseurs. <em style="-webkit-text-fill-color:var(--gold);">On g&egrave;re le reste.</em></h3>
-        <p class="gate-card-desc">Du textile halal &agrave; l&rsquo;&eacute;lectronique. On n&eacute;gocie sur place, on filme chaque usine, on contr&ocirc;le chaque lot. 12 cat&eacute;gories, 500+ fournisseurs audit&eacute;s.</p>
-        <div class="gate-card-highlights">
-          <span>Comparatif fournisseurs gratuit</span>
-          <span>Visites usine film&eacute;es</span>
-          <span>Contr&ocirc;le qualit&eacute; sur place</span>
-          <span>Logistique import compl&egrave;te</span>
-        </div>
-        <div class="gate-card-cta">D&eacute;couvrir le sourcing &rarr;</div>
-      </a>
-
-      <!-- E-COMMERCE -->
-      <a href="https://app.caraxes.fr/ecommerce.html" class="gate-card gate-card--ecom rv rv-d3">
-        <div class="gate-card-icon">&#9883;</div>
-        <div class="gate-card-tag">E-commerce</div>
-        <h3>Votre boutique en ligne. <em style="-webkit-text-fill-color:var(--emerald);">Cl&eacute; en main.</em></h3>
-        <p class="gate-card-desc">Shopify, WooCommerce, PrestaShop. On cr&eacute;e, on g&egrave;re, on forme. De la fiche produit au paiement en ligne, tout est pris en charge.</p>
-        <div class="gate-card-highlights">
-          <span>Cr&eacute;ation boutique compl&egrave;te</span>
-          <span>Gestion mensuelle d&eacute;l&eacute;gu&eacute;e</span>
-          <span>Formation e-commerce gratuite</span>
-          <span>Sourcing + e-com = &minus;15%</span>
-        </div>
-        <div class="gate-card-cta">D&eacute;couvrir l&rsquo;e-commerce &rarr;</div>
-      </a>
-
-      <!-- VÉHICULES -->
-      <a href="https://app.caraxes.fr/vehicules.html" class="gate-card gate-card--vehicules rv rv-d4">
-        <div class="gate-card-icon">&#9878;</div>
-        <div class="gate-card-tag">Export V&eacute;hicules</div>
-        <h3>V&eacute;hicules chinois. <em style="-webkit-text-fill-color:var(--red);">Livr&eacute;s en Afrique.</em></h3>
-        <p class="gate-card-desc">Berlines, SUV, pick-up, utilitaires, &eacute;lectriques. Inspection sur place, logistique RoRo ou conteneur, d&eacute;douanement &agrave; destination.</p>
-        <div class="gate-card-highlights">
-          <span>8 types de v&eacute;hicules</span>
-          <span>Inspection avant exp&eacute;dition</span>
-          <span>Livraison Afrique de l&rsquo;Ouest &amp; Maghreb</span>
-          <span>Devis sur mesure</span>
-        </div>
-        <div class="gate-card-cta">D&eacute;couvrir l&rsquo;export &rarr;</div>
-      </a>
-
+    <div class="section-tag rv">Pourquoi un agent</div>
+    <h2 class="section-title rv rv-d1">Seul sur Alibaba vs <em>avec CARAXES</em></h2>
+    <p class="section-sub rv rv-d2">Alibaba c&rsquo;est bien pour chercher. Mais sans pr&eacute;sence terrain, vous payez le prix &laquo;&nbsp;export&nbsp;&raquo; et vous priez pour la qualit&eacute;.</p>
+    <div class="rv rv-d3" style="max-width:720px;">
+      <table class="compare-table">
+        <thead><tr><th></th><th>Seul sur Alibaba</th><th>Avec CARAXES</th></tr></thead>
+        <tbody>
+          <tr><td>V&eacute;rification fournisseur</td><td><span class="compare-cross">&times;</span> Photos en ligne</td><td><span class="compare-check">&check;</span> Visite usine film&eacute;e</td></tr>
+          <tr><td>N&eacute;gociation prix</td><td><span class="compare-cross">&times;</span> Prix &laquo;&nbsp;export&nbsp;&raquo;</td><td><span class="compare-check">&check;</span> Tarif local n&eacute;goci&eacute; sur place</td></tr>
+          <tr><td>Contr&ocirc;le qualit&eacute;</td><td><span class="compare-cross">&times;</span> Aucun avant envoi</td><td><span class="compare-check">&check;</span> Inspection syst&eacute;matique + vid&eacute;o</td></tr>
+          <tr><td>Risque arnaque</td><td><span class="compare-cross">&times;</span> &Eacute;lev&eacute; sans pr&eacute;sence</td><td><span class="compare-check">&check;</span> Fournisseur v&eacute;rifi&eacute; en personne</td></tr>
+          <tr><td>Logistique</td><td><span class="compare-cross">&times;</span> &Agrave; g&eacute;rer soi-m&ecirc;me</td><td><span class="compare-check">&check;</span> <abbr title="Free On Board">FOB</abbr>, <abbr title="Cost, Insurance &amp; Freight">CIF</abbr> ou <abbr title="Delivered Duty Paid &mdash; tout compris">DDP</abbr> cl&eacute; en main</td></tr>
+          <tr><td>D&eacute;douanement</td><td><span class="compare-cross">&times;</span> Complexe, risque de blocage</td><td><span class="compare-check">&check;</span> G&eacute;r&eacute; de A &agrave; Z</td></tr>
+          <tr><td>Interlocuteur</td><td><span class="compare-cross">&times;</span> Chat avec l&rsquo;usine (d&eacute;calage, langue)</td><td><span class="compare-check">&check;</span> Agent francophone, r&eacute;ponse sous 24h</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
 <div class="lum-sep"></div>
+
+<!-- SOURCING PRICING -->
+<section class="section" id="pricing">
+  <div class="w">
+    <div class="section-tag rv">Tarifs Sourcing</div>
+    <h2 class="section-title rv rv-d1">Transparent. <em>Vous payez au r&eacute;sultat.</em></h2>
+    <p class="section-sub rv rv-d2">Premier devis gratuit. Commission uniquement si vous commandez. Z&eacute;ro frais cach&eacute;s.</p>
+    <div class="pricing-grid rv rv-d3">
+      <div class="price-card">
+        <div class="price-name">Comparatif</div>
+        <div class="price-amount">0&thinsp;&euro;</div>
+        <div class="price-period">Gratuit, sans engagement</div>
+        <ul class="price-features">
+          <li>2 fournisseurs compar&eacute;s</li>
+          <li>Rapport avec prix compar&eacute;s et photos</li>
+          <li>R&eacute;ponse garantie sous 48h par email</li>
+          <li>Testez sans risque&thinsp;: 0&thinsp;&euro;, 0 engagement</li>
+        </ul>
+        <a href="javascript:void(0)" onclick="openForm('formComparatif')" class="price-cta">Demander un comparatif</a>
+        <a href="https://caraxes.as.me/?appointmentType=91681399" target="_blank" rel="noopener" class="price-cta-secondary" style="display:block; margin-top:0.5rem; font-size:0.6rem; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; text-align:center; color:var(--text-dim); text-decoration:none; transition:color 0.3s;">ou r&eacute;server un appel gratuit &rarr;</a>
+      </div>
+      <div class="price-card">
+        <div class="price-name">Sourcing Ponctuel</div>
+        <div class="price-amount">249&thinsp;&euro;</div>
+        <div class="price-period">par produit</div>
+        <ul class="price-features">
+          <li>3 &agrave; 5 usines visit&eacute;es en personne</li>
+          <li>Devis compar&eacute;s + rapport</li>
+          <li>N&eacute;gociation tarifaire incluse</li>
+          <li>Votre agent r&eacute;pond sur WhatsApp sous 4h</li>
+          <li>Assistance 1&egrave;re commande</li>
+        </ul>
+        <a href="javascript:void(0)" onclick="openForm('formSourcing')" class="price-cta">Choisir ce plan</a>
+      </div>
+      <div class="price-card featured">
+        <div class="price-name">Sourcing Complet</div>
+        <div class="price-amount">599&thinsp;&euro;</div>
+        <div class="price-period">par produit</div>
+        <ul class="price-features">
+          <li>10+ fournisseurs pr&eacute;-s&eacute;lectionn&eacute;s</li>
+          <li>Rapport complet + photos QC</li>
+          <li>N&eacute;gociation avanc&eacute;e</li>
+          <li>&Eacute;chantillons + inspection QC</li>
+          <li>Suivi jusqu&rsquo;&agrave; exp&eacute;dition</li>
+          <li>Dashboard + WhatsApp prioritaire</li>
+        </ul>
+        <a href="javascript:void(0)" onclick="openForm('formSourcing')" class="price-cta">Lancer mon sourcing</a>
+      </div>
+      <div class="price-card">
+        <div class="price-name">Agent D&eacute;di&eacute;</div>
+        <div class="price-amount">8&thinsp;%</div>
+        <div class="price-period">min. 800&thinsp;&euro; / mois</div>
+        <ul class="price-features">
+          <li>Sourcing illimit&eacute;</li>
+          <li>Inspections QC syst&eacute;matiques</li>
+          <li>N&eacute;gociation + suivi continu</li>
+          <li>Gestion e-commerce int&eacute;gr&eacute;e</li>
+          <li>Rapport d&rsquo;activit&eacute; mensuel</li>
+          <li>Ligne directe 7j/7</li>
+        </ul>
+        <a href="javascript:void(0)" onclick="openForm('formSourcing')" class="price-cta">Parler &agrave; un agent d&eacute;di&eacute;</a>
+        <a href="https://caraxes.as.me/?appointmentType=91750360" target="_blank" rel="noopener" class="price-cta-secondary" style="display:block; margin-top:0.5rem; font-size:0.6rem; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; text-align:center; color:var(--text-dim); text-decoration:none; transition:color 0.3s;">ou r&eacute;server une consultation &rarr;</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<div id="ecommerce-anchor" style="padding:var(--s12) 0 var(--s4); text-align:center;">
+  <div class="w" style="display:flex;align-items:center;gap:var(--s4);">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--emerald), transparent);opacity:0.3;"></div>
+    <span style="font-family:var(--mono);font-size:0.7rem;color:var(--emerald);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;">Services E-commerce</span>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--emerald), transparent);opacity:0.3;"></div>
+  </div>
+</div>
+
+<!-- E-COMMERCE SERVICES -->
+<section class="section" id="ecommerce" style="background:var(--bg-warm);">
+  <div class="w">
+    <div class="section-tag rv" style="color:var(--gold);">Services E-commerce</div>
+    <h2 class="section-title rv rv-d1">Votre boutique en ligne, <em>cl&eacute; en main.</em></h2>
+    <p class="section-sub rv rv-d2">On cr&eacute;e votre boutique, on la g&egrave;re, on vous forme. Shopify ou WooCommerce, connect&eacute; &agrave; votre sourcing.</p>
+    <!-- E-commerce à la carte -->
+    <div class="ecom-addons rv rv-d4" id="ecom" style="margin-top:2rem; padding:2.5rem 2rem; border:1px solid oklch(35% 0.02 25); background:oklch(12% 0.005 25); position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; left:0; right:0; height:2px; background:var(--gold); opacity:0.5;"></div>
+      <div style="text-align:center; margin-bottom:2.5rem;">
+        <span class="section-tag" style="color:var(--gold);">Nouveau</span>
+        <h3 style="font-family:'Playfair Display',serif; font-size:clamp(1.3rem,1rem+1vw,1.8rem); font-weight:700; margin-top:0.75rem; letter-spacing:-0.01em; color:var(--text);">Services E-commerce <em>&agrave; la carte</em></h3>
+        <p style="color:oklch(65% 0.02 25); font-size:0.9rem; margin-top:0.75rem; max-width:55ch; margin-left:auto; margin-right:auto; line-height:1.7;">Du sourcing &agrave; la vente&nbsp;: on cr&eacute;e, g&egrave;re et forme pour votre boutique en ligne. 3 services, chacun activable ind&eacute;pendamment.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.5rem;">
+        <!-- Service 01 — Création boutique -->
+        <div class="price-card" style="border-top:2px solid var(--gold);">
+          <div class="price-name" style="font-size:0.65rem; color:var(--gold); letter-spacing:0.08em;">01 &mdash; Cr&eacute;ation boutique</div>
+          <div class="price-amount">1&thinsp;490&thinsp;&euro;</div>
+          <div class="price-period">Shopify ou WooCommerce &middot; 5-10 jours</div>
+          <ul class="price-features">
+            <li>Branding + design responsive</li>
+            <li>Catalogue 5-60 produits</li>
+            <li>Paiements, livraison, pages l&eacute;gales</li>
+            <li>SEO de base int&eacute;gr&eacute;</li>
+            <li>Formation 2h offerte</li>
+          </ul>
+          <button class="pay-toggle" onclick="togglePay(this)">Souscrire &rarr;</button>
+          <div class="pay-panel" data-service="creation-boutique" data-amount="1490">
+            <div class="pay-methods">
+              <a href="https://buy.stripe.com/28EeV66yS6HZ3H92cjfEk00" target="_blank" rel="noopener noreferrer" class="pay-method" data-method="stripe">
+                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span class="pm-label">Carte bancaire <span style="opacity:0.5;">(Stripe)</span></span>
+                <span class="pm-arrow">&rarr;</span>
+              </a>
+              <button class="pay-method" onclick="showVirement(this, 1490, 'Cr&eacute;ation boutique')">
+                <svg viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+                <span class="pm-label">Virement bancaire</span>
+                <span class="pm-arrow">&rarr;</span>
+              </button>
+              <button class="pay-method" onclick="showCrypto(this, 1490, 'Cr&eacute;ation boutique')">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h5l-1 4h-3l-1 4h5"/></svg>
+                <span class="pm-label">Crypto <span style="opacity:0.5;">(USDT / BTC)</span></span>
+                <span class="pm-arrow">&rarr;</span>
+              </button>
+            </div>
+            <p class="pay-note">Paiement s&eacute;curis&eacute; &middot; Facture envoy&eacute;e par email</p>
+          </div>
+        </div>
+        <!-- Service 02 — Gestion boutique -->
+        <div class="price-card" style="border-top:2px solid oklch(72% 0.12 180);">
+          <div class="price-name" style="font-size:0.65rem; color:oklch(72% 0.12 180); letter-spacing:0.08em;">02 &mdash; Gestion boutique</div>
+          <div class="price-amount">249&thinsp;&euro;<span style="font-size:0.6em; font-weight:400; opacity:0.6;">/mois</span></div>
+          <div class="price-period">Engagement 3 mois &middot; tout inclus</div>
+          <ul class="price-features">
+            <li>Mise &agrave; jour stock &amp; catalogue</li>
+            <li>Traitement commandes &amp; SAV</li>
+            <li>Photos + descriptions SEO</li>
+            <li>Calendrier promos saisonnier</li>
+            <li>Rapport analytics mensuel</li>
+          </ul>
+          <button class="pay-toggle" onclick="togglePay(this)">Souscrire &rarr;</button>
+          <div class="pay-panel" data-service="gestion-boutique" data-amount="249">
+            <div class="pay-methods">
+              <a href="https://buy.stripe.com/14A5kwg9s3vNa5x5ovfEk01" target="_blank" rel="noopener noreferrer" class="pay-method" data-method="stripe">
+                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span class="pm-label">Carte bancaire <span style="opacity:0.5;">(Stripe)</span></span>
+                <span class="pm-arrow">&rarr;</span>
+              </a>
+              <button class="pay-method" onclick="showVirement(this, 249, 'Gestion boutique')">
+                <svg viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+                <span class="pm-label">Virement bancaire</span>
+                <span class="pm-arrow">&rarr;</span>
+              </button>
+              <button class="pay-method" onclick="showCrypto(this, 249, 'Gestion boutique')">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h5l-1 4h-3l-1 4h5"/></svg>
+                <span class="pm-label">Crypto <span style="opacity:0.5;">(USDT / BTC)</span></span>
+                <span class="pm-arrow">&rarr;</span>
+              </button>
+            </div>
+            <p class="pay-note">249&thinsp;&euro;/mois &middot; 1er pr&eacute;l&egrave;vement imm&eacute;diat &middot; Facture mensuelle</p>
+          </div>
+        </div>
+        <!-- Service 03 — Formation GRATUITE -->
+        <div class="price-card" style="border-top:2px solid oklch(72% 0.16 155);">
+          <div class="price-name" style="font-size:0.65rem; color:oklch(72% 0.16 155); letter-spacing:0.08em;">03 &mdash; Formation</div>
+          <div class="price-amount" style="color:oklch(72% 0.16 155);">GRATUIT</div>
+          <div class="price-period">Incluse pour tous nos clients</div>
+          <ul class="price-features">
+            <li>8 modules e-commerce complets</li>
+            <li>5 outils interactifs</li>
+            <li>Guides PDF t&eacute;l&eacute;chargeables</li>
+            <li>Acc&egrave;s imm&eacute;diat sur le Dashboard</li>
+            <li>Bonus 20h avec l'offre Cr&eacute;ation</li>
+          </ul>
+          <a href="https://app.caraxes.fr/" target="_blank" rel="noopener noreferrer" class="pay-toggle" style="text-decoration:none; display:block; text-align:center; background:oklch(72% 0.16 155); color:#fff;">Acc&eacute;der gratuitement &rarr;</a>
+        </div>
+      </div>
+      <p style="text-align:center; font-size:0.75rem; color:oklch(55% 0.02 25); margin-top:1.5rem;">Bundling sourcing + e-com&nbsp;: &minus;10 &agrave; &minus;15&thinsp;%</p>
+      <p style="text-align:center; font-size:var(--text-sm); color:var(--text-mid); margin-top:var(--s6); max-width:50ch; margin-inline:auto; line-height:1.7;">Comparatif gratuit, sans engagement. Si nos prix ne battent pas les v&ocirc;tres, vous ne payez rien.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<div style="padding:var(--s12) 0 var(--s4); text-align:center;">
+  <div class="w" style="display:flex;align-items:center;gap:var(--s4);">
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--red), transparent);opacity:0.3;"></div>
+    <span style="font-family:var(--mono);font-size:0.7rem;color:var(--red);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;">Export V&eacute;hicules</span>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--red), transparent);opacity:0.3;"></div>
+  </div>
+</div>
+
+<!-- VEHICLE EXPORT -->
+<section class="section" id="vehicules" style="position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background: radial-gradient(ellipse 60% 50% at 80% 40%, oklch(55% 0.22 25 / 0.04), transparent 60%), radial-gradient(ellipse 40% 50% at 20% 60%, oklch(75% 0.12 85 / 0.03), transparent 60%); pointer-events:none;"></div>
+  <div class="w" style="position:relative; z-index:2;">
+    <div class="section-tag rv" style="color:var(--red);">Nouveau service</div>
+    <h2 class="section-title rv rv-d1">Export de v&eacute;hicules, <em>vers le monde entier</em></h2>
+    <p class="section-sub rv rv-d2">Voitures neuves et d&rsquo;occasion, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. Surtout vers l&rsquo;Afrique, mais toute destination est possible.</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; margin-top:3rem;" class="rv rv-d3">
+      <!-- Card 1 -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--red); padding:2rem; position:relative;">
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--red); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">01 &mdash; Sourcing v&eacute;hicule</div>
+        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">S&eacute;lection sur place</h3>
+        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">On s&eacute;lectionne le v&eacute;hicule en personne dans les march&eacute;s auto chinois. Inspection m&eacute;canique, photos 360&deg;, historique v&eacute;rifi&eacute;.</p>
+      </div>
+      <!-- Card 2 -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--gold); padding:2rem; position:relative;">
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--gold); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">02 &mdash; Logistique</div>
+        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">Exp&eacute;dition RORO &amp; conteneur</h3>
+        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">Transport par navire roulier (RORO) ou conteneur ferm&eacute;. D&eacute;douanement export Chine et import destination g&eacute;r&eacute;s.</p>
+      </div>
+      <!-- Card 3 -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-top:2px solid var(--emerald); padding:2rem; position:relative;">
+        <div style="font-family:var(--mono); font-size:0.65rem; color:var(--emerald); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1rem;">03 &mdash; Destinations</div>
+        <h3 style="font-family:var(--serif); font-size:var(--text-lg); font-weight:700; margin-bottom:0.75rem;">Afrique &amp; international</h3>
+        <p style="color:var(--text-mid); font-size:var(--text-sm); line-height:1.7;">S&eacute;n&eacute;gal, C&ocirc;te d&rsquo;Ivoire, Congo, Cameroun, Maroc, Alg&eacute;rie&hellip; et toute autre destination sur demande.</p>
+      </div>
+    </div>
+    <!-- Types de véhicules -->
+    <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-top:2rem; justify-content:center;" class="rv rv-d4">
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Berlines</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">SUV</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Pick-up</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Utilitaires</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Mini-bus</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Pi&egrave;ces d&eacute;tach&eacute;es</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">&Eacute;lectriques</span>
+      <span style="font-family:var(--mono); font-size:0.7rem; color:var(--text-mid); letter-spacing:0.06em; padding:6px 14px; border:1px solid var(--border);">Camions</span>
+    </div>
+    <div style="text-align:center; margin-top:2.5rem;" class="rv rv-d5">
+      <a href="javascript:void(0)" onclick="openForm('formVehicule')" style="display:inline-block; font-size:var(--text-xs); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:var(--s3) var(--s8); background:var(--red); color:var(--text); text-decoration:none; box-shadow:0 0 16px oklch(55% 0.22 25 / 0.25); transition:background 0.3s, box-shadow 0.3s; cursor:pointer;">Demander un devis v&eacute;hicule &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<div class="lum-sep lum-sep--green"></div>
 
 <!-- SHOWREEL -->
 <section class="showreel section" id="showreel">
@@ -2097,9 +2769,9 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 <!-- MODAL MENTIONS LÉGALES -->
 <div id="modalMentions" style="display:none;position:fixed;inset:0;z-index:9999;background:oklch(0% 0 0 / 0.8);align-items:center;justify-content:center;padding:var(--s4);" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:var(--surface);max-width:680px;width:100%;max-height:80vh;overflow-y:auto;padding:var(--s8);position:relative;border:1px solid var(--border);">
+  <div style="background:var(--surface);max-width:680px;width:100%;max-height:80vh;overflow-y:auto;padding:var(--s5);position:relative;border:1px solid var(--border);">
     <button onclick="document.getElementById('modalMentions').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;" aria-label="Fermer">&times;</button>
-    <h2 style="font-family:var(--serif);font-size:1.5rem;color:var(--text);margin-bottom:var(--s3);">Mentions l&eacute;gales</h2>
+    <h2 style="font-family:var(--display);font-size:1.5rem;color:var(--text);margin-bottom:var(--s3);">Mentions l&eacute;gales</h2>
     <div style="color:var(--text-mid);font-size:0.85rem;line-height:1.7;">
       <p style="margin-bottom:var(--s2);"><strong style="color:var(--text);">&Eacute;diteur du site</strong></p>
       <p style="margin-bottom:var(--s3);">CARAXES &mdash; Agent de Sourcing Chine<br>
@@ -2119,9 +2791,9 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 <!-- MODAL CGV -->
 <div id="modalCGV" style="display:none;position:fixed;inset:0;z-index:9999;background:oklch(0% 0 0 / 0.8);align-items:center;justify-content:center;padding:var(--s4);" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:var(--surface);max-width:680px;width:100%;max-height:80vh;overflow-y:auto;padding:var(--s8);position:relative;border:1px solid var(--border);">
+  <div style="background:var(--surface);max-width:680px;width:100%;max-height:80vh;overflow-y:auto;padding:var(--s5);position:relative;border:1px solid var(--border);">
     <button onclick="document.getElementById('modalCGV').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;" aria-label="Fermer">&times;</button>
-    <h2 style="font-family:var(--serif);font-size:1.5rem;color:var(--text);margin-bottom:var(--s3);">Conditions G&eacute;n&eacute;rales de Vente</h2>
+    <h2 style="font-family:var(--display);font-size:1.5rem;color:var(--text);margin-bottom:var(--s3);">Conditions G&eacute;n&eacute;rales de Vente</h2>
     <div style="color:var(--text-mid);font-size:0.85rem;line-height:1.7;">
       <p style="margin-bottom:var(--s2);"><strong style="color:var(--text);">1. Objet</strong></p>
       <p style="margin-bottom:var(--s3);">Les pr&eacute;sentes CGV r&eacute;gissent les prestations de services de sourcing, d&rsquo;accompagnement &agrave; l&rsquo;import et de formation propos&eacute;es par CARAXES.</p>
@@ -2144,10 +2816,12 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 <script>
 /* ═══════════════════════════════════════
-   CARAXES GATE — Scripts
+   CARAXES V10 — Scripts
    ═══════════════════════════════════════ */
 
-// ── Hero entrance ──
+// (Canvas removed — replaced with CSS ambient gradients)
+
+// ── Hero entrance (class-based, no animation keyframes) ──
 requestAnimationFrame(function() {
   var hero = document.querySelector('.hero');
   if (hero) hero.classList.add('loaded');
@@ -2157,10 +2831,12 @@ requestAnimationFrame(function() {
 var nav = document.getElementById('nav');
 window.addEventListener('scroll', function() {
   nav.classList.toggle('scrolled', window.scrollY > 60);
+  // Scroll progress bar
   var scrollTop = window.scrollY;
   var docHeight = document.documentElement.scrollHeight - window.innerHeight;
   var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
   document.getElementById('scrollProgress').style.width = progress + '%';
+  // Back to top button — show after 50%
   var btt = document.getElementById('backToTop');
   if (btt) btt.classList.toggle('visible', progress > 50);
 }, { passive: true });
@@ -2185,6 +2861,7 @@ if (playBtn && showreelVideo) {
       isPlaying = true;
     }
   });
+  // Click on video to pause and show play button again
   showreelVideo.addEventListener('click', function() {
     if (isPlaying) {
       showreelVideo.pause();
@@ -2196,9 +2873,13 @@ if (playBtn && showreelVideo) {
   showreelVideo.style.cursor = 'pointer';
 }
 
-// ── Scroll reveal ──
+// ── Scroll reveal (IntersectionObserver) ──
+// Strategy: elements are visible by default (CSS). JS adds .hide first,
+// then IntersectionObserver adds .vis to animate in. If JS fails, content stays visible.
 var rvEls = document.querySelectorAll('.rv, .rv-left, .rv-scale, .rv-blur');
 rvEls.forEach(function(el) { el.classList.add('hide'); });
+
+// Force reflow so .hide transition takes effect before observer fires
 void document.body.offsetHeight;
 
 var revealObs = new IntersectionObserver(function(entries) {
@@ -2212,6 +2893,7 @@ var revealObs = new IntersectionObserver(function(entries) {
 }, { threshold: 0.02, rootMargin: '0px 0px 60px 0px' });
 rvEls.forEach(function(el) { revealObs.observe(el); });
 
+// Safety net: if observer doesn't fire within 3s, show everything
 setTimeout(function() {
   document.querySelectorAll('.rv.hide, .rv-left.hide, .rv-scale.hide, .rv-blur.hide').forEach(function(el) {
     el.classList.remove('hide');
@@ -2226,9 +2908,11 @@ function animateCounters() {
     var suffix = el.dataset.suffix || '';
     var duration = 1200;
     var start = performance.now();
+
     function update(now) {
       var elapsed = now - start;
       var progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
       var eased = 1 - Math.pow(1 - progress, 3);
       var current = Math.round(eased * target);
       el.textContent = current.toLocaleString('fr-FR') + suffix;
@@ -2245,14 +2929,24 @@ var statsObs = new IntersectionObserver(function(entries) {
 var heroStats = document.querySelector('.hero-stats');
 if (heroStats) statsObs.observe(heroStats);
 
-// ── Smooth scroll for anchor links ──
+// ── Smooth scroll ──
 document.querySelectorAll('a[href^="#"]').forEach(function(a) {
   a.addEventListener('click', function(e) {
     var target = document.querySelector(a.getAttribute('href'));
     if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    // Close mobile menu
     document.getElementById('navLinks').classList.remove('open');
   });
 });
+
+// ── Parallax effect on hero glows ──
+window.addEventListener('scroll', function() {
+  var scrolled = window.scrollY;
+  var hero = document.querySelector('.hero');
+  if (hero && scrolled < window.innerHeight * 1.5) {
+    hero.style.setProperty('--parallax', scrolled * 0.3 + 'px');
+  }
+}, { passive: true });
 
 // ── CTA form handler ──
 document.getElementById('ctaForm').addEventListener('submit', function(e) {
@@ -2262,7 +2956,8 @@ document.getElementById('ctaForm').addEventListener('submit', function(e) {
   if (email) {
     var btn = this.querySelector('button');
     btn.disabled = true;
-    btn.textContent = 'Envoi…';
+    btn.textContent = 'Envoi\u2026';
+    // Send to Supabase REST API (leads table)
     fetch('https://nmuqzzedlxilnbpnalsf.supabase.co/rest/v1/leads', {
       method: 'POST',
       headers: {
@@ -2272,12 +2967,13 @@ document.getElementById('ctaForm').addEventListener('submit', function(e) {
       },
       body: JSON.stringify({ email: email, source: 'landing-cta' })
     }).then(function(r) { if (!r.ok) throw new Error(r.status); }).then(function() {
-      btn.textContent = 'Envoyé ✓';
+      btn.textContent = 'Envoy\u00e9 \u2713';
       btn.style.background = 'oklch(55% 0.15 155)';
       input.value = '';
     }).catch(function() {
+      // Fallback: open mailto
       window.location.href = 'mailto:contact@caraxes.fr?subject=Demande%20de%20devis&body=Email%20:%20' + encodeURIComponent(email);
-      btn.textContent = 'Envoyé ✓';
+      btn.textContent = 'Envoy\u00e9 \u2713';
       btn.style.background = 'oklch(55% 0.15 155)';
       input.value = '';
     }).finally(function() {
@@ -2290,20 +2986,78 @@ document.getElementById('ctaForm').addEventListener('submit', function(e) {
   }
 });
 
+// ── Payment panel toggle ──
+function togglePay(btn) {
+  var panel = btn.nextElementSibling;
+  var isOpen = panel.classList.contains('open');
+  // Close all panels first
+  document.querySelectorAll('.pay-panel.open').forEach(function(p) {
+    p.classList.remove('open');
+    p.previousElementSibling.textContent = 'Souscrire \u2192';
+  });
+  if (!isOpen) {
+    panel.classList.add('open');
+    btn.textContent = 'Fermer \u00d7';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// ── Virement info modal ──
+function showVirement(btn, amount, service) {
+  // Close any existing info box
+  var existing = btn.closest('.pay-panel').querySelector('.pay-info-box');
+  if (existing) { existing.remove(); return; }
+  // Remove all info boxes
+  document.querySelectorAll('.pay-info-box').forEach(function(b) { b.remove(); });
+  var box = document.createElement('div');
+  box.className = 'pay-info-box';
+  box.style.cssText = 'margin-top:0.75rem; padding:1rem; background:oklch(8% 0.004 50); border:1px solid oklch(25% 0.02 85 / 0.3); font-size:0.75rem; color:var(--text-mid); line-height:1.7;';
+  box.innerHTML = '<div style="font-weight:600; color:var(--gold); margin-bottom:0.5rem; font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase;">Virement bancaire</div>'
+    + '<div><strong>Montant :</strong> ' + amount.toLocaleString('fr-FR') + '\u00a0\u20ac</div>'
+    + '<div><strong>R\u00e9f\u00e9rence :</strong> CARAXES-ECOM-' + service.replace(/\s/g, '').toUpperCase().substring(0,8) + '</div>'
+    + '<div><strong>IBAN :</strong> <span style="font-family:var(--mono); letter-spacing:0.05em; opacity:0.7;">Communiqué après validation de votre commande</span></div>'
+    + '<div><strong>BIC :</strong> <span style="font-family:var(--mono); opacity:0.7;">Communiqué avec l’IBAN</span></div>'
+    + '<div style="margin-top:0.5rem; font-size:0.65rem; color:var(--text-dim);">Envoyez le justificatif \u00e0 contact@caraxes.fr &middot; Activation sous 24-48h</div>'
+    + '<button onclick="this.parentElement.remove()" style="margin-top:0.75rem; background:none; border:1px solid var(--border); color:var(--text-dim); padding:0.3rem 0.75rem; font-size:0.65rem; cursor:pointer; letter-spacing:0.05em;">Fermer</button>';
+  btn.closest('.pay-methods').after(box);
+}
+
+// ── Crypto info modal ──
+function showCrypto(btn, amount, service) {
+  var existing = btn.closest('.pay-panel').querySelector('.pay-info-box');
+  if (existing) { existing.remove(); return; }
+  document.querySelectorAll('.pay-info-box').forEach(function(b) { b.remove(); });
+  var box = document.createElement('div');
+  box.className = 'pay-info-box';
+  box.style.cssText = 'margin-top:0.75rem; padding:1rem; background:oklch(8% 0.004 50); border:1px solid oklch(25% 0.02 85 / 0.3); font-size:0.75rem; color:var(--text-mid); line-height:1.7;';
+  box.innerHTML = '<div style="font-weight:600; color:var(--gold); margin-bottom:0.5rem; font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase;">Paiement Crypto</div>'
+    + '<div><strong>Montant :</strong> ' + amount.toLocaleString('fr-FR') + '\u00a0\u20ac (en USDT ou \u00e9quivalent BTC)</div>'
+    + '<div style="margin-top:0.5rem;"><strong>USDT (TRC-20) :</strong></div>'
+    + '<div style="font-family:var(--mono); font-size:0.65rem; letter-spacing:0.03em; word-break:break-all; padding:0.4rem; background:oklch(6% 0.003 50); margin-top:0.25rem; opacity:0.7;">Adresse communiquée par email après validation</div>'
+    + '<div style="margin-top:0.5rem;"><strong>BTC :</strong></div>'
+    + '<div style="font-family:var(--mono); font-size:0.65rem; letter-spacing:0.03em; word-break:break-all; padding:0.4rem; background:oklch(6% 0.003 50); margin-top:0.25rem; opacity:0.7;">Adresse communiquée par email après validation</div>'
+    + '<div style="margin-top:0.5rem; font-size:0.65rem; color:var(--text-dim);">R\u00e9f. : CARAXES-' + service.replace(/\s/g, '').toUpperCase().substring(0,8) + ' &middot; Envoyez la preuve de tx \u00e0 contact@caraxes.fr</div>'
+    + '<button onclick="this.parentElement.remove()" style="margin-top:0.75rem; background:none; border:1px solid var(--border); color:var(--text-dim); padding:0.3rem 0.75rem; font-size:0.65rem; cursor:pointer; letter-spacing:0.05em;">Fermer</button>';
+  btn.closest('.pay-methods').after(box);
+}
+// FAQ accordion is handled by inline onclick on .faq-q buttons
+
 // ── Calculator ──
 function runCalc() {
   var vol = parseFloat(document.getElementById('calcVolume').value) || 0;
-  if (vol < 500) { alert('Entrez un volume annuel minimum de 500€'); return; }
+  if (vol < 500) { alert('Entrez un volume annuel minimum de 500\u20AC'); return; }
   var cat = document.getElementById('calcCategory').value;
+  // Saving rates by category (realistic estimates)
   var rates = { textile: 0.32, cosmetique: 0.28, alimentaire: 0.22, electronique: 0.25, mobilier: 0.30, packaging: 0.35, bijoux: 0.27, autre: 0.25 };
   var rate = rates[cat] || 0.25;
   var saving = Math.round(vol * rate);
-  document.getElementById('calcSaving').textContent = saving.toLocaleString('fr-FR') + ' €';
+  document.getElementById('calcSaving').textContent = saving.toLocaleString('fr-FR') + ' \u20AC';
   var pct = Math.round(rate * 100);
-  document.getElementById('calcDetail').textContent = 'soit ' + pct + '% d’économies estimées par an avec CARAXES';
+  document.getElementById('calcDetail').textContent = 'soit ' + pct + '% d\u2019\u00E9conomies estim\u00E9es par an avec CARAXES';
+  // Dynamic WhatsApp CTA
   var waLink = document.getElementById('calcWhatsApp');
   if (waLink) {
-    waLink.textContent = 'Vous pourriez économiser ' + saving.toLocaleString('fr-FR') + '€. Discutons-en →';
+    waLink.textContent = 'Vous pourriez \u00e9conomiser ' + saving.toLocaleString('fr-FR') + '\u20AC. Discutons-en \u2192';
     waLink.href = 'https://wa.me/8613819652960?text=Bonjour%20CARAXES%2C%20j%27ai%20estim%C3%A9%20' + saving.toLocaleString('fr-FR') + '%E2%82%AC%20d%27%C3%A9conomies%20sur%20ma%20cat%C3%A9gorie%20' + cat + '.%20Pouvons-nous%20en%20discuter%20%3F';
   }
   var result = document.getElementById('calcResult');
@@ -2321,6 +3075,7 @@ function openForm(id) {
   document.body.style.overflow = 'hidden';
   var firstInput = overlay.querySelector('input');
   if (firstInput) setTimeout(function() { firstInput.focus(); }, 100);
+  // GA4 — track form open
   if (typeof gtag === 'function') {
     gtag('event', 'form_open', { form_id: id, page: window.location.pathname });
   }
@@ -2332,11 +3087,13 @@ function closeForm(id) {
   document.body.style.overflow = '';
   setTimeout(function() { overlay.style.display = 'none'; }, 300);
 }
+// Close on overlay click (not modal)
 document.querySelectorAll('.form-overlay').forEach(function(ov) {
   ov.addEventListener('click', function(e) {
     if (e.target === ov) closeForm(ov.id);
   });
 });
+// Close on Escape
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     document.querySelectorAll('.form-overlay.active').forEach(function(ov) {
@@ -2344,8 +3101,7 @@ document.addEventListener('keydown', function(e) {
     });
   }
 });
-
-// GA4 — track outbound CTA clicks
+// GA4 — track outbound CTA clicks (Stripe, WhatsApp, Acuity)
 document.addEventListener('click', function(e) {
   var link = e.target.closest('a[href]');
   if (!link || typeof gtag !== 'function') return;
@@ -2365,17 +3121,20 @@ function submitForm(e, formType) {
   var btn = form.querySelector('button[type="submit"]');
   var origText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Envoi…';
+  btn.textContent = 'Envoi\u2026';
+  // GA4 \u2014 track form submission
   if (typeof gtag === 'function') {
     gtag('event', 'generate_lead', { form_type: formType, page: window.location.pathname });
   }
 
+  // Collect form data
   var data = { source: 'landing-' + formType, timestamp: new Date().toISOString() };
   var inputs = form.querySelectorAll('input, select, textarea');
   inputs.forEach(function(el) {
     if (el.name && el.value) data[el.name] = el.value;
   });
 
+  // Acuity booking links by form type
   var acuityLinks = {
     comparatif: 'https://caraxes.as.me/?appointmentType=91681399',
     vehicule: 'https://caraxes.as.me/?appointmentType=91681399',
@@ -2383,10 +3142,10 @@ function submitForm(e, formType) {
     sourcing: 'https://caraxes.as.me/?appointmentType=91750360'
   };
   var acuityLabels = {
-    comparatif: 'Réserver un appel découverte gratuit',
-    vehicule: 'Réserver un appel découverte gratuit',
-    ecommerce: 'Réserver un appel découverte gratuit',
-    sourcing: 'Réserver une consultation sourcing'
+    comparatif: 'R\u00e9server un appel d\u00e9couverte gratuit',
+    vehicule: 'R\u00e9server un appel d\u00e9couverte gratuit',
+    ecommerce: 'R\u00e9server un appel d\u00e9couverte gratuit',
+    sourcing: 'R\u00e9server une consultation sourcing'
   };
 
   fetch('https://nmuqzzedlxilnbpnalsf.supabase.co/rest/v1/leads', {
@@ -2398,11 +3157,13 @@ function submitForm(e, formType) {
     },
     body: JSON.stringify({ name: data.name || data.nom, email: data.email, phone: data.phone || data.tel, product: data.product || data.produit, source: data.source, message: data.message || data.notes || '', data: data })
   }).then(function(r) { if (!r.ok) throw new Error(r.status); }).then(function() {
+    // Show success state with Acuity booking CTA
     var modal = form.closest('.form-modal');
     form.style.display = 'none';
     var trustEl = modal.querySelector('.form-modal-trust');
     if (trustEl) trustEl.style.display = 'none';
 
+    // Remove any existing success view
     var existing = modal.querySelector('.form-success-view');
     if (existing) existing.remove();
 
@@ -2412,14 +3173,15 @@ function submitForm(e, formType) {
     var bookingUrl = acuityLinks[formType] || acuityLinks.comparatif;
     var bookingLabel = acuityLabels[formType] || acuityLabels.comparatif;
     var isPaid = formType === 'sourcing';
-    successDiv.innerHTML = '<div style="font-size:2.5rem; margin-bottom:1rem;">✓</div>'
-      + '<h3 style="font-family:\'Playfair Display\',serif; font-size:1.3rem; font-weight:700; margin-bottom:0.75rem; color:var(--text);">Demande envoyée</h3>'
-      + '<p style="color:var(--text-mid); font-size:0.85rem; line-height:1.7; max-width:35ch; margin:0 auto 1.5rem;">On vous recontacte sous 24h. Pour accélérer, réservez directement un créneau :</p>'
-      + '<a href="' + bookingUrl + '" target="_blank" rel="noopener" style="display:inline-block; font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:0.75rem 1.75rem; background:' + (isPaid ? 'var(--gold)' : 'transparent') + '; color:var(--text); border:1px solid ' + (isPaid ? 'var(--gold)' : 'var(--border)') + '; text-decoration:none; transition:all 0.3s; cursor:pointer;">' + bookingLabel + ' →</a>'
-      + (isPaid ? '<div style="margin-top:0.5rem; font-size:0.65rem; color:var(--text-dim);">45 min · 45 €</div>' : '<div style="margin-top:0.5rem; font-size:0.65rem; color:var(--text-dim);">15 min · Gratuit</div>')
+    successDiv.innerHTML = '<div style="font-size:2.5rem; margin-bottom:1rem;">\u2713</div>'
+      + '<h3 style="font-family:\'Playfair Display\',serif; font-size:1.3rem; font-weight:700; margin-bottom:0.75rem; color:var(--text);">Demande envoy\u00e9e</h3>'
+      + '<p style="color:var(--text-mid); font-size:0.85rem; line-height:1.7; max-width:35ch; margin:0 auto 1.5rem;">On vous recontacte sous 24h. Pour acc\u00e9l\u00e9rer, r\u00e9servez directement un cr\u00e9neau\u00a0:</p>'
+      + '<a href="' + bookingUrl + '" target="_blank" rel="noopener" style="display:inline-block; font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:0.75rem 1.75rem; background:' + (isPaid ? 'var(--gold)' : 'transparent') + '; color:var(--text); border:1px solid ' + (isPaid ? 'var(--gold)' : 'var(--border)') + '; text-decoration:none; transition:all 0.3s; cursor:pointer;">' + bookingLabel + ' \u2192</a>'
+      + (isPaid ? '<div style="margin-top:0.5rem; font-size:0.65rem; color:var(--text-dim);">45 min \u00b7 45\u00a0\u20ac</div>' : '<div style="margin-top:0.5rem; font-size:0.65rem; color:var(--text-dim);">15 min \u00b7 Gratuit</div>')
       + '<div style="margin-top:1.5rem;"><button onclick="resetFormAfterSuccess(this)" style="background:none; border:none; color:var(--text-dim); font-size:0.7rem; cursor:pointer; text-decoration:underline; letter-spacing:0.03em;">Fermer</button></div>';
     modal.appendChild(successDiv);
   }).catch(function() {
+    // Fallback: open email with data
     var subject = 'Demande ' + formType + ' CARAXES';
     var body = Object.keys(data).map(function(k) { return k + ': ' + data[k]; }).join('%0A');
     window.location.href = 'mailto:contact@caraxes.fr?subject=' + encodeURIComponent(subject) + '&body=' + body;
@@ -2446,6 +3208,9 @@ window.openForm = openForm;
 window.closeForm = closeForm;
 window.submitForm = submitForm;
 window.resetFormAfterSuccess = resetFormAfterSuccess;
+window.togglePay = togglePay;
+window.showVirement = showVirement;
+window.showCrypto = showCrypto;
 </script>
 
 
@@ -2461,11 +3226,11 @@ window.resetFormAfterSuccess = resetFormAfterSuccess;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; max-width: 400px; padding: 14px 24px;
     background: var(--red); color: var(--text); text-decoration: none;
-    font-family: var(--sans); font-size: 0.875rem; font-weight: 700;
+    font-family: var(--f-body); font-size: 0.875rem; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
     border: none; cursor: pointer;
   ">Mon comparatif fournisseur gratuit &rarr;</a>
-  <div style="margin-top: 6px; font-size: 11px; color: var(--text-dim); font-family: var(--mono); letter-spacing: 0.08em;">
+  <div style="margin-top: 6px; font-size: 11px; color: var(--text-2); font-family: var(--f-mono); letter-spacing: 0.08em;">
     R&Eacute;PONSE SOUS 48H &middot; SANS ENGAGEMENT
   </div>
 </div>
