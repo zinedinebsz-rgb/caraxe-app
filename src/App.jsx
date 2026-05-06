@@ -7,9 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { I18nProvider } from './lib/i18n.jsx'
 import CookieBanner from './components/CookieBanner'
 import { useSEO } from './hooks/useSEO'
-import Login from './pages/Login'
-
 /* ── LAZY LOADED PAGES ── */
+const Login = lazy(() => import('./pages/Login'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Admin = lazy(() => import('./pages/Admin'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
@@ -158,7 +157,7 @@ export default function App() {
       <CookieBanner />
       <Routes>
         <Route path="/login" element={
-          session ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />
+          session ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/'} replace /> : <Suspense fallback={<Loader />}><Login /></Suspense>
         } />
 
         <Route path="/reset-password" element={
@@ -196,23 +195,23 @@ export default function App() {
             {profile?.role === 'admin'
               ? <Navigate to="/admin" replace />
               : needsOnboarding
-                ? <Onboarding
+                ? <ErrorBoundary name="Onboarding"><Onboarding
                     user={session?.user}
                     profile={profile}
                     onComplete={() => loadProfile(session?.user?.id)}
-                  />
-                : <Dashboard
+                  /></ErrorBoundary>
+                : <ErrorBoundary name="Dashboard"><Dashboard
                     user={session?.user}
                     profile={profile}
                     onSignOut={handleSignOut}
-                  />
+                  /></ErrorBoundary>
             }
           </ProtectedRoute>
         } />
 
         <Route path="/admin" element={
           <ProtectedRoute session={session} profile={profile} loading={loading} requiredRole="admin" onRetry={() => session?.user && loadProfile(session.user.id)}>
-            <Admin user={session?.user} profile={profile} onSignOut={handleSignOut} />
+            <ErrorBoundary name="Admin"><Admin user={session?.user} profile={profile} onSignOut={handleSignOut} /></ErrorBoundary>
           </ProtectedRoute>
         } />
 

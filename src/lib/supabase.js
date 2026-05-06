@@ -884,26 +884,24 @@ export async function setTypingPresence(channel, userId, userName, isTyping) {
 }
 
 // ─── NOTIFICATION SOUND ───
-let notifAudio = null
+let _audioCtx = null
 export function playNotificationSound() {
   try {
-    if (!notifAudio) {
-      // Create a short beep using AudioContext
-      const ctx = new (window.AudioContext || window.webkitAudioContext)()
-      const oscillator = ctx.createOscillator()
-      const gain = ctx.createGain()
-      oscillator.connect(gain)
-      gain.connect(ctx.destination)
-      oscillator.frequency.value = 880
-      oscillator.type = 'sine'
-      gain.gain.value = 0.15
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
-      oscillator.start(ctx.currentTime)
-      oscillator.stop(ctx.currentTime + 0.3)
-      return
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)()
     }
-    notifAudio.currentTime = 0
-    notifAudio.play().catch(() => {})
+    // Resume if suspended (browser autoplay policy)
+    if (_audioCtx.state === 'suspended') _audioCtx.resume()
+    const oscillator = _audioCtx.createOscillator()
+    const gain = _audioCtx.createGain()
+    oscillator.connect(gain)
+    gain.connect(_audioCtx.destination)
+    oscillator.frequency.value = 880
+    oscillator.type = 'sine'
+    gain.gain.value = 0.15
+    gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.3)
+    oscillator.start(_audioCtx.currentTime)
+    oscillator.stop(_audioCtx.currentTime + 0.3)
   } catch (e) {
     // Silent fail — audio not supported
   }
