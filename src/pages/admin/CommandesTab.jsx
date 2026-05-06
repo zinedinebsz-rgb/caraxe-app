@@ -539,18 +539,18 @@ export default function CommandesDetail({ selectedId, setMobileShowDetail }) {
           { key: 'messages', label: 'Messages', icon: icons.msg },
           { key: 'details', label: 'Détails', icon: icons.edit },
           { key: 'documents', label: 'Documents', icon: icons.doc },
-        ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
+        ].map(tb => (
+          <button key={tb.key} onClick={() => setTab(tb.key)} style={{
             padding: `10px ${sp[3]}`, background: 'transparent', border: 'none',
-            borderBottom: `2px solid ${tab === t.key ? c.red : 'transparent'}`,
-            color: tab === t.key ? c.text : c.textTertiary,
+            borderBottom: `2px solid ${tab === tb.key ? c.red : 'transparent'}`,
+            color: tab === tb.key ? c.text : c.textTertiary,
             fontSize: size.xs, fontWeight: 600, cursor: 'pointer', fontFamily: f.body,
             transition: `all 0.2s ${ease.smooth}`,
             display: 'flex', alignItems: 'center', gap: '6px',
           }}>
-            <Icon d={t.icon} size={13} color={tab === t.key ? c.red : c.textTertiary} />
-            {t.label}
-            {t.key === 'messages' && messages.length > 0 && (
+            <Icon d={tb.icon} size={13} color={tab === tb.key ? c.red : c.textTertiary} />
+            {tb.label}
+            {tb.key === 'messages' && messages.length > 0 && (
               <span style={{ fontSize: '9px', fontFamily: f.mono, color: c.gold, fontWeight: 700, marginInlineStart: '2px' }}>{messages.length}</span>
             )}
           </button>

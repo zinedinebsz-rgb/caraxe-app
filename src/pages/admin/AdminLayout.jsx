@@ -476,49 +476,49 @@ export default function AdminLayout({ children, commandesSidebar }) {
                   {sidebarCollapsed && gi > 0 && group.label && (
                     <div style={{ height: '1px', background: `${c.borderSubtle}`, margin: `${sp[1]} 8px` }} />
                   )}
-                  {groupTabs.map(t => {
-                    const badge = t.key === 'commandes' ? activeOrders : t.key === 'stock' ? inventory.filter(i => i.quantity < (i.alert_threshold || 10)).length : t.key === 'services' ? ecomServices.filter(s => s.status === 'pending').length : t.key === 'pipeline' ? leads.filter(l => l.status === 'new' || l.status === 'pending').length : t.key === 'team_chat' ? teamUnreadCount : 0
+                  {groupTabs.map(tab => {
+                    const badge = tab.key === 'commandes' ? activeOrders : tab.key === 'stock' ? inventory.filter(i => i.quantity < (i.alert_threshold || 10)).length : tab.key === 'services' ? ecomServices.filter(s => s.status === 'pending').length : tab.key === 'pipeline' ? leads.filter(l => l.status === 'new' || l.status === 'pending').length : tab.key === 'team_chat' ? teamUnreadCount : 0
                     return (
-                      <button key={t.key}
-                        onClick={() => { setMainTab(t.key); if (isMobile) setSidebarOpen(false) }}
-                        onMouseEnter={() => setHoveredTab(t.key)}
+                      <button key={tab.key}
+                        onClick={() => { setMainTab(tab.key); if (isMobile) setSidebarOpen(false) }}
+                        onMouseEnter={() => setHoveredTab(tab.key)}
                         onMouseLeave={() => setHoveredTab(null)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: sidebarCollapsed ? 0 : sp[2],
                           justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                           padding: sidebarCollapsed ? '10px 0' : `8px ${sp[3]}`,
-                          background: mainTab === t.key ? c.bgHover : 'transparent',
+                          background: mainTab === tab.key ? c.bgHover : 'transparent',
                           border: 'none',
-                          borderInlineStart: `2px solid ${mainTab === t.key ? c.gold : 'transparent'}`,
-                          boxShadow: mainTab === t.key ? `inset 3px 0 8px rgba(196, 163, 90, 0.08)` : 'none',
-                          color: mainTab === t.key ? c.text : c.textTertiary,
-                          fontSize: size.xs, fontWeight: mainTab === t.key ? 700 : 500,
+                          borderInlineStart: `2px solid ${mainTab === tab.key ? c.gold : 'transparent'}`,
+                          boxShadow: mainTab === tab.key ? `inset 3px 0 8px rgba(196, 163, 90, 0.08)` : 'none',
+                          color: mainTab === tab.key ? c.text : c.textTertiary,
+                          fontSize: size.xs, fontWeight: mainTab === tab.key ? 700 : 500,
                           cursor: 'pointer', fontFamily: f.body,
                           transition: `all 0.25s ${ease.expo}`,
                           width: '100%', textAlign: 'start', position: 'relative',
                           borderRadius: radius.sm,
                         }}>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                          <Icon d={t.icon} size={18} color={mainTab === t.key ? (t.color || c.gold) : c.textTertiary} sw={1.5} />
+                          <Icon d={tab.icon} size={18} color={mainTab === tab.key ? (tab.color || c.gold) : c.textTertiary} sw={1.5} />
                           {badge > 0 && sidebarCollapsed && (
                             <div style={{
                               position: 'absolute', top: -4, right: -6,
                               width: 14, height: 14, borderRadius: '50%',
-                              background: t.key === 'stock' ? c.red : c.gold,
+                              background: tab.key === 'stock' ? c.red : c.gold,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontSize: '7px', fontWeight: 800, color: c.bg, fontFamily: f.mono,
                             }}>{badge > 9 ? '9+' : badge}</div>
                           )}
                         </div>
-                        {!sidebarCollapsed && <span>{t.label}</span>}
+                        {!sidebarCollapsed && <span>{tab.label}</span>}
                         {!sidebarCollapsed && badge > 0 && (
                           <span style={{
                             marginInlineStart: 'auto', padding: '1px 6px', fontSize: '9px', fontWeight: 700,
-                            fontFamily: f.mono, background: t.key === 'stock' ? `${c.red}20` : `${c.gold}15`,
-                            color: t.key === 'stock' ? c.red : c.gold, letterSpacing: '0.02em',
+                            fontFamily: f.mono, background: tab.key === 'stock' ? `${c.red}20` : `${c.gold}15`,
+                            color: tab.key === 'stock' ? c.red : c.gold, letterSpacing: '0.02em',
                           }}>{badge}</span>
                         )}
-                        {sidebarCollapsed && hoveredTab === t.key && <SidebarTooltip label={t.label} visible />}
+                        {sidebarCollapsed && hoveredTab === tab.key && <SidebarTooltip label={tab.label} visible />}
                       </button>
                     )
                   })}

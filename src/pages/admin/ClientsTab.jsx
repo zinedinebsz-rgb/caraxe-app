@@ -114,17 +114,17 @@ export default function ClientsTab() {
           border: `1px solid ${!clientTierFilter ? c.gold : c.border}`, cursor: 'pointer',
           letterSpacing: '0.04em', textTransform: 'uppercase', transition: `all 0.15s ${ease.smooth}`,
         }}>Tous</button>
-        {TIERS.map(t => (
-          <button key={t.key} onClick={() => setClientTierFilter(clientTierFilter === t.key ? null : t.key)} style={{
-            padding: '6px 12px', fontSize: '9px', fontFamily: f.mono, fontWeight: clientTierFilter === t.key ? 700 : 500,
-            background: clientTierFilter === t.key ? t.color : 'transparent',
-            color: clientTierFilter === t.key ? c.bg : c.textTertiary,
-            border: `1px solid ${clientTierFilter === t.key ? t.color : c.border}`, cursor: 'pointer',
+        {TIERS.map(tier => (
+          <button key={tier.key} onClick={() => setClientTierFilter(clientTierFilter === tier.key ? null : tier.key)} style={{
+            padding: '6px 12px', fontSize: '9px', fontFamily: f.mono, fontWeight: clientTierFilter === tier.key ? 700 : 500,
+            background: clientTierFilter === tier.key ? tier.color : 'transparent',
+            color: clientTierFilter === tier.key ? c.bg : c.textTertiary,
+            border: `1px solid ${clientTierFilter === tier.key ? tier.color : c.border}`, cursor: 'pointer',
             letterSpacing: '0.04em', textTransform: 'uppercase', transition: `all 0.15s ${ease.smooth}`,
             display: 'flex', alignItems: 'center', gap: '4px',
           }}>
-            <span style={{ fontSize: '12px' }}>{t.icon}</span> {t.label}
-            <span style={{ opacity: 0.7, fontSize: '8px' }}>{allProfiles.filter(p => (p.client_tier || DEFAULT_TIER) === t.key).length}</span>
+            <span style={{ fontSize: '12px' }}>{tier.icon}</span> {tier.label}
+            <span style={{ opacity: 0.7, fontSize: '8px' }}>{allProfiles.filter(p => (p.client_tier || DEFAULT_TIER) === tier.key).length}</span>
           </button>
         ))}
       </div>
@@ -380,21 +380,21 @@ export default function ClientsTab() {
                       <div style={{ marginBottom: sp[3] }}>
                         <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>Changer le profil</div>
                         <div style={{ display: 'flex', gap: '2px' }}>
-                          {TIERS.map(t => (
-                            <button key={t.key} onClick={() => {
-                              updateProfile(client.id, { client_tier: t.key }).then(() => loadAll()).catch(err => console.error('Error:', err))
+                          {TIERS.map(tier => (
+                            <button key={tier.key} onClick={() => {
+                              updateProfile(client.id, { client_tier: tier.key }).then(() => loadAll()).catch(err => console.error('Error:', err))
                             }} style={{
                               flex: 1, padding: '6px 4px',
-                              background: (client.client_tier || DEFAULT_TIER) === t.key ? t.color : c.bgElevated,
-                              border: `1px solid ${(client.client_tier || DEFAULT_TIER) === t.key ? t.color : c.border}`,
-                              color: (client.client_tier || DEFAULT_TIER) === t.key ? c.bg : c.textTertiary,
-                              fontSize: '9px', fontFamily: f.mono, fontWeight: (client.client_tier || DEFAULT_TIER) === t.key ? 700 : 400,
+                              background: (client.client_tier || DEFAULT_TIER) === tier.key ? tier.color : c.bgElevated,
+                              border: `1px solid ${(client.client_tier || DEFAULT_TIER) === tier.key ? tier.color : c.border}`,
+                              color: (client.client_tier || DEFAULT_TIER) === tier.key ? c.bg : c.textTertiary,
+                              fontSize: '9px', fontFamily: f.mono, fontWeight: (client.client_tier || DEFAULT_TIER) === tier.key ? 700 : 400,
                               cursor: 'pointer', transition: `all 0.15s ${ease.smooth}`,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
                             }}
-                            onMouseEnter={e => { if ((client.client_tier || DEFAULT_TIER) !== t.key) { e.currentTarget.style.borderColor = t.color; e.currentTarget.style.color = t.color } }}
-                            onMouseLeave={e => { if ((client.client_tier || DEFAULT_TIER) !== t.key) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textTertiary } }}>
-                              <span style={{ fontSize: '12px' }}>{t.icon}</span> {t.label}
+                            onMouseEnter={e => { if ((client.client_tier || DEFAULT_TIER) !== tier.key) { e.currentTarget.style.borderColor = tier.color; e.currentTarget.style.color = tier.color } }}
+                            onMouseLeave={e => { if ((client.client_tier || DEFAULT_TIER) !== tier.key) { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textTertiary } }}>
+                              <span style={{ fontSize: '12px' }}>{tier.icon}</span> {tier.label}
                             </button>
                           ))}
                         </div>

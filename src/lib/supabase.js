@@ -232,6 +232,7 @@ export async function getUnreadCounts(userId) {
     .select('order_id')
     .neq('sender_id', userId)
     .eq('read', false)
+    .neq('order_id', 'admin-internal')
   if (error) throw error
   const counts = {}
   ;(data || []).forEach(m => { counts[m.order_id] = (counts[m.order_id] || 0) + 1 })

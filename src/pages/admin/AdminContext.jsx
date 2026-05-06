@@ -57,7 +57,6 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
   // ── Team chat unread (for sidebar badge) ──
   const [teamUnreadCount, setTeamUnreadCount] = useState(0)
 
-  const loadAllRef = useRef(null)
   const debounceRef = useRef(null)
 
   const loadAll = useCallback(async () => {
@@ -70,7 +69,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [toast, t])
 
   // Debounced loadAll — coalesces rapid realtime events into a single fetch
   const debouncedLoadAll = useCallback(() => {
