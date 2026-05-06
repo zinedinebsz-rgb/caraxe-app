@@ -26,10 +26,17 @@ export function useAdmin() {
 export function AdminProvider({ user, profile, onSignOut, children }) {
   const toast = useToast()
   const { t, isRtl } = useI18n()
+
+  // Stable refs to avoid re-render loops (toast/t are not referentially stable)
+  const toastRef = useRef(toast)
+  const tRef = useRef(t)
+  useEffect(() => { toastRef.current = toast }, [toast])
+  useEffect(() => { tRef.current = t }, [t])
+
   const tToast = useCallback((key, vars = {}) => {
-    const msg = t(`toast.${key}`)
+    const msg = tRef.current(`toast.${key}`)
     return Object.entries(vars).reduce((str, [k, v]) => str.replace(`{${k}}`, v), msg)
-  }, [t])
+  }, [])
 
   // ── Core data ──
   const [orders, setOrders] = useState([])
@@ -65,11 +72,11 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
       setOrders(ordersData); setClients(clientsData); setAllProfiles(profilesData); setShipments(shipmentsData); setInventory(inventoryData); setProducts(productsData); setCategories(categoriesData); setShops(shopsData); setEcomServices(ecomData); setLeads(leadsData)
     } catch (err) {
       console.error('loadAll error:', err)
-      toast.error(t('toast.loadDataError'))
+      toastRef.current.error(tRef.current('toast.loadDataError'))
     } finally {
       setLoading(false)
     }
-  }, [toast, t])
+  }, [])
 
   // Debounced loadAll — coalesces rapid realtime events into a single fetch
   const debouncedLoadAll = useCallback(() => {
