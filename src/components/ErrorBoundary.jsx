@@ -12,7 +12,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('[CARAXES] Crash caught:', error, errorInfo)
+    console.error(`[CARAXES${this.props.name ? ` — ${this.props.name}` : ''}] Crash caught:`, error, errorInfo)
 
     // Send error to N8N webhook for monitoring (fire-and-forget)
     const webhookUrl = import.meta.env.VITE_N8N_ERROR_WEBHOOK
@@ -41,8 +41,30 @@ export default class ErrorBoundary extends Component {
   render() {
     if (!this.state.hasError) return this.props.children
 
+    const isSection = !!this.props.name
+
+    // Section-level boundary: compact inline fallback
+    if (isSection) {
+      return (
+        <div role="alert" style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: sp[8], textAlign: 'center', minHeight: 200,
+        }}>
+          <div style={{ fontSize: '28px', marginBottom: sp[2], opacity: 0.4 }}>⚠</div>
+          <p style={{ margin: 0, marginBottom: sp[3], fontFamily: f.body, fontSize: size.sm, color: c.textSecondary, maxWidth: 360, lineHeight: 1.5 }}>
+            Cette section a rencontré un problème.
+          </p>
+          <button onClick={() => this.setState({ hasError: false, error: null })} style={{
+            padding: `${sp[1]} ${sp[3]}`, background: c.gold, border: 'none', color: c.black,
+            fontFamily: f.body, fontSize: size.sm, fontWeight: 600, cursor: 'pointer',
+          }}>Réessayer</button>
+        </div>
+      )
+    }
+
+    // App-level boundary: full-page fallback
     return (
-      <div style={{
+      <div role="alert" style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: c.bg, fontFamily: f.body, color: c.text, flexDirection: 'column',
         gap: sp[4], padding: sp[4], textAlign: 'center',

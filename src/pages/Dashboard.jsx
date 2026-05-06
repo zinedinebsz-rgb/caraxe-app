@@ -18,7 +18,7 @@ import LocaleAndPwaControls from '../components/LocaleAndPwaControls.jsx'
 import { useI18n } from '../lib/i18n.jsx'
 import { sendLocalNotification, notificationPermission } from '../lib/pwa'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+import { MAX_FILE_SIZE } from '../lib/constants'
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
 
 const Icon = ({ d, size: s = 20, color = 'currentColor', sw = 1.5 }) => (
@@ -531,7 +531,9 @@ export default function Dashboard({ user, profile, onSignOut }) {
 
       // Notify admin via N8N webhook (silent, client doesn't know)
       try {
-        await fetch('https://caraxes13.app.n8n.cloud/webhook/site-creation', {
+        const n8nUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || ''
+      if (!n8nUrl) throw new Error('N8N webhook URL not configured')
+      await fetch(`${n8nUrl}/webhook/site-creation`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

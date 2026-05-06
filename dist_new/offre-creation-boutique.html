@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Cr&eacute;ation Boutique E-Commerce &mdash; CARAXES | Votre shop cl&eacute; en main depuis la Chine</title>
+	<meta name="description" content="Cr&eacute;ation de boutique e-commerce Shopify ou WooCommerce cl&eacute; en main. Design personnalis&eacute;, catalogue produits, paiement, livraison, SEO. 1490&euro; tout compris. CARAXES, votre agent sourcing Chine.">
+	<meta property="og:title" content="Cr&eacute;ation Boutique E-Commerce — CARAXES">
+	<meta property="og:description" content="Votre boutique en ligne cl&eacute; en main depuis la Chine. Design, produits, paiement, livraison. 1490&euro;.">
+	<meta property="og:url" content="https://app.caraxes.fr/offre-creation-boutique.html">
+	<meta property="og:type" content="product">
+	<meta name="robots" content="index, follow">
+	<!-- Google Analytics 4 — Replace G-XXXXXXXXXX with your Measurement ID -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+	<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		:root {
+			--bg-main: #141210;
+			--bg-surface: #1e1a16;
+			--brand-red: #c0392b;
+			--brand-gold: #c8a85c;
+			--text-primary: #e8e0d4;
+			--text-secondary: #8a7e6e;
+			--border-color: #2a2520;
+		}
+
+		html, body {
+			height: 100%;
+		}
+
+		body {
+			background-color: var(--bg-main);
+			color: var(--text-primary);
+			font-family: system-ui, -apple-system, sans-serif;
+			line-height: 1.6;
+		}
+
+		/* Header */
+		header {
+			background-color: var(--bg-surface);
+			border-bottom: 1px solid var(--border-color);
+			padding: 1.5rem 1rem;
+		}
+
+		.header-content {
+			max-width: 1200px;
+			margin: 0 auto;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.logo {
+			font-family: Georgia, serif;
+			font-size: 1.8rem;
+			font-weight: normal;
+			letter-spacing: 2px;
+			color: var(--brand-red);
+		}
+
+		.logo-accent {
+			color: var(--brand-gold);
+		}
+
+		.header-nav {
+			display: flex;
+			gap: 2rem;
+			align-items: center;
+		}
+
+		.back-link {
+			color: var(--text-primary);
+			text-decoration: none;
+			font-size: 0.95rem;
+			transition: color 0.3s ease;
+		}
+
+		.back-link:hover {
+			color: var(--brand-gold);
+		}
+
+		/* Hero Section */
+		.hero {
+			padding: 4rem 1rem;
+			background-color: var(--bg-main);
+			border-bottom: 1px solid var(--border-color);
+		}
+
+		.hero-content {
+			max-width: 800px;
+			margin: 0 auto;
+			text-align: center;
+		}
+
+		.hero h1 {
+			font-family: Georgia, serif;
+			font-size: 2.5rem;
+			font-weight: normal;
+			margin-bottom: 1.5rem;
+			color: var(--text-primary);
+			line-height: 1.3;
+		}
+
+		.hero p {
+			font-size: 1.1rem;
+			color: var(--text-secondary);
+			margin-bottom: 2rem;
+			line-height: 1.8;
+		}
+
+		.price-highlight {
+			display: inline-block;
+			font-family: Georgia, serif;
+			font-size: 3rem;
+			color: var(--brand-red);
+			margin: 1.5rem 0;
+			font-weight: normal;
+		}
+
+		/* What's Included Section */
+		.included-section {
+			padding: 4rem 1rem;
+			background-color: var(--bg-surface);
+			border-bottom: 1px solid var(--border-color);
+		}
+
+		.included-content {
+			max-width: 1000px;
+			margin: 0 auto;
+		}
+
+		.included-section h2 {
+			font-family: Georgia, serif;
+			font-size: 2rem;
+			font-weight: normal;
+			margin-bottom: 3rem;
+			color: var(--text-primary);
+		}
+
+		.features-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+			gap: 2.5rem;
+		}
+
+		.feature {
+			padding: 2rem;
+			background-color: var(--bg-main);
+			border: 1px solid var(--border-color);
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.feature-number {
+			font-family: Georgia, serif;
+			font-size: 2.2rem;
+			color: var(--brand-gold);
+			font-weight: normal;
+			line-height: 1;
+		}
+
+		.feature-title {
+			color: var(--text-primary);
+			font-weight: 600;
+			font-size: 1rem;
+			line-height: 1.4;
+		}
+
+		.feature-text {
+			color: var(--text-secondary);
+			font-size: 0.9rem;
+			line-height: 1.6;
+		}
+
+		/* Form Section */
+		.form-section {
+			padding: 4rem 1rem;
+			background-color: var(--bg-main);
+			border-bottom: 1px solid var(--border-color);
+		}
+
+		.form-content {
+			max-width: 750px;
+			margin: 0 auto;
+		}
+
+		.form-section h2 {
+			font-family: Georgia, serif;
+			font-size: 2rem;
+			font-weight: normal;
+			margin-bottom: 3rem;
+			color: var(--text-primary);
+		}
+
+		form {
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+		}
+
+		.form-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 1.5rem;
+		}
+
+		.form-row.full {
+			grid-template-columns: 1fr;
+		}
+
+		.form-row.triple {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		.form-group {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
+		label {
+			color: var(--text-primary);
+			font-size: 0.95rem;
+			font-weight: 600;
+		}
+
+		label .required {
+			color: var(--brand-red);
+		}
+
+		input[type="text"],
+		input[type="email"],
+		input[type="tel"],
+		input[type="color"],
+		input[type="file"],
+		select,
+		textarea {
+			background-color: var(--bg-surface);
+			color: var(--text-primary);
+			border: 1px solid var(--border-color);
+			padding: 0.75rem 1rem;
+			font-family: system-ui, -apple-system, sans-serif;
+			font-size: 1rem;
+			transition: border-color 0.3s ease;
+		}
+
+		input[type="text"]:focus,
+		input[type="email"]:focus,
+		input[type="tel"]:focus,
+		input[type="color"]:focus,
+		input[type="file"]:focus,
+		select:focus,
+		textarea:focus {
+			outline: none;
+			border-color: var(--brand-red);
+			box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.1);
+		}
+
+		textarea {
+			resize: vertical;
+			min-height: 100px;
+		}
+
+		select {
+			cursor: pointer;
+		}
+
+		input[type="color"] {
+			width: 80px;
+			height: 44px;
+			cursor: pointer;
+			border-radius: 2px;
+		}
+
+		input[type="file"] {
+			padding: 0.5rem;
+		}
+
+		.form-error {
+			color: var(--brand-red);
+			font-size: 0.85rem;
+			display: none;
+			margin-top: -0.3rem;
+		}
+
+		.form-group.error input,
+		.form-group.error select,
+		.form-group.error textarea {
+			border-color: var(--brand-red);
+		}
+
+		.form-group.error .form-error {
+			display: block;
+		}
+
+		.checkbox-group {
+			display: flex;
+			flex-direction: column;
+			gap: 0.8rem;
+		}
+
+		.checkbox-item {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+		}
+
+		input[type="checkbox"] {
+			width: 20px;
+			height: 20px;
+			cursor: pointer;
+			accent-color: var(--brand-red);
+		}
+
+		.checkbox-item label {
+			margin: 0;
+			font-weight: 400;
+			cursor: pointer;
+		}
+
+		.disclaimer {
+			background-color: var(--bg-surface);
+			border: 1px solid var(--border-color);
+			padding: 1.5rem;
+			margin-bottom: 2rem;
+			font-size: 0.9rem;
+			color: var(--text-secondary);
+			line-height: 1.7;
+			font-style: italic;
+		}
+
+		.submit-button {
+			background-color: var(--brand-red);
+			color: var(--text-primary);
+			border: none;
+			padding: 1rem 2rem;
+			font-size: 1.1rem;
+			font-weight: 600;
+			cursor: pointer;
+			margin-top: 1rem;
+			font-family: Georgia, serif;
+			letter-spacing: 1px;
+			transition: background-color 0.3s ease;
+		}
+
+		.submit-button:hover {
+			background-color: #b03021;
+		}
+
+		.submit-button:active {
+			background-color: #9a2818;
+		}
+
+		.submit-button:disabled {
+			opacity: 0.7;
+			cursor: not-allowed;
+		}
+
+		/* Footer */
+		footer {
+			background-color: var(--bg-surface);
+			border-top: 1px solid var(--border-color);
+			padding: 3rem 1rem;
+			text-align: center;
+		}
+
+		.footer-content {
+			max-width: 1000px;
+			margin: 0 auto;
+		}
+
+		.footer-logo {
+			font-family: Georgia, serif;
+			font-size: 1.5rem;
+			letter-spacing: 2px;
+			color: var(--brand-red);
+			margin-bottom: 1rem;
+		}
+
+		.footer-text {
+			color: var(--text-secondary);
+			font-size: 0.9rem;
+			margin-bottom: 0.5rem;
+		}
+
+		/* Responsive */
+		@media (max-width: 768px) {
+			.header-content {
+				flex-direction: column;
+				gap: 1rem;
+			}
+
+			.hero h1 {
+				font-size: 1.8rem;
+			}
+
+			.price-highlight {
+				font-size: 2.2rem;
+			}
+
+			.form-row,
+			.form-row.triple {
+				grid-template-columns: 1fr;
+			}
+
+			.features-grid {
+				grid-template-columns: 1fr;
+				gap: 2rem;
+			}
+
+			.hero,
+			.included-section,
+			.form-section {
+				padding: 2rem 1rem;
+			}
+
+			.included-section h2,
+			.form-section h2 {
+				margin-bottom: 2rem;
+			}
+
+			label {
+				font-size: 0.9rem;
+			}
+
+			input,
+			select,
+			textarea {
+				font-size: 16px;
+			}
+
+			.disclaimer {
+				padding: 1rem;
+				font-size: 0.85rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			.hero h1 { font-size: 1.4rem; }
+			.price-highlight { font-size: 1.8rem; }
+			.hero, .included-section, .form-section { padding: 1.5rem 0.75rem; }
+			.form-row { gap: 1rem; }
+			header { padding: 0.75rem; }
+			.logo { font-size: 1.2rem; }
+			.back-link { font-size: 0.85rem; }
+			input[type="color"] { width: 60px; height: 38px; }
+			.submit-btn { font-size: 1rem; padding: 0.9rem; }
+		}
+	</style>
+</head>
+<body>
+	<!-- Header -->
+	<header>
+		<div class="header-content">
+			<div class="logo">
+				CAR<span class="logo-accent">A</span>XES
+			</div>
+			<nav class="header-nav">
+				<a href="https://caraxes.fr" class="back-link">&larr; Retour au site</a>
+			</nav>
+		</div>
+	</header>
+
+	<!-- Hero Section -->
+	<section class="hero">
+		<div class="hero-content">
+			<h1>Votre Boutique E-Commerce Cl&eacute; en Main</h1>
+			<p>
+				Nous cr&eacute;ons et configurons votre boutique Shopify compl&egrave;te, pr&ecirc;te &agrave; accueillir vos clients et g&eacute;n&eacute;rer des ventes d&egrave;s le premier jour.
+			</p>
+			<div class="price-highlight">1&nbsp;490&euro;</div>
+			<p>
+				Une solution packag&eacute;e sp&eacute;cialement con&ccedil;ue pour les entrepreneurs musulmans du e-commerce, livr&eacute;e cl&eacute;s en main avec tous les fondamentaux d'une boutique moderne.
+			</p>
+		</div>
+	</section>
+
+	<!-- What's Included Section -->
+	<section class="included-section">
+		<div class="included-content">
+			<h2>Qu'est-ce qui est inclus &nbsp;?</h2>
+			<div class="features-grid">
+				<div class="feature">
+					<div class="feature-number">01</div>
+					<div class="feature-title">Boutique Shopify ou WooCommerce compl&egrave;te</div>
+					<p class="feature-text">Cr&eacute;&eacute;e avec votre identit&eacute; visuelle et configur&eacute;e selon vos besoins commerciaux.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">02</div>
+					<div class="feature-title">Design responsive aux couleurs de ta marque</div>
+					<p class="feature-text">Th&egrave;me configur&eacute; avec vos couleurs primaires et secondaires pour un look professionnel.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">03</div>
+					<div class="feature-title">Catalogue 5-60 produits int&eacute;gr&eacute;s</div>
+					<p class="feature-text">Cat&eacute;gories cr&eacute;&eacute;es selon votre niche et optimis&eacute;es pour la navigation client.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">04</div>
+					<div class="feature-title">Paiements s&eacute;curis&eacute;s (CB, PayPal)</div>
+					<p class="feature-text">Stripe et PayPal int&eacute;gr&eacute;s et configur&eacute;s pour accepter vos clients en toute s&eacute;curit&eacute;.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">05</div>
+					<div class="feature-title">Livraison configur&eacute;e</div>
+					<p class="feature-text">Colissimo et Mondial Relay pr&ecirc;ts pour offrir &agrave; vos clients des options de livraison fiables.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">06</div>
+					<div class="feature-title">Pages l&eacute;gales (CGV, mentions, politique retour)</div>
+					<p class="feature-text">Tous les &eacute;l&eacute;ments l&eacute;gaux n&eacute;cessaires g&eacute;n&eacute;r&eacute;s et int&eacute;gr&eacute;s.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">07</div>
+					<div class="feature-title">SEO de base int&eacute;gr&eacute;</div>
+					<p class="feature-text">M&eacute;tadonn&eacute;es, titres et descriptions optimis&eacute;s pour les moteurs de recherche.</p>
+				</div>
+
+				<div class="feature">
+					<div class="feature-number">08</div>
+					<div class="feature-title">Formation 2h offerte</div>
+					<p class="feature-text">Acc&egrave;s &agrave; votre boutique, instructions d'utilisation et support pour d&eacute;marrer rapidement.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Form Section -->
+	<section class="form-section">
+		<div class="form-content">
+			<h2>Cr&eacute;er Votre Boutique</h2>
+			<form id="creationForm" novalidate>
+				<!-- Contact Info -->
+				<div class="form-row">
+					<div class="form-group">
+						<label for="fullName">Nom complet <span class="required">*</span></label>
+						<input type="text" id="fullName" name="fullName" required>
+						<div class="form-error">Le nom complet est requis</div>
+					</div>
+					<div class="form-group">
+						<label for="email">Email <span class="required">*</span></label>
+						<input type="email" id="email" name="email" required>
+						<div class="form-error">Veuillez entrer un email valide</div>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<div class="form-group">
+						<label for="phone">T&eacute;l&eacute;phone / WhatsApp <span class="required">*</span></label>
+						<input type="tel" id="phone" name="phone" placeholder="+33 6 12 34 56 78" required>
+						<div class="form-error">Un num&eacute;ro de t&eacute;l&eacute;phone valide est requis</div>
+					</div>
+					<div class="form-group">
+						<label for="city">Ville <span class="required">*</span></label>
+						<input type="text" id="city" name="city" placeholder="Paris, Lyon..." required>
+						<div class="form-error">La ville est requise</div>
+					</div>
+				</div>
+
+				<!-- Boutique Info -->
+				<div class="form-row">
+					<div class="form-group">
+						<label for="shopName">Nom de la boutique <span class="required">*</span></label>
+						<input type="text" id="shopName" name="shopName" required>
+						<div class="form-error">Le nom de la boutique est requis</div>
+					</div>
+					<div class="form-group">
+						<label for="niche">Niche / secteur <span class="required">*</span></label>
+						<input type="text" id="niche" name="niche" placeholder="Mode hijab, cosm&eacute;tique halal, &eacute;picerie fine..." required>
+						<div class="form-error">La niche / secteur est requise</div>
+					</div>
+				</div>
+
+				<!-- Colors -->
+				<div class="form-row">
+					<div class="form-group">
+						<label for="primaryColor">Couleur principale <span class="required">*</span></label>
+						<input type="color" id="primaryColor" name="primaryColor" value="#c0392b" required>
+					</div>
+					<div class="form-group">
+						<label for="secondaryColor">Couleur secondaire <span class="required">*</span></label>
+						<input type="color" id="secondaryColor" name="secondaryColor" value="#c8a85c" required>
+					</div>
+				</div>
+
+				<!-- Logo -->
+				<div class="form-group full">
+					<label for="logo">Logo (optionnel)</label>
+					<input type="file" id="logo" name="logo" accept="image/*">
+					<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem;">Si vous n'en avez pas, on s'en occupe.</div>
+				</div>
+
+				<!-- Products -->
+				<div class="form-group full">
+					<label for="productTypes">Types de produits &agrave; vendre <span class="required">*</span></label>
+					<textarea id="productTypes" name="productTypes" placeholder="Ex: abayas, huiles essentielles, dattes premium..." required></textarea>
+					<div class="form-error">Veuillez d&eacute;crire les types de produits</div>
+				</div>
+
+				<!-- Product Count -->
+				<div class="form-group full">
+					<label for="productCount">Combien de produits au lancement &nbsp;? <span class="required">*</span></label>
+					<select id="productCount" name="productCount" required>
+						<option value="">S&eacute;lectionnez une option</option>
+						<option value="5-15">5-15 produits</option>
+						<option value="15-30">15-30 produits</option>
+						<option value="30-60">30-60 produits</option>
+						<option value="60+">60+ produits</option>
+					</select>
+					<div class="form-error">Veuillez s&eacute;lectionner une option</div>
+				</div>
+
+				<!-- Price Range -->
+				<div class="form-group full">
+					<label for="priceRange">Gamme de prix de tes produits <span class="required">*</span></label>
+					<select id="priceRange" name="priceRange" required>
+						<option value="">S&eacute;lectionnez votre gamme</option>
+						<option value="5-20">5-20&euro;</option>
+						<option value="20-50">20-50&euro;</option>
+						<option value="50-100">50-100&euro;</option>
+						<option value="100+">100&euro;+</option>
+						<option value="mix">Mix (plusieurs gammes)</option>
+					</select>
+					<div class="form-error">Veuillez s&eacute;lectionner une gamme de prix</div>
+				</div>
+
+				<!-- Supplier -->
+				<div class="form-group full">
+					<label for="supplier">As-tu d&eacute;j&agrave; un fournisseur &nbsp;? <span class="required">*</span></label>
+					<select id="supplier" name="supplier" required>
+						<option value="">S&eacute;lectionnez une option</option>
+						<option value="yes">Oui</option>
+						<option value="no">Non</option>
+						<option value="caraxes">CARAXES s'en occupe</option>
+					</select>
+					<div class="form-error">Veuillez s&eacute;lectionner une option</div>
+				</div>
+
+				<!-- Domain -->
+				<div class="form-group full">
+					<label for="domain">As-tu d&eacute;j&agrave; un nom de domaine &nbsp;?</label>
+					<input type="text" id="domain" name="domain" placeholder="maboutique.com">
+				</div>
+
+				<!-- Target Market -->
+				<div class="form-group full">
+					<label for="target">Cible principale <span class="required">*</span></label>
+					<select id="target" name="target" required>
+						<option value="">S&eacute;lectionnez votre cible</option>
+						<option value="france">France m&eacute;tropolitaine</option>
+						<option value="europe">Europe</option>
+						<option value="international">International</option>
+						<option value="local">Communaut&eacute; locale</option>
+					</select>
+					<div class="form-error">Veuillez s&eacute;lectionner une cible</div>
+				</div>
+
+				<!-- Features Priority -->
+				<div class="form-group full">
+					<label>Quelles fonctionnalit&eacute;s sont prioritaires &nbsp;?</label>
+					<div class="checkbox-group">
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_payment" name="features" value="payment">
+							<label for="feat_payment">Paiement CB</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_paypal" name="features" value="paypal">
+							<label for="feat_paypal">PayPal</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_transfer" name="features" value="transfer">
+							<label for="feat_transfer">Virement</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_tracking" name="features" value="tracking">
+							<label for="feat_tracking">Livraison suiv&eacute;e</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_pickup" name="features" value="pickup">
+							<label for="feat_pickup">Click &amp; collect</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_multilang" name="features" value="multilang">
+							<label for="feat_multilang">Multi-langues</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_blog" name="features" value="blog">
+							<label for="feat_blog">Blog int&eacute;gr&eacute;</label>
+						</div>
+						<div class="checkbox-item">
+							<input type="checkbox" id="feat_loyalty" name="features" value="loyalty">
+							<label for="feat_loyalty">Programme fid&eacute;lit&eacute;</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- References -->
+				<div class="form-group full">
+					<label for="references">R&eacute;f&eacute;rences / inspirations</label>
+					<textarea id="references" name="references" placeholder="Sites que tu aimes, style souhait&eacute;..."></textarea>
+				</div>
+
+				<!-- Additional Message -->
+				<div class="form-group full">
+					<label for="message">Message ou pr&eacute;cisions</label>
+					<textarea id="message" name="message" placeholder="Informations suppl&eacute;mentaires que vous jugez utiles..."></textarea>
+				</div>
+
+				<!-- Disclaimer -->
+				<div class="disclaimer">
+					Plus vous nous donnez de d&eacute;tails, plus votre boutique sera personnalis&eacute;e et performante d&egrave;s le lancement. En cas d'informations incompl&egrave;tes ou insuffisantes, le rendu ne pourra pas &ecirc;tre adapt&eacute; &agrave; vos besoins sp&eacute;cifiques et CARAXES ne pourra &ecirc;tre tenu responsable d'un r&eacute;sultat g&eacute;n&eacute;rique.
+				</div>
+
+				<!-- Submit Button -->
+				<button type="submit" class="submit-button">Passer au paiement &mdash; 1&nbsp;490&euro;</button>
+			</form>
+		</div>
+	</section>
+
+	<!-- Footer -->
+	<footer>
+		<div class="footer-content">
+			<div class="footer-logo">CAR<span style="color: #c8a85c;">A</span>XES</div>
+			<p class="footer-text">Plateforme de sourcing pour entrepreneurs e-commerce musulmans</p>
+			<p class="footer-text">&copy; 2026 CARAXES. Tous droits r&eacute;serv&eacute;s.</p>
+		</div>
+	</footer>
+
+	<script>
+		const form = document.getElementById('creationForm');
+
+		form.addEventListener('submit', async function(e) {
+			e.preventDefault();
+
+			// Reset all error states
+			document.querySelectorAll('.form-group').forEach(group => {
+				group.classList.remove('error');
+			});
+
+			// Validate required fields
+			let isValid = true;
+			const requiredFields = [
+				'fullName',
+				'email',
+				'phone',
+				'city',
+				'shopName',
+				'niche',
+				'primaryColor',
+				'secondaryColor',
+				'productTypes',
+				'productCount',
+				'priceRange',
+				'supplier',
+				'target'
+			];
+
+			requiredFields.forEach(fieldId => {
+				const field = document.getElementById(fieldId);
+				if (!field) return;
+				const value = field.value.trim();
+
+				if (!value) {
+					field.closest('.form-group').classList.add('error');
+					isValid = false;
+				}
+			});
+
+			// Validate email format
+			const emailField = document.getElementById('email');
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (emailField.value && !emailRegex.test(emailField.value)) {
+				emailField.closest('.form-group').classList.add('error');
+				isValid = false;
+			}
+
+			// Validate phone format
+			const phoneField = document.getElementById('phone');
+			const phoneRegex = /^[\d\s\-\+]+$/;
+			if (phoneField.value && !phoneRegex.test(phoneField.value)) {
+				phoneField.closest('.form-group').classList.add('error');
+				isValid = false;
+			}
+
+			if (!isValid) {
+				console.log('Form validation failed. Please check required fields.');
+				return;
+			}
+
+			// Collect form data
+			const formData = new FormData(form);
+
+			// Collect selected features
+			const selectedFeatures = [];
+			document.querySelectorAll('input[name="features"]:checked').forEach(checkbox => {
+				selectedFeatures.push(checkbox.value);
+			});
+
+			const data = {
+				offre: 'creation_boutique',
+				client_nom: formData.get('fullName'),
+				client_email: formData.get('email'),
+				client_tel: formData.get('phone'),
+				ville: formData.get('city'),
+				nom_boutique: formData.get('shopName'),
+				niche: formData.get('niche'),
+				couleur_primaire: formData.get('primaryColor'),
+				couleur_secondaire: formData.get('secondaryColor'),
+				produits_types: formData.get('productTypes'),
+				nombre_produits: formData.get('productCount'),
+				prix_range: formData.get('priceRange'),
+				fournisseur: formData.get('supplier'),
+				domaine: formData.get('domain'),
+				cible_principale: formData.get('target'),
+				fonctionnalites: selectedFeatures.join(', '),
+				references: formData.get('references'),
+				message: formData.get('message')
+			};
+
+			// Collect UTM params
+			const urlParams = new URLSearchParams(window.location.search);
+			const tracking = {
+				utm_source: urlParams.get('utm_source') || '',
+				utm_medium: urlParams.get('utm_medium') || '',
+				utm_campaign: urlParams.get('utm_campaign') || '',
+				referrer: document.referrer || ''
+			};
+
+			// Disable submit button and show loading
+			const submitBtn = form.querySelector('button[type="submit"]');
+			const originalText = submitBtn.textContent;
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'Redirection vers le paiement...';
+
+			try {
+				// 1. Save lead to Supabase
+				const SUPABASE_URL = 'https://nmuqzzedlxilnbpnalsf.supabase.co';
+				const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdXF6emVkbHhpbG5icG5hbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjI3NDIsImV4cCI6MjA5MDg5ODc0Mn0.HvrL1uQxHccBiOwHPj1LWi-o-l-J5N2Ga_beDy2TANs';
+
+				const leadPayload = {
+					email: data.client_email,
+					full_name: data.client_nom,
+					phone: data.client_tel,
+					city: data.ville,
+					service_type: 'creation',
+					form_data: data,
+					status: 'form_submitted',
+					utm_source: tracking.utm_source,
+					utm_medium: tracking.utm_medium,
+					utm_campaign: tracking.utm_campaign,
+					referrer: tracking.referrer
+				};
+
+				fetch(SUPABASE_URL + '/rest/v1/leads', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'apikey': SUPABASE_KEY,
+						'Authorization': 'Bearer ' + SUPABASE_KEY,
+						'Prefer': 'return=minimal'
+					},
+					body: JSON.stringify(leadPayload)
+				}).catch(() => {}); // Non-blocking — don't break checkout if lead save fails
+
+				// 2. Send to N8N for Stripe checkout
+				const response = await fetch('https://caraxes13.app.n8n.cloud/webhook/caraxe-checkout-ecom', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ ...data, ...tracking })
+				});
+
+				const result = await response.json();
+
+				if (result.url) {
+					// Track conversion event
+					if (typeof gtag === 'function') gtag('event', 'begin_checkout', { currency: 'EUR', value: 1490, items: [{ item_name: 'Creation Boutique' }] });
+					window.location.href = result.url;
+				} else {
+					throw new Error(result.error || 'Erreur lors de la creation du paiement');
+				}
+			} catch (error) {
+				console.error('Erreur:', error);
+				submitBtn.disabled = false;
+				submitBtn.textContent = originalText;
+				alert('Une erreur est survenue. Veuillez reessayer ou contacter contact@caraxes.fr');
+			}
+		});
+	</script>
+</body>
+</html>

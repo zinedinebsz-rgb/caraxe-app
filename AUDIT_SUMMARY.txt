@@ -1,0 +1,123 @@
+================================================================================
+AUDIT COMPLET BUILD & BUNDLE - CARAXE APP React/Vite
+Date: 16 avril 2026
+================================================================================
+
+BUILD EXECUTION
+───────────────
+✓ npm run build: SUCCESS (22.51s, 97 modules)
+✓ Tous les chunks générés correctement
+✓ Pas d'erreurs de compilation
+⚠ Avertissement initial: dist/ corrompu (résolu)
+
+BUNDLE SIZE ANALYSIS
+────────────────────
+Total assets: 924 KB
+Main JS (index): 415 KB (123 KB gzip) ← TROP LARGE
+Admin page: 344 KB (65 KB gzip) ← CRITIQUE
+
+Chunks OK: Dashboard (54K), LocaleAndPwaControls (30K), Onboarding (20K)
+Chunks petits: Settings, Catalogue, ResetPassword, clientTiers (3-12K)
+
+PROBLÈMES IDENTIFIÉS
+─────────────────────
+
+🔴 CRITIQUES (2)
+─────────────────
+1. Admin.jsx: 8,169 lignes en un seul composant
+   → Chunk: 344 KB (trop gros pour une page)
+   → Fix: Splitter en 8-12 sous-composants
+   → Impact: 344 KB → 60 KB (-82%)
+   → Effort: 2-3 jours
+
+2. Index chunk: 415 KB sans code splitting
+   → Vite.config vide (pas de manualChunks)
+   → Fix: Configurer build.rollupOptions.output.manualChunks
+   → Impact: 415 KB → 250 KB (-40%)
+   → Effort: 2 heures
+
+🟡 MAJEURS (3)
+──────────────
+3. 2 Vulnérabilités modérées (Vite/esbuild)
+   → GHSA-67mh-4wv8-2f99 (esbuild CSRF dev-server)
+   → GHSA-4w7w-66w2-5vf9 (Vite path traversal)
+   → Fix: npm audit fix --force (Vite 8.0.8)
+   → Risk production: MINIMAL
+   → Effort: 4 heures
+
+4. 4 Fichiers dupliqués (App 2.jsx, Admin 2.jsx, Dashboard 2.jsx, Login 2.jsx)
+   → 697 KB disk wasted, zéro impact bundle
+   → Fix: rm src/App\ 2.jsx src/pages/{Admin,Dashboard,Login}\ 2.jsx
+   → Effort: 30 min
+
+5. Vite.config.js: Configuration minimale
+   → Manquent: manualChunks, chunkSizeWarningLimit, alias
+   → Fix: Ajouter optimisations build
+   → Impact: +30% bundle optimization
+   → Effort: 2 heures
+
+🟢 MINEURS (1)
+───────────────
+6. LocaleAndPwaControls: 30 KB (logique couplée)
+   → Fix: Splitter en LocaleSwitcher + PWAControls
+   → Impact: -5 KB gzip
+   → Effort: 4 heures
+
+ℹ️ INFO (1)
+───────────
+7. Public assets (vidéo 2.7MB, PDFs 250K): Correctement externalisés
+
+VÉRIFICATIONS COMPLÉTÉES
+──────────────────────
+
+✓ npm run build output: Capturé (zéro warnings, zéro erreurs)
+✓ Taille chunks: Analysée avec détails (9 JS files)
+✓ Bundle principal: 415 KB > 500KB threshold? Non, mais suboptimisé
+✓ Imports inutilisés: Vérifiés (AUCUN dead code, juste mauvaise organisation)
+✓ Tree-shaking: Actif mais limité par Admin.jsx monolithique
+✓ Vite.config: Minimal (ajouts recommandés listés)
+✓ npm audit: 2 vulnérabilités MODERATE (dev-server only)
+✓ Package.json: 7 dépendances directes, TOUTES utilisées
+
+SCORES
+──────
+Build Quality: 8/10 (succès, mais lent)
+Bundle Optimization: 5/10 (trop de vendor dans main chunk)
+Code Architecture: 4/10 (Admin.jsx géant)
+Security: 6/10 (vulnérabilités dev-server)
+Overall: 6.5/10 → Target: 9/10
+
+PLAN D'ACTION IMMÉDIAT (Sprint 1)
+──────────────────────────────────
+[ ] 1. Refactoring Admin.jsx: Splitter en sous-composants (2-3 jours)
+[ ] 2. Config Vite code splitting: manualChunks (2 heures)
+[ ] 3. Supprimer fichiers dupliqués (30 min)
+[ ] 4. Test & validation build (1 heure)
+
+PLAN À MOYEN TERME (Sprint 2-3)
+────────────────────────────────
+[ ] 5. Mise à jour Vite 8 avec tests (4 heures)
+[ ] 6. Lazy-load modales Admin (1 jour)
+[ ] 7. Refactoring LocaleAndPwaControls (4 heures)
+[ ] 8. Ajouter bundle analysis tool (vite-bundle-visualizer)
+
+IMPACT POTENTIEL TOTAL
+──────────────────────
+Admin refactoring: -284 KB (344 → 60)
+Code splitting: -165 KB (415 → 250)
+Component cleanup: -15 KB
+Total: -464 KB (-50% reduction)
+
+Final bundle target: ~460 KB (vs 924 KB actuellement)
+Final gzip target: ~50-60 KB gzip (vs 200 KB actuellement)
+
+================================================================================
+FICHIERS CLÉS
+================================================================================
+Audit détaillé: AUDIT_REPORT.md (FR, complet)
+Issues JSON: AUDIT_ISSUES.json (structured data)
+Config actuelle: vite.config.js
+Code problématique: src/pages/Admin.jsx (8,169 lignes)
+Duplicates: src/App 2.jsx, src/pages/{Admin,Dashboard,Login} 2.jsx
+
+================================================================================

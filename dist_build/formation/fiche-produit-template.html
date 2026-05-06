@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARAXES — Fiche Produit Template</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0F0D0B;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #C9A96E;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #C9A96E;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .editor {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background-color: #1A1815;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #C9A96E;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #C9A96E;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #0F0D0B;
+            border: 1px solid #333;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #C9A96E;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        /* Image Upload Section */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .image-slot {
+            aspect-ratio: 1;
+            background-color: #0F0D0B;
+            border: 2px dashed #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-slot:hover {
+            border-color: #C9A96E;
+            background-color: rgba(201, 169, 110, 0.05);
+        }
+
+        .image-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-slot-placeholder {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .image-slot-placeholder span {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 20px;
+        }
+
+        .image-slot input[type="file"] {
+            display: none;
+        }
+
+        .bullets-section {
+            background-color: #0F0D0B;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .bullet-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .bullet-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .bullet-item input[type="text"] {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .bullet-item button {
+            padding: 6px 10px;
+            background-color: #C43A2F;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bullet-item button:hover {
+            background-color: #9d2c22;
+        }
+
+        .add-bullet {
+            padding: 8px 12px;
+            background-color: #333;
+            color: #C9A96E;
+            border: 1px solid #C9A96E;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .add-bullet:hover {
+            background-color: #1A1815;
+        }
+
+        .divider {
+            margin: 40px 0;
+            border-top: 1px solid #333;
+        }
+
+        .preview-section {
+            background-color: #1A1815;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .preview-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: #EDE6DA;
+            margin-bottom: 10px;
+        }
+
+        .preview-meta {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .preview-images {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .preview-image-container {
+            width: 100%;
+            height: 250px;
+            background-color: #0F0D0B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .preview-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-content {
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .preview-description-short {
+            font-size: 14px;
+            color: #EDE6DA;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .preview-bullets {
+            list-style: none;
+            margin: 15px 0;
+            padding-left: 0;
+        }
+
+        .preview-bullets li {
+            padding: 8px 0 8px 20px;
+            font-size: 13px;
+            position: relative;
+            color: #EDE6DA;
+        }
+
+        .preview-bullets li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #C9A96E;
+            font-weight: bold;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        button {
+            padding: 14px 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #C9A96E;
+            color: #0F0D0B;
+        }
+
+        .btn-primary:hover {
+            background-color: #E8C89C;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            color: #EDE6DA;
+            border: 1px solid #C9A96E;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1A1815;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #333;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .footer a {
+            color: #C9A96E;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .editor {
+                grid-template-columns: 1fr;
+            }
+
+            .image-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            .editor,
+            .actions {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+                background-color: white;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .section,
+            .preview-section {
+                background-color: white;
+                color: black;
+                border: 1px solid #ddd;
+            }
+
+            .preview-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CARAXES</h1>
+            <p>Fiche Produit Template</p>
+        </div>
+
+        <div class="editor">
+            <!-- LEFT COLUMN: INPUTS -->
+            <div>
+                <div class="section">
+                    <h2 class="section-title">Informations Produit</h2>
+
+                    <div class="form-group">
+                        <label for="product-name">Nom du Produit</label>
+                        <input type="text" id="product-name" placeholder="ex: Pochette Lin Naturel Premium">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="product-ref">Référence SKU</label>
+                            <input type="text" id="product-ref" placeholder="ex: SKU-001">
+                        </div>
+                        <div class="form-group">
+                            <label for="product-category">Catégorie</label>
+                            <select id="product-category">
+                                <option value="">Sélectionner...</option>
+                                <option value="textiles">Textiles</option>
+                                <option value="home">Maison</option>
+                                <option value="accessories">Accessoires</option>
+                                <option value="beauty">Beauté</option>
+                                <option value="food">Alimentation</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="product-supplier">Fournisseur</label>
+                            <input type="text" id="product-supplier" placeholder="ex: ABC Manufacturing">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Tarification</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cost-price">Prix d'Achat (EUR)</label>
+                            <input type="number" id="cost-price" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="selling-price">Prix de Vente (EUR)</label>
+                            <input type="number" id="selling-price" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="margin-percent">Marge %</label>
+                            <input type="number" id="margin-percent" placeholder="0.00" step="0.1" min="0" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="moq">MOQ (Quantité Min)</label>
+                            <input type="number" id="moq" placeholder="100" step="1" min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Logistique</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lead-time">Délai Fabrication</label>
+                            <input type="text" id="lead-time" placeholder="ex: 15-20 jours">
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Poids Unitaire (kg)</label>
+                            <input type="number" id="weight" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dimensions">Dimensions (L×L×H cm)</label>
+                        <input type="text" id="dimensions" placeholder="ex: 30×20×10">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hs-code">Code HS</label>
+                            <input type="text" id="hs-code" placeholder="ex: 6201">
+                        </div>
+                        <div class="form-group">
+                            <label for="incoterm">Incoterm</label>
+                            <select id="incoterm">
+                                <option value="">Sélectionner...</option>
+                                <option value="exw">EXW</option>
+                                <option value="fob">FOB</option>
+                                <option value="cif">CIF</option>
+                                <option value="ddu">DDU</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="certification">Certifications Requises</label>
+                        <input type="text" id="certification" placeholder="ex: CE, Halal, Organic">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Notes Internes</h2>
+                    <div class="form-group">
+                        <textarea id="internal-notes" placeholder="Notes sur la source, qualité, fournisseur..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: SEO & PREVIEW -->
+            <div>
+                <div class="section">
+                    <h2 class="section-title">Optimisation SEO</h2>
+
+                    <div class="form-group">
+                        <label for="seo-title">Titre SEO (60 caractères max)</label>
+                        <input type="text" id="seo-title" placeholder="Titre optimisé pour les moteurs..." maxlength="60">
+                        <small style="color: #999; font-size: 11px; margin-top: 4px; display: block;" id="seo-title-count">0 / 60</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="seo-meta">Meta Description (160 caractères max)</label>
+                        <textarea id="seo-meta" placeholder="Description pour les résultats de recherche..." maxlength="160" style="min-height: 60px;"></textarea>
+                        <small style="color: #999; font-size: 11px; margin-top: 4px; display: block;" id="seo-meta-count">0 / 160</small>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Points Clés</h2>
+
+                    <div class="bullets-section" id="bullets-container">
+                        <div class="bullet-item">
+                            <input type="text" class="bullet-input" placeholder="Point clé #1" value="">
+                            <button type="button" onclick="removeBullet(this)">Supprimer</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-bullet" onclick="addBullet()">+ Ajouter Point</button>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Description Longue</h2>
+                    <div class="form-group">
+                        <textarea id="long-description" placeholder="Description détaillée du produit pour votre boutique..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREVIEW SECTION -->
+        <div class="divider"></div>
+
+        <div class="preview-section" id="preview-section">
+            <div class="preview-title" id="preview-title">[Titre Produit]</div>
+            <div class="preview-meta">
+                <span id="preview-category">[Catégorie]</span> •
+                <span id="preview-price">[Prix]</span> •
+                <span id="preview-supplier">[Fournisseur]</span>
+            </div>
+
+            <div class="preview-images">
+                <div class="preview-image-container" id="preview-image">
+                    Aucune image
+                </div>
+            </div>
+
+            <div class="preview-content">
+                <div class="preview-description-short" id="preview-seo-meta">[Meta description...]</div>
+                <ul class="preview-bullets" id="preview-bullets">
+                    <li>Aucun point clé ajouté</li>
+                </ul>
+                <div class="preview-description-short" id="preview-long-description">[Description longue...]</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" onclick="generateSheet()">📄 Générer la Fiche</button>
+            <button class="btn-secondary" onclick="resetForm()">↻ Réinitialiser</button>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 CARAXES E-Commerce Mastery</p>
+            <a href="/offre-formation-ecom.html">← Retour à la formation</a>
+        </div>
+    </div>
+
+    <script>
+        // Form fields
+        const inputs = {
+            name: document.getElementById('product-name'),
+            ref: document.getElementById('product-ref'),
+            category: document.getElementById('product-category'),
+            supplier: document.getElementById('product-supplier'),
+            costPrice: document.getElementById('cost-price'),
+            sellingPrice: document.getElementById('selling-price'),
+            moq: document.getElementById('moq'),
+            weight: document.getElementById('weight'),
+            dimensions: document.getElementById('dimensions'),
+            hsCode: document.getElementById('hs-code'),
+            incoterm: document.getElementById('incoterm'),
+            certification: document.getElementById('certification'),
+            leadTime: document.getElementById('lead-time'),
+            seoTitle: document.getElementById('seo-title'),
+            seoMeta: document.getElementById('seo-meta'),
+            longDescription: document.getElementById('long-description'),
+            internalNotes: document.getElementById('internal-notes')
+        };
+
+        // Preview elements
+        const previews = {
+            title: document.getElementById('preview-title'),
+            category: document.getElementById('preview-category'),
+            price: document.getElementById('preview-price'),
+            supplier: document.getElementById('preview-supplier'),
+            seoMeta: document.getElementById('preview-seo-meta'),
+            bullets: document.getElementById('preview-bullets'),
+            longDescription: document.getElementById('preview-long-description')
+        };
+
+        // Event listeners for calculations
+        inputs.costPrice.addEventListener('input', updateMargin);
+        inputs.sellingPrice.addEventListener('input', updateMargin);
+
+        // Event listeners for preview updates
+        inputs.name.addEventListener('input', updatePreview);
+        inputs.category.addEventListener('change', updatePreview);
+        inputs.supplier.addEventListener('input', updatePreview);
+        inputs.sellingPrice.addEventListener('input', updatePreview);
+        inputs.seoMeta.addEventListener('input', updatePreview);
+        inputs.seoTitle.addEventListener('input', () => {
+            document.getElementById('seo-title-count').textContent = inputs.seoTitle.value.length + ' / 60';
+        });
+        inputs.seoMeta.addEventListener('input', () => {
+            document.getElementById('seo-meta-count').textContent = inputs.seoMeta.value.length + ' / 160';
+        });
+        inputs.longDescription.addEventListener('input', updatePreview);
+
+        function updateMargin() {
+            const cost = parseFloat(inputs.costPrice.value) || 0;
+            const selling = parseFloat(inputs.sellingPrice.value) || 0;
+            const margin = cost > 0 ? ((selling - cost) / selling * 100) : 0;
+            document.getElementById('margin-percent').value = margin.toFixed(1);
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const categoryValue = inputs.category.value;
+            const categoryLabel = inputs.category.options[inputs.category.selectedIndex]?.text || 'Non défini';
+            const price = parseFloat(inputs.sellingPrice.value) || 0;
+
+            previews.title.textContent = inputs.name.value || '[Titre Produit]';
+            previews.category.textContent = categoryValue ? categoryLabel : '[Catégorie]';
+            previews.price.textContent = price > 0 ? price.toFixed(2) + ' EUR' : '[Prix]';
+            previews.supplier.textContent = inputs.supplier.value || '[Fournisseur]';
+            previews.seoMeta.textContent = inputs.seoMeta.value || '[Meta description...]';
+            previews.longDescription.textContent = inputs.longDescription.value || '[Description longue...]';
+        }
+
+        function addBullet() {
+            const container = document.getElementById('bullets-container');
+            const div = document.createElement('div');
+            div.className = 'bullet-item';
+            div.innerHTML = `
+                <input type="text" class="bullet-input" placeholder="Point clé" value="">
+                <button type="button" onclick="removeBullet(this)">Supprimer</button>
+            `;
+            container.appendChild(div);
+            updateBulletPreview();
+        }
+
+        function removeBullet(btn) {
+            btn.parentElement.remove();
+            updateBulletPreview();
+        }
+
+        function updateBulletPreview() {
+            const bullets = Array.from(document.querySelectorAll('.bullet-input'))
+                .map(input => input.value)
+                .filter(val => val.trim() !== '');
+
+            if (bullets.length === 0) {
+                previews.bullets.innerHTML = '<li>Aucun point clé ajouté</li>';
+            } else {
+                previews.bullets.innerHTML = bullets.map(bullet => `<li>${bullet}</li>`).join('');
+            }
+        }
+
+        function generateSheet() {
+            window.print();
+        }
+
+        function resetForm() {
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.type === 'number' || el.type === 'text' || el.tagName === 'TEXTAREA') {
+                    el.value = '';
+                } else if (el.tagName === 'SELECT') {
+                    el.selectedIndex = 0;
+                }
+            });
+            document.getElementById('seo-title-count').textContent = '0 / 60';
+            document.getElementById('seo-meta-count').textContent = '0 / 160';
+            document.getElementById('bullets-container').innerHTML = `
+                <div class="bullet-item">
+                    <input type="text" class="bullet-input" placeholder="Point clé #1" value="">
+                    <button type="button" onclick="removeBullet(this)">Supprimer</button>
+                </div>
+            `;
+            updateMargin();
+            updatePreview();
+        }
+
+        // Initial preview update
+        updatePreview();
+    </script>
+</body>
+</html>

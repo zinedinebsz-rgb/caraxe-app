@@ -36,8 +36,17 @@ export const icons = {
   folder: 'M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z',
 }
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024
-export const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://caraxes13.app.n8n.cloud/webhook'
+export { MAX_FILE_SIZE } from '../../lib/constants'
+export const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || ''
+
+/** Safe N8N fetch — skips if webhook URL is not configured */
+export const n8nFetch = async (path, options) => {
+  if (!N8N_WEBHOOK_URL) {
+    console.warn('N8N webhook URL not configured — skipping:', path)
+    return new Response('{}', { status: 200 })
+  }
+  return fetch(`${N8N_WEBHOOK_URL}${path}`, options)
+}
 
 /* ── FORMATTING ── */
 export const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })

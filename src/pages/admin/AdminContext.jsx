@@ -1,5 +1,5 @@
 /* ── CARAXES Admin — Shared Context ── */
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   getOrders, updateOrder, deleteOrder, getMessages, sendMessage,
   getDocuments, uploadDocument, getDocumentUrl, getAllClients, getAllProfiles, createOrder,
@@ -26,10 +26,10 @@ export function useAdmin() {
 export function AdminProvider({ user, profile, onSignOut, children }) {
   const toast = useToast()
   const { t, isRtl } = useI18n()
-  const tToast = (key, vars = {}) => {
+  const tToast = useCallback((key, vars = {}) => {
     const msg = t(`toast.${key}`)
     return Object.entries(vars).reduce((str, [k, v]) => str.replace(`{${k}}`, v), msg)
-  }
+  }, [t])
 
   // ── Core data ──
   const [orders, setOrders] = useState([])
@@ -50,13 +50,15 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
   // ── Notifications ──
   const [notifications, setNotifications] = useState([])
   const [showNotifPanel, setShowNotifPanel] = useState(false)
-  const notifSoundRef = useRef(null)
 
   // ── Confirm dialog ──
   const [confirmDialog, setConfirmDialog] = useState({ open: false })
 
   // ── Team chat unread (for sidebar badge) ──
   const [teamUnreadCount, setTeamUnreadCount] = useState(0)
+
+  const loadAllRef = useRef(null)
+  const debounceRef = useRef(null)
 
   const loadAll = useCallback(async () => {
     try {
@@ -70,42 +72,27 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     }
   }, [])
 
-  useEffect(() => { loadAll() }, [loadAll])
-  useEffect(() => {
-    const ch = subscribeToOrders(() => loadAll())
-    return () => { supabase.removeChannel(ch) }
+  // Debounced loadAll — coalesces rapid realtime events into a single fetch
+  const debouncedLoadAll = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => { loadAll() }, 500)
   }, [loadAll])
 
-  // ── NOTIFICATION SYSTEM ──
-  const playNotifSound = useCallback(() => {
-    try {
-      if (!notifSoundRef.current) {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)()
-        notifSoundRef.current = ctx
-      }
-      const ctx = notifSoundRef.current
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(880, ctx.currentTime)
-      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1)
-      gain.gain.setValueAtTime(0.15, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
-      osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 0.4)
-    } catch (e) { /* ignore audio errors */ }
-  }, [])
+  useEffect(() => { loadAll() }, [loadAll])
+  useEffect(() => {
+    const ch = subscribeToOrders(() => debouncedLoadAll())
+    return () => { supabase.removeChannel(ch) }
+  }, [debouncedLoadAll])
 
+  // ── NOTIFICATION SYSTEM ──
   const addNotification = useCallback((type, title, detail) => {
     const notif = { id: Date.now(), type, title, detail, time: new Date(), read: false }
     setNotifications(prev => [notif, ...prev].slice(0, 50))
-    playNotifSound()
+    playNotificationSound()
     if (Notification?.permission === 'granted') {
       new Notification(`CARAXES — ${title}`, { body: detail, icon: '/img/dragon-crest.jpg' })
     }
-  }, [playNotifSound])
+  }, [])
 
   const requestNotifPermission = useCallback(() => {
     if (Notification && Notification.permission === 'default') {
@@ -119,10 +106,10 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
       const name = newProfile.full_name || newProfile.email || 'Inconnu'
       toast.success(tToast('newClientNotif', { name }))
       addNotification('client', 'Nouveau client', name)
-      loadAll()
+      debouncedLoadAll()
     })
     return () => { supabase.removeChannel(ch) }
-  }, [addNotification, loadAll])
+  }, [addNotification, debouncedLoadAll])
 
   useEffect(() => {
     const ch = subscribeToNewOrders((newOrder) => {
@@ -130,10 +117,10 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
       const name = cl ? (cl.full_name || cl.email) : 'Client'
       toast.success(tToast('newOrderNotif', { name }))
       addNotification('order', 'Nouvelle commande', `${newOrder.product || 'Produit'} — ${name}`)
-      loadAll()
+      debouncedLoadAll()
     })
     return () => { supabase.removeChannel(ch) }
-  }, [addNotification, loadAll, allProfiles])
+  }, [addNotification, debouncedLoadAll, allProfiles])
 
   useEffect(() => {
     const ch = subscribeToNewEcomServices((newService) => {
@@ -142,10 +129,10 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
       const typeLabel = newService.service_type === 'creation' ? 'Création boutique' : newService.service_type === 'formation' ? 'Formation' : newService.service_type
       toast.success(tToast('newEcomNotif', { type: typeLabel }))
       addNotification('ecom', 'Nouvelle demande e-com', `${typeLabel} — ${name}`)
-      loadAll()
+      debouncedLoadAll()
     })
     return () => { supabase.removeChannel(ch) }
-  }, [addNotification, loadAll, allProfiles])
+  }, [addNotification, debouncedLoadAll, allProfiles])
 
   useEffect(() => {
     const ch = subscribeToNewLeads((payload) => {
@@ -157,10 +144,10 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
         toast.success(tToast('paymentReceivedNotif', { name: payload.new.full_name || payload.new.email }))
         addNotification('lead', 'Paiement confirme', `${payload.new.full_name || payload.new.email} a paye`)
       }
-      loadAll()
+      debouncedLoadAll()
     })
     return () => { supabase.removeChannel(ch) }
-  }, [addNotification, loadAll])
+  }, [addNotification, debouncedLoadAll])
 
   // ── Team Chat: unread badge when not on tab ──
   useEffect(() => {
@@ -187,23 +174,30 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
   const unreadNotifs = notifications.filter(n => !n.read).length
   const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })))
 
-  // ── Helpers ──
-  const clientName = (clientId) => {
-    const cl = allProfiles.find(x => x.id === clientId) || clients.find(x => x.id === clientId)
+  // ── Helpers (memoized) ──
+  const profilesMap = useMemo(() => {
+    const map = new Map()
+    allProfiles.forEach(p => map.set(p.id, p))
+    clients.forEach(c => { if (!map.has(c.id)) map.set(c.id, c) })
+    return map
+  }, [allProfiles, clients])
+
+  const clientName = useCallback((clientId) => {
+    const cl = profilesMap.get(clientId)
     return cl ? (cl.full_name || cl.email) : 'Inconnu'
-  }
-  const clientInitial = (clientId) => clientName(clientId).charAt(0).toUpperCase()
-  const getClientOrderCount = (clientId) => orders.filter(o => o.client_id === clientId).length
-  const getClientLastOrderDate = (clientId) => {
+  }, [profilesMap])
+  const clientInitial = useCallback((clientId) => clientName(clientId).charAt(0).toUpperCase(), [clientName])
+  const getClientOrderCount = useCallback((clientId) => orders.filter(o => o.client_id === clientId).length, [orders])
+  const getClientLastOrderDate = useCallback((clientId) => {
     const clientOrders = orders.filter(o => o.client_id === clientId)
     if (clientOrders.length === 0) return null
     return new Date(clientOrders[0].created_at)
-  }
+  }, [orders])
 
-  const activeOrders = orders.filter(o => o.status !== 6 && o.status !== 'delivered').length
-  const deliveredOrders = orders.filter(o => o.status === 6 || o.status === 'delivered' || o.status === 'livré').length
+  const activeOrders = useMemo(() => orders.filter(o => o.status !== 6 && o.status !== 'delivered').length, [orders])
+  const deliveredOrders = useMemo(() => orders.filter(o => o.status === 6 || o.status === 'delivered' || o.status === 'livré').length, [orders])
 
-  const value = {
+  const value = useMemo(() => ({
     // Props
     user, profile, onSignOut,
     // i18n
@@ -221,7 +215,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     mainTab, setMainTab,
     // Notifications
     notifications, setNotifications, showNotifPanel, setShowNotifPanel,
-    unreadNotifs, markAllRead, addNotification, requestNotifPermission, playNotifSound,
+    unreadNotifs, markAllRead, addNotification, requestNotifPermission, playNotificationSound,
     // Team chat
     teamUnreadCount, setTeamUnreadCount,
     // Confirm dialog
@@ -234,7 +228,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     updateOrder, deleteOrder, getMessages, sendMessage, getDocuments, uploadDocument, getDocumentUrl,
     createOrder, subscribeToMessages,
     updateProfile, resetPassword,
-    getAdminMessages, sendAdminMessage, subscribeToAdminMessages, playNotificationSound,
+    getAdminMessages, sendAdminMessage, subscribeToAdminMessages,
     updateLead, deleteLead,
     createShipment, updateShipment, deleteShipment,
     updateInventoryItem, createInventoryItem, deleteInventoryItem,
@@ -243,7 +237,12 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     createShop, updateShop, deleteShop,
     createEcomService, updateEcomService, deleteEcomService,
     sendPushToUser: null, // imported separately by tabs that need it
-  }
+  }), [
+    user, profile, onSignOut, t, tToast, isRtl, toast,
+    orders, clients, allProfiles, shipments, inventory, products, categories, shops, ecomServices, leads, loading,
+    loadAll, mainTab, notifications, showNotifPanel, unreadNotifs, markAllRead, addNotification, requestNotifPermission,
+    teamUnreadCount, confirmDialog, clientName, clientInitial, getClientOrderCount, getClientLastOrderDate, activeOrders, deliveredOrders,
+  ])
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
 }

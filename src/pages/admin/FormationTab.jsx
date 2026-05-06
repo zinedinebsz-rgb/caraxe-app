@@ -1,7 +1,7 @@
 /* ── CARAXES Admin — Formation Tab ── */
 import { useState } from 'react'
 import { useAdmin } from './AdminContext'
-import { Icon, icons, ArtDecoDivider, fmtDate } from './AdminShared'
+import { Icon, icons, ArtDecoDivider } from './AdminShared'
 import { c, f, size, sp, ease } from '../../lib/theme'
 import { FORMATION_INTERNE, FORMATION_CLIENT } from '../../lib/formationData'
 
@@ -21,7 +21,7 @@ export default function FormationTab() {
   // Send formation to client — placeholder until send modal is implemented
   const handleSendToClient = () => {
     // TODO: implement send formation modal (email/WhatsApp link to client)
-    toast('Fonctionnalité en cours de développement', 'info')
+    toast.info('Fonctionnalité en cours de développement')
   }
 
   if (mainTab !== 'formation') return null
@@ -51,14 +51,14 @@ export default function FormationTab() {
         {[
           { key: 'interne', label: 'Formation Interne (~20h)', sub: 'Équipe CARAXES' },
           { key: 'client', label: 'Formation Client (2H)', sub: 'Offre Création Boutique' },
-        ].map(t => (
-          <button key={t.key} onClick={() => { setAdminFormationType(t.key); setAdminActiveLesson(null); setAdminExpandedModule(null) }} style={{
-            flex: 1, padding: `${sp[2]} ${sp[3]}`, background: adminFormationType === t.key ? c.bgElevated : c.bg,
+        ].map(tab => (
+          <button key={tab.key} onClick={() => { setAdminFormationType(tab.key); setAdminActiveLesson(null); setAdminExpandedModule(null) }} style={{
+            flex: 1, padding: `${sp[2]} ${sp[3]}`, background: adminFormationType === tab.key ? c.bgElevated : c.bg,
             border: 'none', cursor: 'pointer', textAlign: 'start',
-            borderBottom: `2px solid ${adminFormationType === t.key ? c.purple : 'transparent'}`,
+            borderBottom: `2px solid ${adminFormationType === tab.key ? c.purple : 'transparent'}`,
           }}>
-            <div style={{ fontWeight: 600, fontSize: size.sm, color: adminFormationType === t.key ? c.text : c.textTertiary }}>{t.label}</div>
-            <div style={{ fontSize: '10px', fontFamily: f.mono, color: c.textTertiary }}>{t.sub}</div>
+            <div style={{ fontWeight: 600, fontSize: size.sm, color: adminFormationType === tab.key ? c.text : c.textTertiary }}>{tab.label}</div>
+            <div style={{ fontSize: '10px', fontFamily: f.mono, color: c.textTertiary }}>{tab.sub}</div>
           </button>
         ))}
       </div>
@@ -228,7 +228,7 @@ export default function FormationTab() {
                         borderBottom: lIdx < mod.lessons.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
                         textAlign: 'start', transition: `background 0.15s ${ease.smooth}`,
                       }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = c.bgDefault }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = c.bgHover }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
                           <span style={{

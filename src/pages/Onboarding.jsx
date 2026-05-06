@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { c, f, size, sp, shadow, ease, radius, gradient } from '../lib/theme'
 import { TIERS, DEFAULT_TIER, getTierByKey } from '../lib/clientTiers'
 import { getCatalog } from '../lib/catalogsByProfile'
-import { updateProfile, sendWelcomeMessage } from '../lib/supabase'
+import { updateProfile } from '../lib/supabase'
 import { useToast } from '../components/Toast'
 
 /* ── KEYFRAMES ── */
@@ -161,7 +161,6 @@ export default function Onboarding({ user, profile, onComplete }) {
       try {
         await updateProfile(user.id, attempts[i])
         toast.success('Bienvenue chez CARAXES !')
-        sendWelcomeMessage(user.id).catch(() => {})
         onComplete()
         return
       } catch (err) {

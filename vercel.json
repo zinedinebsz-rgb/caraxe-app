@@ -1,4 +1,24 @@
 {
+  "redirects": [
+    {
+      "source": "/login",
+      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "destination": "https://app.caraxes.fr/login",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "destination": "https://app.caraxes.fr/admin",
+      "permanent": false
+    },
+    {
+      "source": "/dashboard",
+      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "destination": "https://app.caraxes.fr/dashboard",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -9,13 +29,14 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
         { "key": "X-XSS-Protection", "value": "0" }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self' https://*.supabase.co" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.app.n8n.cloud; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self' https://*.supabase.co" }
       ]
     },
     {
@@ -97,6 +118,12 @@
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=300" }
       ]
+    },
+    {
+      "source": "/export-vehicules.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300" }
+      ]
     }
   ],
   "rewrites": [
@@ -126,6 +153,7 @@
     { "source": "/blog/:path*", "destination": "/blog/:path*" },
     { "source": "/particuliers.html", "destination": "/particuliers.html" },
     { "source": "/commercants.html", "destination": "/commercants.html" },
+    { "source": "/export-vehicules.html", "destination": "/export-vehicules.html" },
     { "source": "/blog-import-chine-france.html", "destination": "/blog-import-chine-france.html" },
     { "source": "/blog-sourcing-halal.html", "destination": "/blog-sourcing-halal.html" },
     { "source": "/blog-ecommerce-fournisseur-chine.html", "destination": "/blog-ecommerce-fournisseur-chine.html" },

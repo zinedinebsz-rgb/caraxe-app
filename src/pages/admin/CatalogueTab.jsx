@@ -4,7 +4,7 @@ import { c, f, size, sp, shadow, ease, radius } from '../../lib/theme'
 import { CATALOGS, getCatalog, VERIFIED_SUPPLIERS } from '../../lib/catalogsByProfile'
 import { TIERS, getTierByKey, DEFAULT_TIER, getTierPrice, getTierMOQ } from '../../lib/clientTiers'
 import { useAdmin } from './AdminContext'
-import { Icon, icons, DragonMark, ArtDecoDivider, DragonEmptyState, fmtMoney, inputStyle, labelStyle, focusGlow, N8N_WEBHOOK_URL } from './AdminShared'
+import { Icon, icons, DragonMark, ArtDecoDivider, DragonEmptyState, fmtMoney, inputStyle, labelStyle, focusGlow, n8nFetch } from './AdminShared'
 
 const DecoPattern = () => null
 
@@ -191,7 +191,7 @@ export default function CatalogueTab() {
                             animationDelay: `${idx * 40}ms`,
                             background: s.custom ? `${c.gold}04` : 'transparent',
                           }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = c.bgDefault || c.bgCard }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = c.bgHover }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = s.custom ? `${c.gold}04` : 'transparent' }}>
                             <td style={{ padding: '10px 12px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -340,7 +340,7 @@ export default function CatalogueTab() {
                         {/* Image + Badges */}
                         <div style={{ height: 160, background: c.bgElevated, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                           {prod.image_urls?.[0] ? (
-                            <img src={prod.image_urls[0]} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={prod.image_urls[0]} alt={prod.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', background: c.bgElevated }}>
                               <DecoPattern color={c.gold} opacity={0.06} />
@@ -1003,7 +1003,7 @@ export default function CatalogueTab() {
                         <div style={{ display: 'flex', gap: sp[2], flexWrap: 'wrap', marginBottom: sp[1] }}>
                           {(editingProduct.image_urls || []).map((url, i) => (
                             <div key={url} style={{ width: 80, height: 80, position: 'relative', border: `1px solid ${c.border}`, overflow: 'hidden' }}>
-                              <img src={url} alt={`Image du produit ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img src={url} alt={`Image du produit ${i + 1}`} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               <button onClick={async () => {
                                 try {
                                   await deleteProductImage(url)
@@ -1232,7 +1232,7 @@ export default function CatalogueTab() {
               setCustomSuppliers(prev => [...prev, newSupplier])
               setShowAddSupplier(false)
               setSupplierForm({ name: '', category: '', city: '', province: '', specialty: '', moq: '', priceRange: '', leadTime: '', email: '', wechat: '', phone: '', website: '', certifications: '', notes: '' })
-              toast.success(t('toast.supplierDeleted'))
+              toast.success('Fournisseur ajouté avec succès')
             }} style={{ padding: sp[4], display: 'flex', flexDirection: 'column', gap: sp[2] }}>
               {[
                 { key: 'name', label: 'Nom du fournisseur *', placeholder: 'ex: Guangzhou Texprint Co.', required: true },
@@ -1323,7 +1323,7 @@ export default function CatalogueTab() {
                   if (!emailForm.to || !emailForm.subject) { toast.error(t('toast.emailFieldsRequired')); return }
                   setEmailSending(true)
                   try {
-                    await fetch(`${N8N_WEBHOOK_URL}/send-email`, {
+                    await n8nFetch('/send-email', {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ to: emailForm.to, subject: emailForm.subject, body: emailForm.body, from: 'contact@caraxes.fr', supplierName: emailForm.supplierName, timestamp: new Date().toISOString() }),
                     })

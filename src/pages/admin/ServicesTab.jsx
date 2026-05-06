@@ -1,7 +1,7 @@
 /* ── CARAXES Admin — Services E-com Tab ── */
 import { useState } from 'react'
 import { useAdmin } from './AdminContext'
-import { Icon, icons, ArtDecoDivider, DragonEmptyState, N8N_WEBHOOK_URL, fmtMoney, inputStyle, labelStyle } from './AdminShared'
+import { Icon, icons, ArtDecoDivider, DragonEmptyState, n8nFetch, fmtMoney, inputStyle, labelStyle } from './AdminShared'
 import { c, f, size, sp, shadow, ease, radius } from '../../lib/theme'
 
 export default function ServicesTab() {
@@ -94,7 +94,7 @@ export default function ServicesTab() {
     return true
   })
 
-  const byType = Object.keys(serviceTypes).map(t => ({ type: t, count: ecomServices.filter(s => s.service_type === t).length, active: ecomServices.filter(s => s.service_type === t && (s.status === 'active' || s.status === 'in_progress')).length }))
+  const byType = Object.keys(serviceTypes).map(st => ({ type: st, count: ecomServices.filter(s => s.service_type === st).length, active: ecomServices.filter(s => s.service_type === st && (s.status === 'active' || s.status === 'in_progress')).length }))
   const totalRevenue = ecomServices.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0)
 
   const handleSaveService = async (e) => {
@@ -191,16 +191,16 @@ export default function ServicesTab() {
 
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: sp[2], marginBottom: sp[3] }}>
-        {byType.map(t => (
-          <div key={t.type} onClick={() => setServiceFilter(serviceFilter === t.type ? null : t.type)} style={{
-            padding: `${sp[2]} ${sp[3]}`, background: serviceFilter === t.type ? `${serviceColors[t.type]}15` : c.bgElevated,
-            border: `1px solid ${serviceFilter === t.type ? serviceColors[t.type] : c.border}`, cursor: 'pointer',
+        {byType.map(st => (
+          <div key={st.type} onClick={() => setServiceFilter(serviceFilter === st.type ? null : st.type)} style={{
+            padding: `${sp[2]} ${sp[3]}`, background: serviceFilter === st.type ? `${serviceColors[st.type]}15` : c.bgElevated,
+            border: `1px solid ${serviceFilter === st.type ? serviceColors[st.type] : c.border}`, cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}>
-            <div style={{ fontSize: '18px', marginBottom: '4px' }}>{serviceIcons[t.type]}</div>
-            <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: serviceColors[t.type] }}>{t.count}</div>
-            <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{serviceTypes[t.type]}</div>
-            <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, marginTop: '2px' }}>{t.active} actif{t.active > 1 ? 's' : ''}</div>
+            <div style={{ fontSize: '18px', marginBottom: '4px' }}>{serviceIcons[st.type]}</div>
+            <div style={{ fontFamily: f.display, fontSize: size.md, fontWeight: 700, color: serviceColors[st.type] }}>{st.count}</div>
+            <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{serviceTypes[st.type]}</div>
+            <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, marginTop: '2px' }}>{st.active} actif{st.active > 1 ? 's' : ''}</div>
           </div>
         ))}
         <div style={{ padding: `${sp[2]} ${sp[3]}`, background: c.bgElevated, border: `1px solid ${c.border}` }}>
@@ -360,7 +360,7 @@ export default function ServicesTab() {
                       timestamp: new Date().toISOString(),
                     }
                     try {
-                      await fetch(`${N8N_WEBHOOK_URL}/site-creation`, {
+                      await n8nFetch('/site-creation', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(n8nPayload),
                       })
@@ -651,7 +651,7 @@ export default function ServicesTab() {
             <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>Méthode de lancement</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
-                { key: 'n8n', label: 'Lancer via N8N (automatique)', desc: 'Webhook vers caraxes13.app.n8n.cloud — création auto', icon: '⚡' },
+                { key: 'n8n', label: 'Lancer via N8N (automatique)', desc: 'Webhook N8N — création automatisée', icon: '⚡' },
                 { key: 'manual', label: 'Enregistrer seulement', desc: 'Créer le service sans webhook — lancer manuellement après', icon: '📝' },
               ].map(method => (
                 <label key={method.key} style={{
@@ -728,7 +728,7 @@ export default function ServicesTab() {
                       notes: quickLaunchForm.notes,
                       timestamp: new Date().toISOString(),
                     }
-                    await fetch(`${N8N_WEBHOOK_URL}/site-creation`, {
+                    await n8nFetch('/site-creation', {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify(webhookPayload),
                     })
@@ -814,7 +814,7 @@ export default function ServicesTab() {
             <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>Méthode de lancement</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
-                { key: 'n8n', label: 'Lancer via N8N (automatique)', desc: 'Webhook vers caraxes13.app.n8n.cloud' },
+                { key: 'n8n', label: 'Lancer via N8N (automatique)', desc: 'Webhook N8N — lancement auto' },
                 { key: 'manual', label: 'Créer manuellement', desc: 'Formulaire avec infos pré-remplies' },
               ].map(method => (
                 <label key={method.key} style={{
@@ -879,7 +879,7 @@ export default function ServicesTab() {
                 }
                 if (siteCreationData.launchMethod === 'n8n') {
                   try {
-                    await fetch(`${N8N_WEBHOOK_URL}/site-creation`, {
+                    await n8nFetch('/site-creation', {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify(payload),
                     })
@@ -1085,7 +1085,7 @@ export default function ServicesTab() {
 
                   if (sendFormationData.deliveryMethod.includes('email')) {
                     try {
-                      const response = await fetch(`${N8N_WEBHOOK_URL}/send-formation`, {
+                      const response = await n8nFetch('/send-formation', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

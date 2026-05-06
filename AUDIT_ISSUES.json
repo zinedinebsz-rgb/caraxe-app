@@ -1,0 +1,145 @@
+{
+  "auditDate": "2026-04-16",
+  "projectName": "caraxe-app",
+  "buildStatus": "SUCCESS",
+  "issues": [
+    {
+      "id": "CRITICAL-001",
+      "title": "Admin.jsx: Composant monolithique de 8,169 lignes",
+      "severity": "CRITICAL",
+      "file": "src/pages/Admin.jsx",
+      "category": "Code Architecture",
+      "description": "Un seul composant React contenant toute la logique admin. Violation massif du principe Single Responsibility.",
+      "metrics": {
+        "fileSize": "558 KB (non-minifié)",
+        "chunkSize": "344 KB (minifié)",
+        "chunkGzipSize": "65 KB"
+      },
+      "impact": "Performance dégradée, maintenabilité impossible, re-renders inefficaces",
+      "suggestedFix": "Splitter en 8-12 sous-composants: AdminLayout, OrdersPanel, ClientsPanel, InventoryPanel, DocumentsPanel, AnalyticsPanel, AdminSettingsPanel, MessageCenter",
+      "estimatedEffort": "2-3 jours",
+      "expectedImprovement": "Admin chunk: 344 KB → 60 KB (-82%)"
+    },
+    {
+      "id": "CRITICAL-002",
+      "title": "Index chunk: 415 KB (vendor non-optimisé)",
+      "severity": "CRITICAL",
+      "file": "vite.config.js (missing configuration)",
+      "category": "Bundle Optimization",
+      "description": "Aucun code splitting configuré. Toutes les dépendances partagées bundlées dans le chunk principal.",
+      "metrics": {
+        "chunkSize": "415 KB (minifié)",
+        "chunkGzipSize": "123 KB"
+      },
+      "impact": "TTI (Time To Interactive) lent, Time To First Byte prolongé",
+      "suggestedFix": "Ajouter build.rollupOptions.output.manualChunks dans vite.config.js pour séparer: react-vendor, supabase-vendor, utils",
+      "estimatedEffort": "2 heures",
+      "expectedImprovement": "Index chunk: 415 KB → 250 KB (-40%)"
+    },
+    {
+      "id": "MAJOR-003",
+      "title": "Vulnérabilités Vite/esbuild non patchées",
+      "severity": "MAJOR",
+      "file": "package.json (vite, esbuild)",
+      "category": "Security",
+      "description": "2 vulnérabilités modérées dans dépendances build: GHSA-67mh-4wv8-2f99 (esbuild CSRF), GHSA-4w7w-66w2-5vf9 (Vite path traversal)",
+      "metrics": {
+        "vulnerabilityCount": 2,
+        "severityLevel": "MODERATE"
+      },
+      "impact": "Dev server: exposition CSRF/path traversal. Production: MINIMAL (dev-server only)",
+      "suggestedFix": "npm audit fix --force (upgrade Vite 5.4.21 → 8.0.8, breaking change possible)",
+      "estimatedEffort": "4 heures (include testing)",
+      "expectedImprovement": "Zéro vulnérabilités, Vite versions up-to-date"
+    },
+    {
+      "id": "MAJOR-004",
+      "title": "Fichiers dupliqués non utilisés (\"* 2\" pattern)",
+      "severity": "MAJOR",
+      "file": "Multiple: App 2.jsx, Admin 2.jsx, Dashboard 2.jsx, Login 2.jsx",
+      "category": "Code Quality",
+      "description": "4 fichiers duplicats abandonés avec suffixe ' 2' sans lien dans le code. Ne sont pas bundlés mais polluent le repo.",
+      "metrics": {
+        "filesAffected": 4,
+        "diskSpaceWasted": "697 KB"
+      },
+      "impact": "Confusion maintenance, cognitive load, slow git operations",
+      "suggestedFix": "rm src/App\\ 2.jsx src/pages/{Admin,Dashboard,Login}\\ 2.jsx",
+      "estimatedEffort": "30 minutes",
+      "expectedImprovement": "Clean repo, -697 KB disk space"
+    },
+    {
+      "id": "MAJOR-005",
+      "title": "Vite.config.js: Configuration build non-optimisée",
+      "severity": "MAJOR",
+      "file": "vite.config.js",
+      "category": "Build Configuration",
+      "description": "Configuration minimale. Manquent: build.rollupOptions.output.manualChunks, build.chunkSizeWarningLimit, resolve.alias",
+      "currentConfig": "{ plugins: [react()], server: { port: 3000 } }",
+      "impact": "Pas d'avertissements chunk surdimensionnés, code splitting inefficace",
+      "suggestedFix": "Ajouter build.rollupOptions.output.manualChunks + build.chunkSizeWarningLimit=500",
+      "estimatedEffort": "2 heures",
+      "expectedImprovement": "30% réduction bundle size, alerts pour regressions"
+    },
+    {
+      "id": "MINOR-006",
+      "title": "LocaleAndPwaControls: Chunk lazy-loaded mais surdimensionné",
+      "severity": "MINOR",
+      "file": "src/components/LocaleAndPwaControls.jsx",
+      "category": "Code Architecture",
+      "description": "Composant 30 KB lazy-loaded mais contient logique mixte pour locale-switching et PWA controls.",
+      "metrics": {
+        "chunkSize": "30 KB (minifié)",
+        "chunkGzipSize": "11 KB"
+      },
+      "impact": "Logique mélangée, fonctionnalités couplées",
+      "suggestedFix": "Splitter en LocaleSwitcher.jsx (8 KB) et PWAControls.jsx (8 KB)",
+      "estimatedEffort": "4 heures",
+      "expectedImprovement": "Separation of concerns, -5 KB gzip"
+    },
+    {
+      "id": "INFO-007",
+      "title": "Public assets inclus dans dist/ (expected behavior)",
+      "severity": "INFO",
+      "file": "public/ → dist/",
+      "category": "Asset Management",
+      "description": "Fichiers statiques (vidéo 2.7 MB, PDFs 250 KB) correctement externalisés. Pas inclus dans JS bundle.",
+      "metrics": {
+        "videoSize": "2.7 MB",
+        "documentSize": "250 KB",
+        "jsImpact": "0 KB"
+      },
+      "impact": "NONE - correctly handled",
+      "suggestedFix": "MONITOR: Considérer CDN pour vidéo en production",
+      "estimatedEffort": "N/A - future optimization",
+      "expectedImprovement": "Video loading performance on slow connections"
+    }
+  ],
+  "bundleMetrics": {
+    "totalAssetSize": "924 KB",
+    "mainJsSize": "415 KB",
+    "mainJsGzipSize": "123 KB",
+    "moduleCount": 97,
+    "buildTime": "22.51s",
+    "chunkCount": 10,
+    "lazyLoadedPages": 6
+  },
+  "dependencies": {
+    "directDependencies": 7,
+    "totalDependencies": 128,
+    "unused": 0,
+    "vulnerabilities": 2
+  },
+  "scorecard": {
+    "currentScore": "6.5/10",
+    "targetScore": "9/10",
+    "improvements": [
+      "Admin refactoring: +1.5",
+      "Code splitting config: +1.0",
+      "Remove duplicates: +0.3",
+      "Update dependencies: +0.2",
+      "LocaleAndPwaControls split: +0.3",
+      "Lazy-load modales: +0.2"
+    ]
+  }
+}

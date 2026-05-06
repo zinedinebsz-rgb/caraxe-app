@@ -1,7 +1,8 @@
 /* ── CARAXES Admin — Boutiques Tab ── */
 import { useState } from 'react'
 import { useAdmin } from './AdminContext'
-import { Icon, icons, ArtDecoDivider, DragonEmptyState, N8N_WEBHOOK_URL, fmtDate, fmtMoney, inputStyle, labelStyle, focusGlow } from './AdminShared'
+import { Icon, icons, ArtDecoDivider, DragonEmptyState, n8nFetch, fmtDate, fmtMoney, inputStyle, labelStyle, focusGlow } from './AdminShared'
+import { Modal } from '../../components/Toast'
 import { c, f, size, sp, shadow, ease, radius } from '../../lib/theme'
 
 export default function BoutiquesTab() {
@@ -163,7 +164,7 @@ export default function BoutiquesTab() {
                       setShopCreationLoading(true)
                       try {
                         const clientData = allProfiles.find(p => p.id === shop.client_id)
-                        await fetch(`${N8N_WEBHOOK_URL}/create-shop`, {
+                        await n8nFetch('/create-shop', {
                           method: 'POST', headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ ...shop, client: clientData }),
                         })
@@ -405,7 +406,7 @@ export default function BoutiquesTab() {
               try {
                 const clientData = allProfiles.find(p => p.id === selectedShop.client_id)
                 const shopData = { ...selectedShop, client: clientData }
-                const response = await fetch(`${N8N_WEBHOOK_URL}/create-shop`, {
+                const response = await n8nFetch('/create-shop', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(shopData),
@@ -451,23 +452,7 @@ export default function BoutiquesTab() {
     </div>
 
     {/* ── BOUTIQUE MODAL ── */}
-    {showShopModal && (
-      <div style={{
-        position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', zIndex: 1000,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-      }} onClick={() => setShowShopModal(false)}>
-        <div style={{
-          background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
-          maxWidth: '520px', width: '90%', maxHeight: '85vh', overflowY: 'auto', borderRadius: radius.sm, boxShadow: shadow.xs,
-        }} onClick={e => e.stopPropagation()} className="admin-scroll">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[3] }}>
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700 }}>
-              {editingShop ? 'Modifier la boutique' : 'Nouvelle boutique'}
-            </h2>
-            <button onClick={() => setShowShopModal(false)} style={{ background: 'none', border: 'none', color: c.textTertiary, cursor: 'pointer' }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-          </div>
+    <Modal open={showShopModal} onClose={() => setShowShopModal(false)} title={editingShop ? 'Modifier la boutique' : 'Nouvelle boutique'} maxWidth={520}>
 
           <form onSubmit={async (e) => {
             e.preventDefault()
@@ -629,7 +614,7 @@ export default function BoutiquesTab() {
                     // Lancer N8N automatiquement
                     setShopCreationLoading(true)
                     const clientData = allProfiles.find(p => p.id === shopForm.client_id)
-                    await fetch(`${N8N_WEBHOOK_URL}/create-shop`, {
+                    await n8nFetch('/create-shop', {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ ...newShop, ...shopForm, client: clientData }),
                     })
@@ -651,9 +636,7 @@ export default function BoutiquesTab() {
               )}
             </div>
           </form>
-        </div>
-      </div>
-    )}
+    </Modal>
     </>
   )
 }

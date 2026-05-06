@@ -10,7 +10,7 @@ const DecoPattern = () => null
 
 export default function VehiculesTab() {
   const {
-    orders, allProfiles, toast, t, tToast, clientName,
+    orders, allProfiles, toast, t, tToast, clientName, loadAll,
   } = useAdmin()
 
   // ── Derive vehicle requests from orders (keyword match) ──
@@ -140,6 +140,7 @@ export default function VehiculesTab() {
               setShowVehicleModal(false)
               setVehicleForm({ client_id: '', type: 'Berline', destination: '', budget: '', notes: '' })
               toast.success('Demande véhicule créée')
+              loadAll()
             } catch (err) {
               toast.error(err?.message || 'Erreur lors de la création')
             } finally {

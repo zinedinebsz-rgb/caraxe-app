@@ -6,7 +6,7 @@ import { c, f, size, sp, shadow, ease, radius, STATUSES } from '../../lib/theme'
 import { TIERS, getTierByKey, DEFAULT_TIER } from '../../lib/clientTiers'
 import { scoreCohort, SCORE_BAND_COLOR } from '../../lib/clientScoring'
 import StatusPill from '../../components/StatusPill'
-import { sendPushToUser } from '../../lib/push'
+import { Modal } from '../../components/Toast'
 
 export default function ClientsTab() {
   const {
@@ -507,40 +507,12 @@ export default function ClientsTab() {
   </div>
 
   {/* ════════════ MODAL: Client Password ════════════ */}
-  {clientPasswordModal && (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-      alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-    }} onClick={() => setClientPasswordModal(null)}>
-      <div style={{
-        background: c.bgCard, border: `1px solid ${c.borderLight}`, padding: sp[4],
-        maxWidth: '440px', width: '90%', position: 'relative', borderRadius: radius.sm, boxShadow: shadow.xs,
-      }} onClick={(e) => e.stopPropagation()}>
-        <div style={{ height: 2, background: c.red, position: 'absolute', top: 0, left: 0, right: 0, borderRadius: `${radius.xs} ${radius.xs} 0 0` }} />
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp[3] }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
-            <div style={{
-              width: 36, height: 36, background: c.bgElevated, border: `1px solid ${c.border}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Icon d={icons.lock} size={16} color={c.gold} />
-            </div>
-            <div>
-              <div style={{ fontFamily: f.display, fontWeight: 700, fontSize: size.md }}>Gestion du compte</div>
-              <div style={{ fontSize: size.xs, color: c.textTertiary }}>{clientPasswordModal.full_name || clientPasswordModal.email}</div>
-            </div>
-          </div>
-          <button onClick={() => setClientPasswordModal(null)} style={{
-            background: 'transparent', border: `1px solid ${c.border}`, cursor: 'pointer', padding: '6px', display: 'flex',
-          }}>
-            <Icon d={icons.close} size={14} color={c.textTertiary} />
-          </button>
-        </div>
+  <Modal open={!!clientPasswordModal} onClose={() => setClientPasswordModal(null)} title="Gestion du compte" maxWidth={440}>
+        {clientPasswordModal && <>
+        <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>{clientPasswordModal.full_name || clientPasswordModal.email}</div></>}
 
         {/* Client info */}
-        <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
+        {clientPasswordModal && <div style={{ padding: sp[2], background: c.bgElevated, border: `1px solid ${c.border}`, marginBottom: sp[3] }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: sp[2] }}>
             <div>
               <div style={{ fontFamily: f.mono, fontSize: '9px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Email</div>
@@ -551,7 +523,7 @@ export default function ClientsTab() {
               <div style={{ fontSize: size.sm, color: c.text }}>{clientPasswordModal.created_at ? new Date(clientPasswordModal.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '–'}</div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Actions */}
         {!passwordAction && (
@@ -816,9 +788,7 @@ export default function ClientsTab() {
             </div>
           </div>
         )}
-      </div>
-    </div>
-  )}
+  </Modal>
   </>
   )
 }

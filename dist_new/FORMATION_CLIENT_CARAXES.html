@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation Express — Gérer votre boutique | CARAXES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0F0D0B;
+            --surface: #1A1714;
+            --elevated: #242019;
+            --gold: #C9A96E;
+            --red: #D14F4F;
+            --teal: #5B9A8B;
+            --text-primary: #EDE6DA;
+            --text-secondary: #9A9186;
+            --border: #2A2520;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--surface);
+            border-bottom: 2px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .progress-bar-container {
+            width: 200px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: var(--elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--red));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        button {
+            background-color: var(--elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background-color: var(--gold);
+            color: var(--dark-bg);
+            border-color: var(--gold);
+        }
+
+        button.active {
+            background-color: var(--gold);
+            color: var(--dark-bg);
+        }
+
+        .container {
+            display: flex;
+            min-height: calc(100vh - 120px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--elevated);
+            border-right: 2px solid var(--border);
+            overflow-y: auto;
+            padding: 2rem 0;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+            position: absolute;
+            height: 100%;
+            z-index: 1000;
+            width: 280px;
+        }
+
+        .search-box {
+            padding: 0 1.5rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.6rem 1rem;
+            border-radius: 3px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .module {
+            margin-bottom: 1rem;
+        }
+
+        .module-header {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .module-header:hover {
+            background-color: rgba(201, 169, 110, 0.1);
+            border-left-color: var(--gold);
+        }
+
+        .module-toggle {
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+
+        .module-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .lesson-list {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .lesson-list.collapsed {
+            max-height: 0;
+        }
+
+        .lesson-item {
+            padding: 0.6rem 1.5rem 0.6rem 2.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .lesson-item:hover {
+            background-color: rgba(201, 169, 110, 0.05);
+            border-left-color: var(--gold);
+        }
+
+        .lesson-item.active {
+            background-color: rgba(201, 169, 110, 0.15);
+            border-left-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .lesson-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--gold);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            background-color: var(--dark-bg);
+        }
+
+        .lesson-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lesson-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lesson-header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .lesson-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .lesson-meta {
+            display: flex;
+            gap: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .lesson-body {
+            line-height: 1.8;
+        }
+
+        .lesson-body h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-body h4 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .lesson-body p {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .lesson-body ul, .lesson-body ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-body li {
+            margin-bottom: 0.6rem;
+            color: var(--text-primary);
+        }
+
+        .highlight-box {
+            background-color: var(--elevated);
+            border-left: 4px solid var(--gold);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 3px;
+        }
+
+        .highlight-box strong {
+            color: var(--gold);
+        }
+
+        .tab-container {
+            margin: 2rem 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-button {
+            flex: 1;
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background-color: rgba(201, 169, 110, 0.05);
+            color: var(--gold);
+        }
+
+        .tab-button.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            background-color: rgba(201, 169, 110, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background-color: var(--elevated);
+            color: var(--gold);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        @media print {
+            header, .sidebar, .mobile-toggle, .button-group {
+                display: none;
+            }
+            .main-content {
+                padding: 0;
+            }
+            .lesson-content {
+                display: block !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid var(--border);
+            }
+            .sidebar.hidden {
+                position: fixed;
+                height: calc(100vh - 120px);
+                max-height: 60vh;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .main-content {
+                padding: 1.5rem;
+            }
+            .lesson-header h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .decorator-line {
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold), transparent);
+            margin: 2rem 0;
+        }
+
+        blockquote {
+            background: var(--elevated);
+            padding: 1rem;
+            border-left: 4px solid var(--gold);
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>CARAXES</h1>
+            <p>Formation Express — Gérer votre boutique</p>
+        </div>
+        <div class="header-right">
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <small id="progressText" style="color: var(--text-secondary);">0/10</small>
+            </div>
+            <div class="button-group">
+                <button id="printBtn" onclick="togglePrintMode()">🖨 Imprimer</button>
+                <button id="toggleSidebar" class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Chercher un cours..." onkeyup="searchLessons()">
+            </div>
+
+            <div class="module" id="module-1">
+                <div class="module-header" onclick="toggleModule(1)">
+                    <span style="color: var(--gold);">📊 Prise en main</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list">
+                    <div class="lesson-item" onclick="selectLesson(1, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(1, 1)">
+                        <span>Tour complet du Dashboard</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(1, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(1, 2)">
+                        <span>Passer & suivre une commande</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-2">
+                <div class="module-header" onclick="toggleModule(2)">
+                    <span style="color: var(--red);">📦 Catalogue & produits</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(2, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 1)">
+                        <span>Comprendre votre catalogue</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(2, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(2, 2)">
+                        <span>Photos & fiches produits</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-3">
+                <div class="module-header" onclick="toggleModule(3)">
+                    <span style="color: #5B9A8B;">🔍 SEO & visibilité</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(3, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(3, 1)">
+                        <span>SEO : les 4 piliers</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(3, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(3, 2)">
+                        <span>GMB & réseaux sociaux</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-4">
+                <div class="module-header" onclick="toggleModule(4)">
+                    <span style="color: var(--gold);">💬 SAV & fidélisation</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(4, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(4, 1)">
+                        <span>Gérer le SAV comme un pro</span>
+                    </div>
+                    <div class="lesson-item" onclick="selectLesson(4, 2)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(4, 2)">
+                        <span>Fidéliser & faire revenir</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="module" id="module-5">
+                <div class="module-header" onclick="toggleModule(5)">
+                    <span style="color: var(--red);">💳 Paiement & livraison</span>
+                    <span class="module-toggle">▼</span>
+                </div>
+                <div class="lesson-list collapsed">
+                    <div class="lesson-item" onclick="selectLesson(5, 1)">
+                        <input type="checkbox" class="lesson-checkbox" onchange="toggleLesson(5, 1)">
+                        <span>Configurer paiement & livraison</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="lesson-content active" id="lesson-1-1">
+                <div class="lesson-header">
+                    <h2>Tour complet de votre espace client</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 15 minutes</span>
+                        <span>📍 Module 1 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Bienvenue dans votre tableau de bord CARAXES ! Ce module vous guide à travers tous les éléments essentiels de votre espace client.</p>
+
+                    <h3>Vue d'ensemble (Dashboard)</h3>
+                    <p>Dès que vous vous connectez, vous voyez en un coup d'œil :</p>
+                    <ul>
+                        <li><strong>Statistiques clés</strong> : nombre de commandes ce mois, chiffre d'affaires, taux de conversion</li>
+                        <li><strong>Alertes importantes</strong> : paiements en attente, stocks faibles, commandes en retard</li>
+                        <li><strong>Activité récente</strong> : dernières commandes, messages clients, mises à jour fournisseurs</li>
+                    </ul>
+
+                    <h3>Commandes</h3>
+                    <p>L'onglet <strong>Commandes</strong> est votre cœur opérationnel :</p>
+                    <ul>
+                        <li>Créer une nouvelle commande en quelques clics</li>
+                        <li>Suivre chaque commande en temps réel</li>
+                        <li>Visualiser tous les statuts (Devis → Validé → Production → QC → Expédition → Transit → Livré)</li>
+                        <li>Télécharger factures, bons de commande, documents d'expédition</li>
+                    </ul>
+
+                    <h3>Catalogue</h3>
+                    <p>Votre catalogue s'adapte à votre profil :</p>
+                    <ul>
+                        <li><strong>Grossiste</strong> : prix usine, MOQ standards, marges réduites</li>
+                        <li><strong>Détaillant</strong> : MOQ réduits, prix détail compétitifs</li>
+                        <li><strong>E-commerce</strong> : forte marge, vente directe consommateur</li>
+                    </ul>
+                    <p>Chaque produit affiche : prix, MOQ minimum, marge estimée, produits phares, villes de sourcing.</p>
+
+                    <h3>Expédition</h3>
+                    <p>Suivi complet de vos colis :</p>
+                    <ul>
+                        <li>Suivi numéro de tracking en temps réel</li>
+                        <li>Estimation d'arrivée</li>
+                        <li>Documents douaniers</li>
+                    </ul>
+
+                    <h3>Stock</h3>
+                    <p>Gestion des niveaux de stock en temps réel :</p>
+                    <ul>
+                        <li>Stock disponible vs. réservé</li>
+                        <li>Alertes stock bas</li>
+                        <li>Historique des mouvements</li>
+                    </ul>
+
+                    <h3>Fournisseurs</h3>
+                    <p>Accès à notre réseau de fournisseurs vérifiés :</p>
+                    <ul>
+                        <li>Évaluations CARAXES (qualité, délai, service)</li>
+                        <li>Coordonnées directes</li>
+                        <li>Gamme complète de produits</li>
+                    </ul>
+
+                    <h3>E-commerce</h3>
+                    <p>Gestion intégrée de votre boutique en ligne :</p>
+                    <ul>
+                        <li>Produits synchronisés avec votre catalogue</li>
+                        <li>Commandes clients centralisées</li>
+                        <li>Gestion d'inventaire automatique</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💡 Conseil :</strong> Prenez 10 minutes pour explorer chaque onglet. Vous n'êtes pas obligé d'acheter, c'est juste pour comprendre comment tout fonctionne. Naviguez librement !
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-1-2">
+                <div class="lesson-header">
+                    <h2>Passer et suivre une commande</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 10 minutes</span>
+                        <span>📍 Module 1 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Passez votre première commande en 5 étapes simples.</p>
+
+                    <h3>Étape 1 : Accéder à l'onglet Commandes</h3>
+                    <p>Cliquez sur <strong>Commandes</strong> dans le menu principal, puis <strong>+ Nouvelle commande</strong>.</p>
+
+                    <h3>Étape 2 : Sélectionner les produits</h3>
+                    <ul>
+                        <li>Cherchez dans le catalogue</li>
+                        <li>Sélectionnez la quantité souhaitée (respectez le MOQ)</li>
+                        <li>Ajoutez au panier</li>
+                    </ul>
+
+                    <h3>Étape 3 : Remplir les détails</h3>
+                    <ul>
+                        <li><strong>Budget</strong> : Montant max que vous êtes prêt à investir</li>
+                        <li><strong>Deadline</strong> : Date limite de réception souhaitée</li>
+                        <li><strong>Spécifications</strong> : Couleurs, tailles, emballage custom (optionnel)</li>
+                    </ul>
+
+                    <h3>Étape 4 : Valider et recevoir un devis</h3>
+                    <p>Cliquez sur <strong>Demander devis</strong>. Notre équipe contacte le fournisseur et vous propose un devis détaillé dans 24-48h.</p>
+
+                    <h3>Étape 5 : Suivre votre commande</h3>
+                    <p>Une fois la commande acceptée, vous entrez dans le workflow :</p>
+
+                    <div class="tab-container">
+                        <div class="tabs">
+                            <button class="tab-button active" onclick="switchTab(event, 'workflow')">Workflow complet</button>
+                            <button class="tab-button" onclick="switchTab(event, 'communication')">Communication</button>
+                        </div>
+                        <div id="workflow" class="tab-content active">
+                            <ol>
+                                <li><strong>Devis</strong> : En attente de votre approbation</li>
+                                <li><strong>Validé</strong> : Vous avez accepté le devis</li>
+                                <li><strong>Production</strong> : Le fournisseur fabrique vos produits</li>
+                                <li><strong>QC (Contrôle Qualité)</strong> : Inspection CARAXES</li>
+                                <li><strong>Expédition</strong> : Départ du port/aéroport</li>
+                                <li><strong>Transit</strong> : En chemin vers vous</li>
+                                <li><strong>Livré</strong> : Reçu à votre adresse</li>
+                            </ol>
+                        </div>
+                        <div id="communication" class="tab-content">
+                            <h4>Chat intégré</h4>
+                            <p>Chaque commande a un chat dédié avec :</p>
+                            <ul>
+                                <li>Votre fournisseur</li>
+                                <li>Votre gestionnaire CARAXES</li>
+                                <li>Réponses garanties en moins de 2 heures</li>
+                            </ul>
+                            <h4>Documents archivés</h4>
+                            <p>Tous vos documents sont sauvegardés :</p>
+                            <ul>
+                                <li>Factures proforma</li>
+                                <li>Commandes confirmées</li>
+                                <li>Documents d'expédition</li>
+                                <li>Photos QC</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>📌 Astuce :</strong> Sauvegardez vos specs de commande préférées. Vous pouvez dupliquer une commande antérieure et juste changer les quantités. Gain de temps garanti !
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-2-1">
+                <div class="lesson-header">
+                    <h2>Comprendre votre catalogue</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 10 minutes</span>
+                        <span>📍 Module 2 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Votre catalogue CARAXES n'est pas banal. Il s'adapte à <strong>vous</strong> et à votre modèle d'affaires.</p>
+
+                    <h3>Trois profils, trois catalogues</h3>
+
+                    <h4>1. Grossiste</h4>
+                    <ul>
+                        <li>Voir les <strong>prix usine</strong> (tarifs les plus avantageux)</li>
+                        <li>MOQ standards, quantités importantes</li>
+                        <li>Marges réduites mais volumes énormes</li>
+                        <li>Accès à tous les fournisseurs du réseau</li>
+                    </ul>
+
+                    <h4>2. Détaillant</h4>
+                    <ul>
+                        <li>Voir les <strong>prix détail</strong> (légèrement supérieurs)</li>
+                        <li>MOQ réduits, flexibilité d'assortiments</li>
+                        <li>Marges intermédiaires, bonnes possibilités de profit</li>
+                        <li>Support spécialisé pour petits volumes</li>
+                    </ul>
+
+                    <h4>3. E-commerce</h4>
+                    <ul>
+                        <li>Voir les <strong>prix e-commerce</strong> (optimisés pour vente B2C)</li>
+                        <li>MOQ très réduits (parfois 1 pièce !)</li>
+                        <li>Marges agressives, marge client possible</li>
+                        <li>Produits testés pour convertir en ligne</li>
+                    </ul>
+
+                    <h3>Informations clés par produit</h3>
+                    <p>Chaque fiche affiche :</p>
+                    <ul>
+                        <li><strong>Prix</strong> : Net TTC, selon votre profil</li>
+                        <li><strong>MOQ</strong> : Quantité minimale de commande</li>
+                        <li><strong>Marge estimée</strong> : Calcul rapide de votre profit brut</li>
+                        <li><strong>Délai</strong> : De la commande à votre porte</li>
+                        <li><strong>Produits phares</strong> : Ce qu'on vend le mieux pour ce produit</li>
+                        <li><strong>Villes sourcing</strong> : Où est fabriqué le produit (Yiwu, Canton, Shenzhen…)</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🎯 Conseil de pro :</strong> Ne vous arrêtez pas au premier fournisseur. Comparez au moins 3 options pour le même produit. Vous verrez que les prix et délais varient, parfois énormément !
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-2-2">
+                <div class="lesson-header">
+                    <h2>Photos produits et fiches</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 10 minutes</span>
+                        <span>📍 Module 2 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Les photos et fiches produits sont votre première impression. Ils doivent être <strong>irréprochables</strong>.</p>
+
+                    <h3>Photos produits : la règle des 4</h3>
+                    <p>Chaque produit doit avoir minimum 4 photos :</p>
+                    <ol>
+                        <li><strong>Fond blanc</strong> : Le produit seul, angle principal, hyper net</li>
+                        <li><strong>Lifestyle</strong> : Le produit en situation, utilisé, en contexte</li>
+                        <li><strong>Détails</strong> : Gros plan des finitions, matériaux, textures</li>
+                        <li><strong>Emballage</strong> : Comment le produit est emballé à la réception</li>
+                    </ol>
+
+                    <h3>Optimisation web</h3>
+                    <ul>
+                        <li>Photos en haute résolution (2000x2000px minimum)</li>
+                        <li>Poids optimisé pour mobile (< 500kb par photo)</li>
+                        <li>Fond uni (blanc ou gris clair, pas transparent)</li>
+                        <li>Pas de watermarks ou logos invasifs</li>
+                    </ul>
+
+                    <h3>La fiche produit gagnante</h3>
+
+                    <h4>Titre</h4>
+                    <ul>
+                        <li>Mots-clés que les clients tapent sur Google</li>
+                        <li>Exemple : "Chemise Oxford 100% Coton Bleu Marine Homme" (pas juste "Chemise")</li>
+                        <li>Max 60 caractères pour les moteurs de recherche</li>
+                    </ul>
+
+                    <h4>Description courte (5 bullets)</h4>
+                    <ul>
+                        <li>✓ Matière</li>
+                        <li>✓ Taille/Dimensions</li>
+                        <li>✓ Couleurs disponibles</li>
+                        <li>✓ Avantage principal</li>
+                        <li>✓ Certification/Norme (si applicable)</li>
+                    </ul>
+
+                    <h4>Description longue</h4>
+                    <ul>
+                        <li>100+ mots pour Google (SEO boost)</li>
+                        <li>Raconte l'histoire du produit</li>
+                        <li>Explique les bénéfices (pas juste les specs)</li>
+                        <li>Répète les mots-clés 2-3 fois naturellement</li>
+                    </ul>
+
+                    <h3>Minimum 4 photos, prix clair</h3>
+                    <ul>
+                        <li><strong>Prix</strong> : Visible immédiatement, grand format</li>
+                        <li><strong>TVA</strong> : Clair si TTC ou HT</li>
+                        <li><strong>Stock</strong> : "En stock" ou "Sur commande"</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💪 Challenge :</strong> Prenez un de vos meilleurs produits. Remplissez la fiche avec ces règles. Vous verrez immédiatement la différence en clics et conversions !
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-3-1">
+                <div class="lesson-header">
+                    <h2>SEO : les 4 piliers pour être trouvé sur Google</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 10 minutes</span>
+                        <span>📍 Module 3 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Être sur Google, c'est gratuit. Mais être <strong>trouvé</strong> sur Google, ça demande du travail. Voici les 4 piliers.</p>
+
+                    <h3>Pilier 1 : Mots-clés</h3>
+                    <p>Avant d'écrire une fiche produit, trouvez les bons mots-clés :</p>
+                    <ul>
+                        <li><strong>Google Suggest</strong> : Tapez votre produit dans Google, regardez les suggestions</li>
+                        <li><strong>Ubersuggest</strong> (gratuit jusqu'à 3 recherches/jour) : Volume de recherche réel</li>
+                        <li><strong>AnswerThePublic</strong> : Questions que les gens posent vraiment</li>
+                    </ul>
+                    <p>Exemple : Au lieu de "Veste", visez "Veste imperméable femme taille M" (plus précis, moins de concurrence).</p>
+
+                    <h3>Pilier 2 : Titres & descriptions uniques</h3>
+                    <p>Google range les sites par pertinence. Chaque page doit avoir :</p>
+                    <ul>
+                        <li><strong>Title</strong> : Unique, contient mot-clé principal, < 60 caractères</li>
+                        <li><strong>Meta description</strong> : Unique, 150-160 caractères, donne envie de cliquer</li>
+                    </ul>
+
+                    <h3>Pilier 3 : Contenu 100+ mots par fiche</h3>
+                    <ul>
+                        <li>100+ mots minimum par fiche produit</li>
+                        <li>Répétez le mot-clé principal 2-3 fois</li>
+                        <li>Utilisez des synonymes (veste = blouson, parka, jacket)</li>
+                        <li>Sections claires avec sous-titres (h2, h3)</li>
+                    </ul>
+
+                    <h3>Pilier 4 : Vitesse du site</h3>
+                    <ul>
+                        <li>Images optimisées (< 100kb en format WebP)</li>
+                        <li>Pas de plugins lourds inutiles</li>
+                        <li>Mobile-first (50% du trafic vient du téléphone)</li>
+                        <li>Test gratuit : Google PageSpeed Insights</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>✅ À faire cette semaine :</strong> Analysez votre TOP 5 produits sur Google. Notez les 3 premiers résultats. Demandez-vous : qu'est-ce qu'ils font mieux que moi ? Améliorez 1-2 fiches avec ces insights.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-3-2">
+                <div class="lesson-header">
+                    <h2>Google My Business & réseaux sociaux</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 10 minutes</span>
+                        <span>📍 Module 3 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Google My Business, Instagram, TikTok, WhatsApp. Chacun joue un rôle dans votre visibilité.</p>
+
+                    <h3>Google My Business (GMB)</h3>
+                    <p>Si vous avez un <strong>commerce physique</strong> (boutique, showroom) :</p>
+                    <ul>
+                        <li>Créez votre fiche GMB : google.com/business</li>
+                        <li>Remplissez infos : adresse exacte, téléphone, horaires, site web</li>
+                        <li>Ajoutez photos de votre boutique</li>
+                        <li>Demandez des avis clients (5 ⭐ = plus de visibilité)</li>
+                    </ul>
+                    <p>Résultat : Vous apparaissez dans Google Maps quand quelqu'un cherche "boutique X près de moi".</p>
+
+                    <h3>Instagram (le "must" pour l'e-commerce)</h3>
+                    <p><strong>Fréquence</strong> : 3-5 posts par semaine</p>
+                    <ul>
+                        <li><strong>Feed</strong> : Carrousel de produits, ambiance lifestyle, couleurs cohérentes</li>
+                        <li><strong>Stories</strong> : Coulisses, flash sales, polls (ask what to post next)</li>
+                        <li><strong>Reels</strong> : Vidéos courtes 15-60 sec (trend, hacks, unboxing)</li>
+                    </ul>
+                    <p>Goal : 1 million de vues par mois → 10-15% cliquent → 1-2% convertissent → revenu.</p>
+
+                    <h3>TikTok (la nouvelle frontière)</h3>
+                    <ul>
+                        <li><strong>Unboxing</strong> : Ouvrir le produit en vidéo, réaction honnête</li>
+                        <li><strong>Avant/Après</strong> : Avant/après l'utilisation du produit</li>
+                        <li><strong>Trends</strong> : Utilisez les musiques/sons à la mode du moment</li>
+                    </ul>
+                    <p>Portée massive (l'algo TikTok booste les créateurs), conversion possible via lien bio.</p>
+
+                    <h3>WhatsApp Business</h3>
+                    <ul>
+                        <li><strong>Catalogue</strong> : Partagez vos produits directement dans WhatsApp</li>
+                        <li><strong>Réponses auto</strong> : "Merci pour ton message, on répond en < 2h"</li>
+                        <li><strong>Messages de groupe</strong> : Alertes promo, nouveautés</li>
+                    </ul>
+                    <p>Conversion élevée : les gens sont déjà sur WhatsApp, déjà dans une mindset "acheter".</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>🚀 Action immédiate :</strong> Si vous n'avez pas Instagram, créez un compte ce soir. Partons des 10 meilleurs produits, prenez 1 photo par jour, postez en story la semaine. Budget : 0€, temps : 15 min/jour.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-4-1">
+                <div class="lesson-header">
+                    <h2>Gérer le SAV comme un pro</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 15 minutes</span>
+                        <span>📍 Module 4 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Le Service Après-Vente (SAV) transforme un client fâché en ambassadeur. Voici les 3 règles d'or.</p>
+
+                    <h3>Règle 1 : Répondre < 2 heures</h3>
+                    <ul>
+                        <li>Client contacte → réponse humaine en moins de 120 minutes</li>
+                        <li>Pas de robots qui disent "merci, on voit", puis silence</li>
+                        <li>Réponse personnalisée avec prénom du client</li>
+                    </ul>
+
+                    <h3>Règle 2 : Être humain</h3>
+                    <p>Votre tone :</p>
+                    <ul>
+                        <li>✅ "Je comprends votre frustration, je suis vraiment désolé"</li>
+                        <li>✅ "On va résoudre ça ensemble, je suis là pour vous"</li>
+                        <li>✅ Emoji humanisant (👋 😊 👍) si c'est sur WhatsApp/SMS</li>
+                        <li>❌ "Selon nos conditions générales…"</li>
+                        <li>❌ Jargon corporatif</li>
+                        <li>❌ Ton défensif</li>
+                    </ul>
+
+                    <h3>Règle 3 : Résoudre, pas argumenter</h3>
+                    <p>Focus : Solution, pas excuses.</p>
+                    <ul>
+                        <li><strong>Écoute</strong> : Posez des questions clarifiantes</li>
+                        <li><strong>Empathie</strong> : "C'est normal d'être frustré"</li>
+                        <li><strong>Solution</strong> : "Voici ce qu'on fait : …"</li>
+                        <li><strong>Suivi</strong> : "Je vous recontacte demain pour confirmer"</li>
+                    </ul>
+
+                    <h3>Le processus retour en 5 étapes</h3>
+
+                    <ol>
+                        <li><strong>Demande reçue</strong> : "Merci pour votre message. On analyse la situation."</li>
+                        <li><strong>Diagnostic</strong> : Photos, description détaillée du problème</li>
+                        <li><strong>Proposition</strong> : "On vous propose : remboursement OU remplacement OU crédit"</li>
+                        <li><strong>Exécution</strong> : Étiquette retour fournie, remboursement 5j après réception</li>
+                        <li><strong>Suivi</strong> : "Désolé encore. Voici un coupon -20% pour votre prochain achat"</li>
+                    </ol>
+
+                    <h3>Phrases-types à utiliser</h3>
+                    <ul>
+                        <li>"Je suis vraiment désolé d'apprendre ça."</li>
+                        <li>"On va faire en sorte que vous soyez 100% satisfait."</li>
+                        <li>"C'est normal d'être frustré, je serais pareil à votre place."</li>
+                        <li>"Voici mon prénom [prénom], contactez-moi directement si besoin."</li>
+                        <li>"On règle ça dès demain matin."</li>
+                    </ul>
+
+                    <h3>À JAMAIS faire</h3>
+                    <ul>
+                        <li>❌ Dire "C'est la faute du fournisseur"</li>
+                        <li>❌ Demander "Pourquoi vous aviez pas bien lu les specs ?"</li>
+                        <li>❌ Laisser sans réponse plus de 2h</li>
+                        <li>❌ Traiter le SAV comme un "problème" plutôt qu'une "opportunité"</li>
+                    </ul>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>💎 Le secret :</strong> Un client SAV bien géré revient et achète 2-3x plus qu'un client normal. Le SAV, c'est votre meilleur canal d'acquisition gratuit.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-4-2">
+                <div class="lesson-header">
+                    <h2>Fidéliser et faire revenir</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 10 minutes</span>
+                        <span>📍 Module 4 / Leçon 2</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Acquérir un client coûte 5x plus cher que le conserver. Voici comment le garder.</p>
+
+                    <h3>Message suivi J+7 (7 jours après achat)</h3>
+                    <p>Envoyez un message unique :</p>
+                    <blockquote>
+                        "Salut [prénom], j'espère que ta commande te plaît ! Sincère question : qu'est-ce que tu en penses ? Des questions ou besoin de conseil pour l'utiliser ? Je suis là 😊"
+                    </blockquote>
+                    <p>Résultat : 30% répondent, 10% reviennent acheter immédiatement.</p>
+
+                    <h3>Code promo fidélité (-10%)</h3>
+                    <ul>
+                        <li>Donnez un code -10% automatiquement après 7 jours</li>
+                        <li>Valable 30 jours, peu importe le montant d'achat</li>
+                        <li>Mention explicite : "C'est pour toi, client VIP 😊"</li>
+                    </ul>
+
+                    <h3>Statut VIP après 3 commandes</h3>
+                    <ul>
+                        <li>À partir de la 3e commande : "Tu es VIP !"</li>
+                        <li>Accès prioritaire aux nouveaux produits (48h d'avance)</li>
+                        <li>Code -15% permanent au lieu de -10%</li>
+                        <li>Support prioritaire par WhatsApp (< 30min)</li>
+                    </ul>
+
+                    <h3>Parrainage : +15€ chacun</h3>
+                    <p>Proposez à vos meilleurs clients :</p>
+                    <ul>
+                        <li>"Parraine un ami → vous recevez 15€ de crédit chacun"</li>
+                        <li>Lien de parrainage unique par client (trackable)</li>
+                        <li>Valable sur l'achat suivant, sans minimum</li>
+                    </ul>
+
+                    <h3>Newsletter (1x par semaine)</h3>
+                    <ul>
+                        <li><strong>Lundi</strong> : Flash sale surprise (-30% un produit)</li>
+                        <li><strong>Jeudi</strong> : Nouveau produit + story courte (pourquoi on l'aime)</li>
+                        <li><strong>Dimanche</strong> : Conseil lifestyle (utiliser le produit autrement)</li>
+                    </ul>
+                    <p>Pas de newsletter = oubli rapide. Newsletter = top-of-mind constant.</p>
+
+                    <h3>Demander des avis Google & Instagram</h3>
+                    <ul>
+                        <li><strong>Google</strong> : Lien direct dans message J+14, +100 caractères = bonus -5% code</li>
+                        <li><strong>Instagram</strong> : Taguez votre compte (@yourshop), repostez le meilleur</li>
+                    </ul>
+                    <p>Avis = social proof. Social proof = confiance = conversions.</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>📊 Métrique clé :</strong> Visez 40% de clients récurrents d'ici 6 mois. Si vous en avez 20%, vous êtes sur la bonne voie. À 40%, vous commencez à avoir un business viable.
+                    </div>
+                </div>
+            </div>
+
+            <div class="lesson-content" id="lesson-5-1">
+                <div class="lesson-header">
+                    <h2>Configurer paiement et livraison</h2>
+                    <div class="lesson-meta">
+                        <span>⏱ 15 minutes</span>
+                        <span>📍 Module 5 / Leçon 1</span>
+                    </div>
+                </div>
+                <div class="lesson-body">
+                    <p>Paiement simple = conversions élevées. Livraison fiable = clients heureux. C'est ici qu'on configure.</p>
+
+                    <h3>Options de paiement</h3>
+
+                    <h4>Stripe (Carte bancaire)</h4>
+                    <ul>
+                        <li>CB, Visa, Mastercard, American Express</li>
+                        <li>Taux de conversion : 3-5%</li>
+                        <li>Commission Stripe : 2.9% + 0.30€ par transaction</li>
+                        <li>Paiement sécurisé PCI-DSS (3D Secure)</li>
+                    </ul>
+
+                    <h4>Apple Pay & Google Pay</h4>
+                    <ul>
+                        <li>1-click checkout sur mobile</li>
+                        <li>Taux de conversion 20% plus haut que CB classique</li>
+                        <li>Même commission que Stripe</li>
+                    </ul>
+
+                    <h4>Virement bancaire</h4>
+                    <ul>
+                        <li>Zéro commission</li>
+                        <li>Délai 2-3 jours ouvrables</li>
+                        <li>Utilisé par les professionnels (B2B)</li>
+                    </ul>
+
+                    <h3>Options de livraison</h3>
+
+                    <h4>Boutique physique</h4>
+                    <ul>
+                        <li><strong>Click & Collect</strong> : Client commande en ligne, retire en boutique (gratuit)</li>
+                        <li><strong>Livraison coursier</strong> : Vous livrez personnellement (radius 5-10km)</li>
+                    </ul>
+
+                    <h4>E-commerce national</h4>
+                    <ul>
+                        <li><strong>Colissimo</strong> : 4.95€ (délai 2-4j, assuré 100€)</li>
+                        <li><strong>Mondial Relay</strong> : 3.95€ en point retrait (délai 3-5j, gratuit retour)</li>
+                        <li><strong>Chronopost</strong> : 9.95€ domicile (délai 24h, express)</li>
+                    </ul>
+
+                    <h4>Livraison gratuite (clé de conversion)</h4>
+                    <ul>
+                        <li>À partir de 50€ d'achat : livraison gratuite</li>
+                        <li>Augmente le panier moyen de 25-30%</li>
+                        <li>Intégrez le coût dans votre prix produit</li>
+                    </ul>
+
+                    <h3>Suivi en temps réel</h3>
+                    <p>Dashboard CARAXES :</p>
+                    <ul>
+                        <li>Stock actualisé en temps réel après chaque commande</li>
+                        <li>Alertes si stock < MOQ minimum</li>
+                        <li>Synchronisation automatique avec votre e-commerce</li>
+                    </ul>
+
+                    <h3>Exemple concret</h3>
+                    <p><strong>Produit : T-shirt</strong></p>
+                    <ul>
+                        <li>Prix usine : 3€</li>
+                        <li>Prix vente : 19.99€</li>
+                        <li>Marge brute : 16.99€ (85%)</li>
+                        <li>Moins frais (Stripe 3%, logistique 5€) : -9.49€</li>
+                        <li>Marge nette : 7.50€ par vente (37.5%)</li>
+                    </ul>
+                    <p>Avec livraison gratuite dès 50€ : client achète 3 t-shirts = 22.50€ marge nette. Rentable ! 💪</p>
+
+                    <div class="decorator-line"></div>
+                    <div class="highlight-box">
+                        <strong>⚡ Configuration immédiate :</strong> Connectez Stripe (30 min), Colissimo (gratuit, automatique), configurez la livraison gratuite dès 50€. Vous êtes prêt à vendre.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let completedLessons = {};
+        let currentLesson = '1-1';
+        let expandedModules = { 1: true, 2: false, 3: false, 4: false, 5: false };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            selectLesson(1, 1);
+            updateProgress();
+        });
+
+        function selectLesson(module, lesson) {
+            document.querySelectorAll('.lesson-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lesson-item').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            const lessonId = `${module}-${lesson}`;
+            const lessonEl = document.getElementById(`lesson-${lessonId}`);
+            if (lessonEl) {
+                lessonEl.classList.add('active');
+            }
+
+            const selector = document.querySelector(`[onclick="selectLesson(${module}, ${lesson})"]`);
+            if (selector) {
+                selector.classList.add('active');
+            }
+
+            currentLesson = lessonId;
+            updateProgress();
+            closeSidebarMobile();
+        }
+
+        function toggleLesson(module, lesson) {
+            const lessonId = `${module}-${lesson}`;
+            completedLessons[lessonId] = !completedLessons[lessonId];
+            updateProgress();
+        }
+
+        function toggleModule(module) {
+            expandedModules[module] = !expandedModules[module];
+            const moduleEl = document.getElementById(`module-${module}`);
+            const lessonList = moduleEl.querySelector('.lesson-list');
+            const toggle = moduleEl.querySelector('.module-toggle');
+
+            lessonList.classList.toggle('collapsed');
+            toggle.classList.toggle('open');
+        }
+
+        function updateProgress() {
+            const total = 10;
+            const completed = Object.values(completedLessons).filter(v => v).length;
+            const percentage = (completed / total) * 100;
+
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${completed}/${total}`;
+        }
+
+        function searchLessons() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const lessonItems = document.querySelectorAll('.lesson-item');
+
+            lessonItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+
+            if (query.length > 0) {
+                Object.keys(expandedModules).forEach(module => {
+                    const lessonList = document.querySelector(`#module-${module} .lesson-list`);
+                    const hasVisibleLessons = document.querySelector(`#module-${module} .lesson-item[style*="display: flex"]`);
+                    if (hasVisibleLessons) {
+                        expandedModules[module] = true;
+                        lessonList.classList.remove('collapsed');
+                        document.querySelector(`#module-${module} .module-toggle`).classList.add('open');
+                    }
+                });
+            }
+        }
+
+        function togglePrintMode() {
+            document.body.classList.toggle('print-mode');
+            if (document.body.classList.contains('print-mode')) {
+                window.print();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function closeSidebarMobile() {
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.add('hidden');
+            }
+        }
+
+        function switchTab(event, tabName) {
+            const buttons = event.target.parentElement.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            const container = event.target.closest('.tab-container');
+            const tabs = container.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            event.target.classList.add('active');
+
+            const tabEl = document.getElementById(tabName);
+            if (tabEl) {
+                tabEl.classList.add('active');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

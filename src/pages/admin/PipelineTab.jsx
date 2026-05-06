@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useAdmin } from './AdminContext'
 import { Icon, icons, fmtMoney, parseBudget } from './AdminShared'
 import { c, f, size, sp, shadow, ease, radius, STATUSES } from '../../lib/theme'
-import StatusPill, { ProgressBar } from '../../components/StatusPill'
+import StatusPill from '../../components/StatusPill'
 import { sendPushToUser } from '../../lib/push'
 
 /* ════════════════════════════════════════════════

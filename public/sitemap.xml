@@ -49,6 +49,14 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Export Véhicules landing page -->
+  <url>
+    <loc>https://app.caraxes.fr/export-vehicules.html</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- Blog SEO articles (Vercel — canonicals match) -->
   <url>
     <loc>https://app.caraxes.fr/blog-import-chine-france.html</loc>

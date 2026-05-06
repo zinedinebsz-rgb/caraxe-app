@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARAXES — Checklist Verification Fournisseur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0F0D0B;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #1A1815;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #C9A96E;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #C9A96E;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #C9A96E;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding: 10px;
+            background-color: #0F0D0B;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            margin-right: 15px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #C9A96E;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .checklist-item input[type="checkbox"]:checked + label {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .score-section {
+            background-color: #0F0D0B;
+            padding: 25px;
+            margin-top: 40px;
+            border: 2px solid #C9A96E;
+        }
+
+        .score-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #C9A96E;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .score-input label {
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .score-input input {
+            width: 80px;
+            padding: 8px 12px;
+            background-color: #1A1815;
+            border: 1px solid #C9A96E;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .score-interpretation {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .interpretation-box {
+            padding: 12px;
+            text-align: center;
+            font-size: 12px;
+            background-color: rgba(201, 169, 110, 0.1);
+            border-left: 3px solid #C9A96E;
+        }
+
+        .interpretation-box.excellent {
+            border-left-color: #4CAF50;
+        }
+
+        .interpretation-box.warning {
+            border-left-color: #FF9800;
+        }
+
+        .interpretation-box.danger {
+            border-left-color: #C43A2F;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .footer a {
+            color: #C9A96E;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .red-flags-section {
+            background-color: rgba(196, 58, 47, 0.1);
+            padding: 15px;
+            border-left: 3px solid #C43A2F;
+            margin-top: 15px;
+        }
+
+        .red-flags-section .section-title {
+            color: #C43A2F;
+            border-bottom-color: #C43A2F;
+            margin-bottom: 12px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background-color: white;
+            }
+
+            .container {
+                background-color: white;
+                padding: 20px;
+                box-shadow: none;
+            }
+
+            .checklist-item {
+                background-color: white;
+            }
+
+            .score-section,
+            .red-flags-section {
+                background-color: #f5f5f5;
+                page-break-inside: avoid;
+            }
+
+            .footer {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CARAXES</h1>
+            <p>Checklist Verification Fournisseur</p>
+        </div>
+
+        <section class="section">
+            <h2 class="section-title">Identité</h2>
+            <div class="checklist-item">
+                <input type="checkbox" id="license">
+                <label for="license">Licence commerciale valide et vérifiée</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="tianyancha">
+                <label for="tianyancha">Vérification Tianyancha (credit score, litigations)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="anciennete">
+                <label for="anciennete">Ancienneté de 3+ années d'activité</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="siret">
+                <label for="siret">Numéro de TVA/SIRET conforme</label>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Capacité de Production</h2>
+            <div class="checklist-item">
+                <input type="checkbox" id="photos">
+                <label for="photos">Photos/vidéos usine fournis</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="capacite">
+                <label for="capacite">Capacité de production mensuelle conforme à vos besoins</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="iso">
+                <label for="iso">Certifications ISO, CE, ou HACCP (si applicable)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="equipment">
+                <label for="equipment">Équipements modernes et traçabilité</label>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Communication</h2>
+            <div class="checklist-item">
+                <input type="checkbox" id="reactivity">
+                <label for="reactivity">Réactivité inférieure à 24h (email, WhatsApp, WeChat)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="language">
+                <label for="language">Communication en anglais, français ou chinois</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="channels">
+                <label for="channels">Canaux professionnels : WeChat Business, email, Alibaba</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="dedicated">
+                <label for="dedicated">Responsable dédié pour votre compte</label>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Échantillon</h2>
+            <div class="checklist-item">
+                <input type="checkbox" id="sample-order">
+                <label for="sample-order">Échantillon commandé et reçu</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="sample-quality">
+                <label for="sample-quality">Qualité conforme à vos spécifications</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="sample-delay">
+                <label for="sample-delay">Délai de livraison respecté</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="packaging">
+                <label for="packaging">Emballage et présentation satisfaisants</label>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Conditions de Paiement</h2>
+            <div class="checklist-item">
+                <input type="checkbox" id="trade-assurance">
+                <label for="trade-assurance">Trade Assurance ou T/T 30% acompte / 70% avant expédition</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="no-western-union">
+                <label for="no-western-union">Pas de paiement Western Union ou en liquide</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="terms-written">
+                <label for="terms-written">Conditions écrites et contrat signé</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="payment-secure">
+                <label for="payment-secure">Paiement sécurisé (virement bancaire ou Alibaba)</label>
+            </div>
+        </section>
+
+        <section class="section red-flags-section">
+            <h2 class="section-title">Signaux d'Alerte (À Éviter)</h2>
+            <div class="checklist-item">
+                <input type="checkbox" id="red1">
+                <label for="red1">Refuse de fournir un échantillon</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="red2">
+                <label for="red2">Prix anormalement bas (trop beau pour être vrai)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="red3">
+                <label for="red3">Aucune photo d'usine ou uniquement photos "stock"</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="red4">
+                <label for="red4">Demande de paiement 100% à l'avance</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="red5">
+                <label for="red5">Historique de défaut de paiement ou litiges sur Tianyancha</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="red6">
+                <label for="red6">Communication lente ou impossible</label>
+            </div>
+        </section>
+
+        <div class="score-section">
+            <h3 class="score-title">Évaluation Globale</h3>
+            <div class="score-input">
+                <label for="total-score">Score Total :</label>
+                <input type="number" id="total-score" min="0" max="20" value="0">
+                <span style="color: #C9A96E; font-weight: 600;">/20</span>
+            </div>
+            <div class="score-interpretation">
+                <div class="interpretation-box excellent">
+                    <strong>16-20</strong><br>Fournisseur Fiable<br><span style="font-size: 11px;">Partenariat recommandé</span>
+                </div>
+                <div class="interpretation-box warning">
+                    <strong>12-15</strong><br>À Surveiller<br><span style="font-size: 11px;">Vérifications supplémentaires</span>
+                </div>
+                <div class="interpretation-box danger">
+                    <strong>&lt;12</strong><br>À Éviter<br><span style="font-size: 11px;">Risque trop élevé</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 CARAXES E-Commerce Mastery</p>
+            <a href="/offre-formation-ecom.html">← Retour à la formation</a>
+        </div>
+    </div>
+
+    <script>
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const scoreInput = document.getElementById('total-score');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateScore);
+        });
+
+        function updateScore() {
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+            const percentage = (checked / allCheckboxes.length) * 20;
+            scoreInput.value = Math.round(percentage);
+        }
+    </script>
+</body>
+</html>

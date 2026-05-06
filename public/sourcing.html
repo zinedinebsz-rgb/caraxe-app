@@ -6,12 +6,12 @@
 <!-- GA4 Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4CF503MJ7G"></script>
 <script defer>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-4CF503MJ7G",{send_page_view:true});</script>
-<title>Sourcing Chine &mdash; CARAXES | Agent terrain Yiwu &amp; Guangzhou</title>
-<meta name="description" content="Agent de sourcing terrain en Chine. Fournisseurs v&eacute;rifi&eacute;s, n&eacute;gociation en mandarin, contr&ocirc;le qualit&eacute; film&eacute;, logistique int&eacute;gr&eacute;e. Yiwu &amp; Guangzhou.">
-<meta property="og:title" content="Sourcing Chine &mdash; CARAXES | Agent terrain Yiwu &amp; Guangzhou">
+<title>Sourcing Chine &mdash; CARAXES | Agent terrain en Chine</title>
+<meta name="description" content="Agent de sourcing terrain en Chine. Fournisseurs v&eacute;rifi&eacute;s, n&eacute;gociation directe, contr&ocirc;le qualit&eacute; film&eacute;, logistique int&eacute;gr&eacute;e.">
+<meta property="og:title" content="Sourcing Chine &mdash; CARAXES | Agent terrain en Chine">
 <meta property="og:description" content="Trouvez le bon fournisseur en Chine. On s&rsquo;occupe du reste. Comparatif gratuit sous 48h.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://caraxes.fr/sourcing">
+<meta property="og:url" content="https://app.caraxes.fr/sourcing.html">
 <meta property="og:image" content="https://app.caraxes.fr/og-image.jpg">
 <meta property="og:image:alt" content="CARAXES — Sourcing Chine">
 <meta property="og:image:width" content="1200">
@@ -19,12 +19,12 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="CARAXES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sourcing Chine &mdash; CARAXES | Agent terrain Yiwu &amp; Guangzhou">
+<meta name="twitter:title" content="Sourcing Chine &mdash; CARAXES | Agent terrain en Chine">
 <meta name="twitter:description" content="Trouvez le bon fournisseur en Chine. On s&rsquo;occupe du reste. Comparatif gratuit sous 48h.">
 <meta name="twitter:image" content="https://app.caraxes.fr/og-image.jpg">
 <meta name="theme-color" content="#1a1612">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://caraxes.fr/sourcing">
+<link rel="canonical" href="https://app.caraxes.fr/sourcing.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='22' height='22' x='5' y='5' rx='2' fill='%23c43a2f' transform='rotate(45 16 16)'/%3E%3Ctext x='16' y='21' text-anchor='middle' fill='white' font-family='Georgia,serif' font-weight='900' font-size='14'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,7 +78,7 @@
   --text-3xl:  clamp(2.25rem, 1.2rem + 4.5vw, 4rem);
   --text-hero: clamp(3rem, 1.4rem + 6.5vw, 5.5rem);
 
-  --s1:0.25rem; --s2:0.5rem; --s3:0.75rem; --s4:1rem;
+  --s1:0.25rem; --s2:0.5rem; --s3:0.75rem; --s4:1rem; --s5:1.25rem;
   --s6:1.5rem; --s8:2rem; --s12:3rem; --s16:4rem;
   --s20:5rem; --s24:6rem; --s32:8rem; --s48:12rem;
 
@@ -259,25 +259,48 @@ h3 { font-size: var(--text-xl); }
   display: flex; align-items: center;
   padding: var(--s32) 0 var(--s24);
   position: relative;
+  overflow: hidden;
   background:
-    radial-gradient(ellipse 60% 50% at 15% 45%, oklch(55% 0.22 25 / 0.07), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 85% 30%, oklch(75% 0.12 85 / 0.04), transparent 70%),
-    radial-gradient(ellipse 70% 60% at 50% 110%, oklch(72% 0.14 155 / 0.03), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 20% 40%, oklch(55% 0.22 25 / 0.14), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 25%, oklch(75% 0.12 85 / 0.09), transparent 55%),
+    radial-gradient(ellipse 90% 70% at 50% 120%, oklch(72% 0.14 155 / 0.06), transparent 50%),
+    linear-gradient(175deg, oklch(16% 0.01 50) 0%, var(--bg) 40%),
     var(--bg);
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath d='M60 0L120 60L60 120L0 60Z' fill='none' stroke='%23c4a35a' stroke-width='0.4' opacity='0.08'/%3E%3Cpath d='M60 20L100 60L60 100L20 60Z' fill='none' stroke='%23c4a35a' stroke-width='0.3' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  mask-image: radial-gradient(ellipse 70% 70% at 80% 50%, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 80% 50%, black 10%, transparent 70%);
+}
+.hero::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
 }
 
 .hero-inner { position: relative; z-index: 2; }
+
+/* Decorative vertical line */
+.hero .hero-inner::before {
+  content: ''; position: absolute; left: -40px; top: 20%; height: 60%;
+  width: 1px; background: linear-gradient(to bottom, transparent, var(--gold-line), transparent);
+}
+@media (max-width: 768px) { .hero .hero-inner::before { display: none; } }
+
+@keyframes heroReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
 
 .hero-tag {
   display: inline-flex; align-items: center; gap: var(--s3);
   font-family: var(--mono); font-size: var(--text-xs);
   color: var(--emerald); letter-spacing: 0.12em; text-transform: uppercase;
   margin-bottom: var(--s8);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-  transition-delay: 0.2s;
+  animation: heroReveal 0.9s var(--ease) 0.2s both;
 }
-.hero.loaded .hero-tag { opacity: 1; transform: none; }
 .hero-tag::before {
   content: ''; width: 32px; height: 1px;
   background: linear-gradient(90deg, var(--emerald), transparent);
@@ -288,11 +311,8 @@ h3 { font-size: var(--text-xl); }
   line-height: 1.02; letter-spacing: -0.03em;
   max-width: 16ch;
   margin-bottom: var(--s6);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.35s;
+  animation: heroReveal 1s var(--ease) 0.35s both;
 }
-.hero.loaded h1 { opacity: 1; transform: none; }
 .hero h1 em {
   font-style: italic; font-weight: 400;
   background: linear-gradient(135deg, var(--gold), var(--gold-dim));
@@ -304,19 +324,13 @@ h3 { font-size: var(--text-xl); }
   font-size: var(--text-lg); color: var(--text-mid);
   max-width: 44ch; line-height: 1.7;
   margin-bottom: var(--s12);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.5s;
+  animation: heroReveal 1s var(--ease) 0.5s both;
 }
-.hero.loaded .hero-sub { opacity: 1; transform: none; }
 
 .hero-actions {
   display: flex; gap: var(--s4); flex-wrap: wrap;
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.65s;
+  animation: heroReveal 1s var(--ease) 0.65s both;
 }
-.hero.loaded .hero-actions { opacity: 1; transform: none; }
 
 .btn-primary {
   font-size: var(--text-sm); font-weight: 600;
@@ -355,11 +369,8 @@ h3 { font-size: var(--text-xl); }
   margin-top: var(--s16);
   padding-top: var(--s8);
   border-top: 1px solid var(--border);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.85s;
+  animation: heroReveal 1s var(--ease) 0.85s both;
 }
-.hero.loaded .hero-stats { opacity: 1; transform: none; }
 .hero-stat-value {
   font-family: var(--serif); font-size: var(--text-xl); font-weight: 700;
   display: block;
@@ -389,11 +400,16 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   content: attr(title);
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
   background: oklch(15% 0.01 50); color: oklch(90% 0.01 70);
-  font-size: 0.7rem; font-family: var(--body); font-style: normal;
+  font-size: 0.7rem; font-family: var(--sans); font-style: normal;
   white-space: nowrap; padding: 6px 12px;
   border: 1px solid oklch(25% 0.01 50);
   pointer-events: none; z-index: 99;
   animation: fadeIn 0.2s ease;
+}
+
+@keyframes scrollHintReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Scroll indicator */
@@ -401,11 +417,8 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   position: absolute; bottom: var(--s8); left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: var(--s2);
   z-index: 2;
-  opacity: 0;
-  transition: opacity 1s var(--ease);
-  transition-delay: 1.2s;
+  animation: scrollHintReveal 1s var(--ease) 1.2s both;
 }
-.hero.loaded .scroll-hint { opacity: 1; }
 .scroll-hint span {
   font-family: var(--mono); font-size: 0.625rem;
   letter-spacing: 0.2em; text-transform: uppercase;
@@ -1308,15 +1321,24 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 }
 .back-to-top svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "name": "CARAXES Sourcing",
-  "url": "https://caraxes.fr/sourcing",
+  "url": "https://app.caraxes.fr/sourcing.html",
   "logo": "https://caraxes.fr/og-image.jpg",
-  "description": "Agent de sourcing terrain en Chine. Fournisseurs vérifiés, négociation en mandarin, contrôle qualité filmé, logistique intégrée depuis Yiwu et Guangzhou.",
+  "description": "Agent de sourcing terrain en Chine. Fournisseurs vérifiés, négociation directe, contrôle qualité filmé, logistique intégrée.",
   "email": "contact@caraxes.fr",
   "priceRange": "$$",
   "areaServed": [
@@ -1333,7 +1355,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   ],
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "Yiwu",
+    "addressLocality": "Chine",
     "addressRegion": "Zhejiang",
     "addressCountry": "CN"
   }
@@ -1424,7 +1446,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   <div class="w hero-inner">
     <div class="hero-tag">&#9670; Sourcing Chine</div>
     <h1>Trouvez le bon fournisseur. <em>On s&rsquo;occupe du reste.</em></h1>
-    <p class="hero-sub">Depuis Yiwu et Guangzhou, on identifie, n&eacute;gocie et contr&ocirc;le vos fournisseurs en Chine. En mandarin, sur le terrain, cam&eacute;ra au poing. Vous recevez un comparatif chiffr&eacute; sous 48h.</p>
+    <p class="hero-sub">On identifie, n&eacute;gocie et contr&ocirc;le vos fournisseurs en Chine. Sur le terrain, cam&eacute;ra au poing. Vous recevez un comparatif chiffr&eacute; sous 48h.</p>
     <div class="hero-actions">
       <a href="javascript:void(0)" onclick="openForm('formComparatif')" class="btn-primary">Demander un comparatif gratuit &rarr;</a>
       <a href="#process" class="btn-ghost">Comment &ccedil;a marche</a>
@@ -1590,13 +1612,13 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   <div class="w">
     <div class="section-tag rv">Pourquoi CARAXES</div>
     <h2 class="section-title rv rv-d1">Pas un interm&eacute;diaire. <em>Votre homme sur place.</em></h2>
-    <p class="section-sub rv rv-d2">On vit en Chine, on n&eacute;gocie en mandarin, on refuse 15% des usines qu&rsquo;on audite. La diff&eacute;rence se compte en milliers d&rsquo;euros &eacute;conomis&eacute;s.</p>
+    <p class="section-sub rv rv-d2">On vit en Chine, on n&eacute;gocie sur le terrain, on refuse 15% des usines qu&rsquo;on audite. La diff&eacute;rence se compte en milliers d&rsquo;euros &eacute;conomis&eacute;s.</p>
     <div class="diff-grid">
       <div class="diff-item rv rv-d1">
         <div class="diff-diamond"></div>
         <div>
           <h3>Bas&eacute; en Chine, pas derri&egrave;re un &eacute;cran</h3>
-          <p>Pr&eacute;sence physique &agrave; Guangzhou, Yiwu et Shenzhen. Visites usines en personne, pas depuis Alibaba.</p>
+          <p>Pr&eacute;sence physique en Chine. Visites usines en personne, pas depuis Alibaba.</p>
         </div>
       </div>
       <div class="diff-item rv rv-d2">
@@ -1645,7 +1667,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   <div class="w">
     <div class="section-tag rv-blur"><span class="terrain-live-dot"></span>Direct du terrain</div>
     <h2 class="section-title rv-blur rv-d1">On est en Chine. <em>En ce moment.</em></h2>
-    <p class="section-sub rv-blur rv-d2">Pas de bureau &agrave; Paris avec un logo chinois. On vit sur place, on visite les usines nous-m&ecirc;mes, on n&eacute;gocie en mandarin chaque jour.</p>
+    <p class="section-sub rv-blur rv-d2">Pas de bureau &agrave; Paris avec un logo chinois. On vit sur place, on visite les usines nous-m&ecirc;mes, on n&eacute;gocie directement chaque jour.</p>
     <div class="terrain-grid rv-blur rv-d3">
       <div class="terrain-card">
         <span class="terrain-card-emoji">&#127981;</span>
@@ -1660,7 +1682,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <div class="terrain-card">
         <span class="terrain-card-emoji">&#129309;</span>
         <span class="terrain-card-title">N&eacute;gociation</span>
-        <span class="terrain-card-desc">En mandarin, face &agrave; face. On obtient les prix locaux, pas les prix &laquo;&nbsp;export&nbsp;&raquo; pour &eacute;trangers.</span>
+        <span class="terrain-card-desc">Face &agrave; face, sur le terrain. On obtient les prix locaux, pas les prix &laquo;&nbsp;export&nbsp;&raquo; pour &eacute;trangers.</span>
       </div>
       <div class="terrain-card">
         <span class="terrain-card-emoji">&#128230;</span>
@@ -1774,7 +1796,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     <p class="section-sub rv rv-d2">Des commer&ccedil;ants et entrepreneurs qui ont fait confiance &agrave; CARAXES pour leur sourcing en Chine.</p>
     <div class="testimonials-grid rv rv-d3">
       <div class="testimonial">
-        <p class="testimonial-text">On cherchait un fournisseur de tapis de pri&egrave;re depuis des mois sur Alibaba. CARAXES nous a trouv&eacute; une usine &agrave; Yiwu en 3&nbsp;jours, avec un prix 40&thinsp;% en dessous.</p>
+        <p class="testimonial-text">On cherchait un fournisseur de tapis de pri&egrave;re depuis des mois sur Alibaba. CARAXES nous a trouv&eacute; une usine en Chine en 3&nbsp;jours, avec un prix 40&thinsp;% en dessous.</p>
         <div class="testimonial-author">
           <div class="testimonial-avatar"><span>K</span></div>
           <div>
@@ -1901,7 +1923,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
           Que se passe-t-il en cas de litige ou de d&eacute;faut qualit&eacute; ?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <div class="faq-a"><p>On n&eacute;gocie syst&eacute;matiquement des clauses de remplacement ou remboursement avec chaque fournisseur. En cas de probl&egrave;me, c&rsquo;est nous qui g&eacute;rons la r&eacute;clamation directement en mandarin, sur place. Vous n&rsquo;avez pas &agrave; vous en occuper.</p></div>
+        <div class="faq-a"><p>On n&eacute;gocie syst&eacute;matiquement des clauses de remplacement ou remboursement avec chaque fournisseur. En cas de probl&egrave;me, c&rsquo;est nous qui g&eacute;rons la r&eacute;clamation directement sur place. Vous n&rsquo;avez pas &agrave; vous en occuper.</p></div>
       </div>
 
       <div class="faq-item">
@@ -2020,9 +2042,9 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <div class="footer-diamond"><span>C</span></div>
       <span class="footer-name">CARAXES</span>
     </div>
-    <div class="footer-tagline">Votre &eacute;quipe terrain &agrave; Yiwu et Guangzhou</div>
+    <div class="footer-tagline">Votre &eacute;quipe terrain en Chine</div>
     <div class="footer-row">
-      <div class="footer-copy">&copy; 2026 CARAXES &mdash; Agent sourcing Chine &middot; Yiwu &amp; Guangzhou</div>
+      <div class="footer-copy">&copy; 2026 CARAXES &mdash; Agent sourcing Chine</div>
       <ul class="footer-links">
         <li><a href="javascript:void(0)" onclick="document.getElementById('modalMentions').style.display='flex';">Mentions l&eacute;gales</a></li>
         <li><a href="javascript:void(0)" onclick="document.getElementById('modalCGV').style.display='flex';">CGV</a></li>
@@ -2041,7 +2063,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <p style="margin-bottom:var(--s2);"><strong style="color:var(--text);">&Eacute;diteur du site</strong></p>
       <p style="margin-bottom:var(--s3);">CARAXES &mdash; Agent de Sourcing Chine<br>
       Repr&eacute;sentant l&eacute;gal : Zin&eacute;dine Bensky<br>
-      Adresse : Yiwu, Zhejiang, Chine<br>
+      Adresse : Chine<br>
       Email : <a href="mailto:contact@caraxes.fr" style="color:var(--gold);">contact@caraxes.fr</a></p>
       <p style="margin-bottom:var(--s2);"><strong style="color:var(--text);">H&eacute;bergement</strong></p>
       <p style="margin-bottom:var(--s3);">Vercel Inc. &mdash; 340 S Lemon Ave #4133, Walnut, CA 91789, USA<br>

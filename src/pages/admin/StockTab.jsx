@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { c, f, size, sp, shadow, ease, radius } from '../../lib/theme'
 import { useAdmin } from './AdminContext'
 import { Icon, icons, ArtDecoDivider, inputStyle, labelStyle, focusGlow } from './AdminShared'
+import { Modal } from '../../components/Toast'
 
 export default function StockTab() {
   const {
@@ -208,29 +209,7 @@ export default function StockTab() {
             </div>
 
       {/* ═══════ MODAL: Nouvel article stock ═══════ */}
-      {showCreateInventory && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
-        }} onClick={() => setShowCreateInventory(false)}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
-            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
-          }} onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowCreateInventory(false)} style={{
-              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
-              color: c.textTertiary, cursor: 'pointer', padding: 0, width: '28px', height: '28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: `all 0.2s ${ease.smooth}`,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = c.purple }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', letterSpacing: '-0.01em', color: c.purple }}>
-              Nouvel article
-            </h2>
+      <Modal open={showCreateInventory} onClose={() => setShowCreateInventory(false)} title="Nouvel article" maxWidth={480}>
             <ArtDecoDivider width={80} color={c.purple} />
 
             <form onSubmit={handleCreateInventory} style={{ display: 'flex', flexDirection: 'column', gap: sp[3], marginTop: sp[3] }}>
@@ -323,34 +302,14 @@ export default function StockTab() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* ═══════ MODAL: Edit Inventory ═══════ */}
-      {editingInventoryItem && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(6, 5, 4, 0.92)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(6px)',
-        }} onClick={() => setEditingInventoryItem(null)}>
-          <div style={{
-            background: c.bgCard, border: `1px solid ${c.border}`, padding: sp[4],
-            maxWidth: '480px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative',
-          }} onClick={(e) => e.stopPropagation()} className="admin-scroll">
-            <button onClick={() => setEditingInventoryItem(null)} style={{
-              position: 'absolute', top: sp[3], right: sp[3], background: 'transparent', border: 'none',
-              color: c.textTertiary, cursor: 'pointer', padding: 0,
-            }}>
-              <Icon d={icons.close} size={16} />
-            </button>
-
-            <h2 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, marginBottom: '4px', color: c.purple }}>
-              Modifier l'article
-            </h2>
+      <Modal open={!!editingInventoryItem} onClose={() => setEditingInventoryItem(null)} title="Modifier l'article" maxWidth={480}>
             <ArtDecoDivider width={80} />
-            <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
+            {editingInventoryItem && <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
               Client : {clientName(editingInventoryItem.client_id)}
-            </div>
+            </div>}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: sp[2] }}>
@@ -408,9 +367,7 @@ export default function StockTab() {
                 }}>Sauvegarder</button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </>
   )
 }

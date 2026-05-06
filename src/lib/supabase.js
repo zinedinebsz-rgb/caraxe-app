@@ -140,16 +140,19 @@ export async function getProfile(userId) {
 }
 
 // ─── ORDERS ───
-export async function getOrders(clientId = null) {
+export async function getOrders(clientId = null, { page = 0, pageSize = 200, paginate = false } = {}) {
   // SECURITY: Always filter by clientId if provided. RLS policies should prevent unauthorized access,
   // but this app-level safeguard ensures clients never accidentally see other users' orders.
   let query = supabase
     .from('orders')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(page * pageSize, (page + 1) * pageSize - 1)
   if (clientId) query = query.eq('client_id', clientId)
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) throw error
+  // Backward-compatible: returns plain array unless paginate:true is passed
+  if (paginate) return { data: data || [], count, page, pageSize }
   return data || []
 }
 
@@ -416,11 +419,6 @@ function maxLength(str, max, fieldName) {
   }
 }
 
-/** Validate email format */
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
 // ── File upload validation ──
 const ALLOWED_FILE_TYPES = [
   'image/jpeg', 'image/png', 'image/webp', 'image/gif',
@@ -430,7 +428,7 @@ const ALLOWED_FILE_TYPES = [
   'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/csv', 'text/plain',
 ]
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+import { MAX_FILE_SIZE } from './constants'
 
 export function validateFile(file) {
   if (!file) throw new Error('Aucun fichier sélectionné')
@@ -467,13 +465,15 @@ export async function updateProfile(userId, updates) {
 // Select only fields needed for admin views — no raw passwords or sensitive metadata
 const ADMIN_PROFILE_FIELDS = 'id, email, full_name, role, client_tier, phone, company, city, country, avatar_url, onboarding_done, created_at, updated_at'
 
-export async function getAllClients() {
-  const { data, error } = await supabase
+export async function getAllClients({ page = 0, pageSize = 200, paginate = false } = {}) {
+  const { data, error, count } = await supabase
     .from('profiles')
-    .select(ADMIN_PROFILE_FIELDS)
+    .select(ADMIN_PROFILE_FIELDS, { count: 'exact' })
     .eq('role', 'client')
     .order('created_at', { ascending: false })
+    .range(page * pageSize, (page + 1) * pageSize - 1)
   if (error) throw error
+  if (paginate) return { data: data || [], count, page, pageSize }
   return data || []
 }
 
@@ -566,7 +566,7 @@ export async function linkOrderToSupplier(orderId, supplierId, priceUnit, notes)
     order_id: orderId,
     supplier_id: supplierId,
     price_unit: priceUnit,
-    notes,
+    notes: typeof notes === 'string' ? sanitize(notes) : notes,
   }).select().single()
   if (error) throw error
   return data
@@ -665,7 +665,7 @@ export async function getShops(clientId = null) {
   let query = supabase.from('shops').select('*').order('created_at', { ascending: false })
   if (clientId) query = query.eq('client_id', clientId)
   const { data, error } = await query
-  if (error) throw error
+  if (error) { console.warn('shops table may not exist yet:', error.message); return [] }
   return data || []
 }
 
@@ -812,12 +812,6 @@ export function subscribeToNewLeads(callback) {
       table: 'leads',
     }, (payload) => callback(payload))
     .subscribe()
-}
-
-// ─── WELCOME MESSAGE ───
-export async function sendWelcomeMessage(userId) {
-  // No-op — welcome info is shown in the onboarding UI.
-  return
 }
 
 // ─── ADMIN INTERNAL CHAT ───

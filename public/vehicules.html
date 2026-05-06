@@ -11,8 +11,8 @@
 <meta property="og:title" content="Export V&eacute;hicules Chine &mdash; CARAXES">
 <meta property="og:description" content="Voitures, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. Export Chine vers Afrique et toute destination. Inspection, logistique RORO/conteneur, d&eacute;douanement.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://caraxes.fr/vehicules">
-<meta property="og:image" content="https://caraxes.fr/og-image.jpg">
+<meta property="og:url" content="https://app.caraxes.fr/vehicules.html">
+<meta property="og:image" content="https://app.caraxes.fr/og-image.jpg">
 <meta property="og:image:alt" content="CARAXES &mdash; Export de v&eacute;hicules depuis la Chine">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -24,7 +24,7 @@
 <meta name="twitter:image" content="https://caraxes.fr/og-image.jpg">
 <meta name="theme-color" content="#1a1612">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://caraxes.fr/vehicules">
+<link rel="canonical" href="https://app.caraxes.fr/vehicules.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='22' height='22' x='5' y='5' rx='2' fill='%23c43a2f' transform='rotate(45 16 16)'/%3E%3Ctext x='16' y='21' text-anchor='middle' fill='white' font-family='Georgia,serif' font-weight='900' font-size='14'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -259,25 +259,48 @@ h3 { font-size: var(--text-xl); }
   display: flex; align-items: center;
   padding: var(--s32) 0 var(--s24);
   position: relative;
+  overflow: hidden;
   background:
-    radial-gradient(ellipse 60% 50% at 15% 45%, oklch(55% 0.22 25 / 0.07), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 85% 30%, oklch(75% 0.12 85 / 0.04), transparent 70%),
-    radial-gradient(ellipse 70% 60% at 50% 110%, oklch(72% 0.14 155 / 0.03), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 30% 50%, oklch(55% 0.22 25 / 0.15), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 80% 30%, oklch(75% 0.12 85 / 0.10), transparent 50%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, oklch(72% 0.14 155 / 0.05), transparent 50%),
+    linear-gradient(172deg, oklch(16% 0.012 25) 0%, var(--bg) 45%),
     var(--bg);
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M0 50h100M50 0v100' stroke='%23c43a2f' stroke-width='0.25' opacity='0.05'/%3E%3Cpath d='M0 0L100 100M100 0L0 100' stroke='%23c4a35a' stroke-width='0.2' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+  mask-image: radial-gradient(ellipse 60% 70% at 85% 55%, black 10%, transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 85% 55%, black 10%, transparent 65%);
+}
+.hero::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
 }
 
 .hero-inner { position: relative; z-index: 2; }
+
+/* Decorative vertical line */
+.hero .hero-inner::before {
+  content: ''; position: absolute; left: -40px; top: 10%; height: 75%;
+  width: 1px; background: linear-gradient(to bottom, transparent, oklch(55% 0.22 25 / 0.2), transparent);
+}
+@media (max-width: 768px) { .hero .hero-inner::before { display: none; } }
+
+@keyframes heroReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
 
 .hero-tag {
   display: inline-flex; align-items: center; gap: var(--s3);
   font-family: var(--mono); font-size: var(--text-xs);
   color: var(--red); letter-spacing: 0.12em; text-transform: uppercase;
   margin-bottom: var(--s8);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-  transition-delay: 0.2s;
+  animation: heroReveal 0.9s var(--ease) 0.2s both;
 }
-.hero.loaded .hero-tag { opacity: 1; transform: none; }
 .hero-tag::before {
   content: ''; width: 32px; height: 1px;
   background: linear-gradient(90deg, var(--red), transparent);
@@ -288,11 +311,8 @@ h3 { font-size: var(--text-xl); }
   line-height: 1.02; letter-spacing: -0.03em;
   max-width: 16ch;
   margin-bottom: var(--s6);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.35s;
+  animation: heroReveal 1s var(--ease) 0.35s both;
 }
-.hero.loaded h1 { opacity: 1; transform: none; }
 .hero h1 em {
   font-style: italic; font-weight: 400;
   background: linear-gradient(135deg, var(--gold), var(--gold-dim));
@@ -304,19 +324,36 @@ h3 { font-size: var(--text-xl); }
   font-size: var(--text-lg); color: var(--text-mid);
   max-width: 44ch; line-height: 1.7;
   margin-bottom: var(--s12);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.5s;
+  animation: heroReveal 1s var(--ease) 0.5s both;
 }
-.hero.loaded .hero-sub { opacity: 1; transform: none; }
 
 .hero-actions {
   display: flex; gap: var(--s4); flex-wrap: wrap;
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s var(--ease), transform 1s var(--ease);
-  transition-delay: 0.65s;
+  animation: heroReveal 1s var(--ease) 0.65s both;
 }
-.hero.loaded .hero-actions { opacity: 1; transform: none; }
+
+.hero-stats {
+  display: flex; gap: var(--s16);
+  margin-top: var(--s16);
+  padding-top: var(--s8);
+  border-top: 1px solid var(--border);
+  animation: heroReveal 1s var(--ease) 0.85s both;
+}
+.hero-stat-value {
+  font-family: var(--serif); font-size: var(--text-xl); font-weight: 700;
+  display: block;
+}
+.hero-stat:nth-child(1) .hero-stat-value { color: var(--gold); }
+.hero-stat:nth-child(2) .hero-stat-value { color: var(--emerald); }
+.hero-stat:nth-child(3) .hero-stat-value { color: var(--red); }
+.hero-stat-label {
+  font-size: var(--text-xs); color: var(--text-dim);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  margin-top: var(--s1);
+}
+@media (max-width: 640px) {
+  .hero-stats { flex-direction: column; gap: var(--s6); }
+}
 
 .btn-primary {
   font-size: var(--text-sm); font-weight: 600;
@@ -350,15 +387,18 @@ h3 { font-size: var(--text-xl); }
 }
 
 /* Scroll indicator */
+@keyframes heroFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .scroll-hint {
   position: absolute; bottom: var(--s8); left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: var(--s2);
   z-index: 2;
   opacity: 0;
-  transition: opacity 1s var(--ease);
-  transition-delay: 1.2s;
+  animation: heroFadeIn 1s var(--ease) 1.2s both;
 }
-.hero.loaded .scroll-hint { opacity: 1; }
 .scroll-hint span {
   font-family: var(--mono); font-size: 0.625rem;
   letter-spacing: 0.2em; text-transform: uppercase;
@@ -950,27 +990,36 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   pointer-events: none; z-index: 99;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Service",
-  "name": "CARAXES Export V&eacute;hicules",
-  "url": "https://caraxes.fr/vehicules",
+  "name": "CARAXES Export Véhicules",
+  "url": "https://app.caraxes.fr/vehicules.html",
   "provider": {
     "@type": "ProfessionalService",
     "name": "CARAXES",
     "url": "https://caraxes.fr"
   },
-  "description": "Export de v&eacute;hicules depuis la Chine vers l'Afrique et le monde entier. Voitures neuves et d'occasion, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. Inspection sur place, transport RORO et conteneur, d&eacute;douanement g&eacute;r&eacute;.",
-  "serviceType": ["Export v&eacute;hicules Chine", "Transport RORO", "Transport conteneur", "Import v&eacute;hicules Afrique"],
+  "description": "Export de véhicules depuis la Chine vers l'Afrique et le monde entier. Voitures neuves et d'occasion, utilitaires, pièces détachées. Inspection sur place, transport RORO et conteneur, dédouanement géré.",
+  "serviceType": ["Export véhicules Chine", "Transport RORO", "Transport conteneur", "Import véhicules Afrique"],
   "areaServed": [
-    {"@type": "Country", "name": "Senegal"},
-    {"@type": "Country", "name": "Ivory Coast"},
+    {"@type": "Country", "name": "Sénégal"},
+    {"@type": "Country", "name": "Côte d'Ivoire"},
     {"@type": "Country", "name": "Congo"},
-    {"@type": "Country", "name": "Cameroon"},
-    {"@type": "Country", "name": "Morocco"},
-    {"@type": "Country", "name": "Algeria"}
+    {"@type": "Country", "name": "Cameroun"},
+    {"@type": "Country", "name": "Maroc"},
+    {"@type": "Country", "name": "Algérie"}
   ]
 }
 </script>
@@ -981,34 +1030,34 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "Combien de temps prend l'exp&eacute;dition d'un v&eacute;hicule depuis la Chine ?",
+      "name": "Combien de temps prend l'expédition d'un véhicule depuis la Chine ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "L'exp&eacute;dition maritime prend g&eacute;n&eacute;ralement 25 &agrave; 45 jours selon la destination. Le RORO est souvent plus rapide que le conteneur. Comptez 25-30 jours pour l'Afrique de l'Ouest, 35-45 jours pour l'Afrique du Nord."
+        "text": "L'expédition maritime prend généralement 25 à 45 jours selon la destination. Le RORO est souvent plus rapide que le conteneur. Comptez 25-30 jours pour l'Afrique de l'Ouest, 35-45 jours pour l'Afrique du Nord."
       }
     },
     {
       "@type": "Question",
-      "name": "Quelle est la diff&eacute;rence entre RORO et conteneur ?",
+      "name": "Quelle est la différence entre RORO et conteneur ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Le RORO (Roll-On/Roll-Off) : le v&eacute;hicule roule directement dans le navire. Moins cher pour un seul v&eacute;hicule. Le conteneur : le v&eacute;hicule est charg&eacute; dans un conteneur ferm&eacute;. Plus s&ucirc;r, permet de grouper pi&egrave;ces et accessoires."
+        "text": "Le RORO (Roll-On/Roll-Off) : le véhicule roule directement dans le navire. Moins cher pour un seul véhicule. Le conteneur : le véhicule est chargé dans un conteneur fermé. Plus sûr, permet de grouper pièces et accessoires."
       }
     },
     {
       "@type": "Question",
-      "name": "CARAXES g&egrave;re-t-il le d&eacute;douanement ?",
+      "name": "CARAXES gère-t-il le dédouanement ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Oui. Nous g&eacute;rons le d&eacute;douanement export Chine et pouvons accompagner sur le d&eacute;douanement import dans le pays de destination. Documents, certificats d'origine, conformit&eacute; : tout est pr&eacute;par&eacute;."
+        "text": "Oui. Nous gérons le dédouanement export Chine et pouvons accompagner sur le dédouanement import dans le pays de destination. Documents, certificats d'origine, conformité : tout est préparé."
       }
     },
     {
       "@type": "Question",
-      "name": "Les v&eacute;hicules sont-ils assur&eacute;s pendant le transport ?",
+      "name": "Les véhicules sont-ils assurés pendant le transport ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Oui. Chaque v&eacute;hicule est couvert par une assurance transport maritime all-risk. Le certificat d'assurance vous est fourni avant l'embarquement."
+        "text": "Oui. Chaque véhicule est couvert par une assurance transport maritime all-risk. Le certificat d'assurance vous est fourni avant l'embarquement."
       }
     }
   ]
@@ -1031,8 +1080,8 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     </a>
     <ul class="nav-links" id="navLinks">
       <li><a href="https://caraxes.fr">Accueil</a></li>
-      <li><a href="/#services">Services</a></li>
-      <li><a href="/#destinations">Destinations</a></li>
+      <li><a href="#process">Services</a></li>
+      <li><a href="#destinations">Destinations</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li style="display:none;" class="nav-mobile-cta-li"><a href="javascript:void(0)" onclick="openForm('formVehicule')" class="nav-mobile-cta">Devis v&eacute;hicule &rarr;</a></li>
     </ul>
@@ -1054,12 +1103,26 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   <div class="w hero-inner">
     <div class="hero-tag">&#9670; Export V&eacute;hicules</div>
     <h1>Export de v&eacute;hicules, <em>vers le monde entier</em></h1>
-    <p class="hero-sub">Voitures neuves et d&rsquo;occasion, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. Chine vers Afrique et toute destination.</p>
+    <p class="hero-sub">Voitures neuves et d&rsquo;occasion, utilitaires, pi&egrave;ces d&eacute;tach&eacute;es. On s&eacute;lectionne sur place en Chine, vous recevez au port de votre choix. Afrique, Europe, Moyen-Orient.</p>
     <div class="hero-actions">
       <a href="javascript:void(0)" onclick="openForm('formVehicule')" class="btn-primary">Demander un devis v&eacute;hicule &rarr;</a>
       <a href="#process" class="btn-ghost">Comment &ccedil;a marche</a>
     </div>
     <p style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-dim); font-family:var(--mono); letter-spacing:0.04em;">Inspection sur place &middot; Transport RORO &amp; conteneur &middot; D&eacute;douanement g&eacute;r&eacute;</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value" data-target="120">0</span>
+        <span class="hero-stat-label">V&eacute;hicules export&eacute;s</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value" data-target="15" data-suffix="+">0</span>
+        <span class="hero-stat-label">Pays desservis</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value" data-target="25" data-suffix="%">0</span>
+        <span class="hero-stat-label">&Eacute;conomie moyenne</span>
+      </div>
+    </div>
   </div>
   <div class="scroll-hint">
     <span>Scroll</span>
@@ -1268,7 +1331,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
         <div class="diff-diamond"></div>
         <div>
           <h3>Prix n&eacute;goci&eacute;s</h3>
-          <p>On n&eacute;gocie directement en mandarin avec les vendeurs. Nos clients &eacute;conomisent en moyenne 15 &agrave; 25% sur le prix du v&eacute;hicule.</p>
+          <p>On n&eacute;gocie directement avec les vendeurs sur place. Nos clients &eacute;conomisent en moyenne 15 &agrave; 25% sur le prix du v&eacute;hicule.</p>
         </div>
       </div>
     </div>
@@ -1432,9 +1495,9 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <div class="footer-diamond"><span>C</span></div>
       <span class="footer-name">CARAXES</span>
     </div>
-    <div class="footer-tagline">Votre &eacute;quipe terrain &agrave; Yiwu et Guangzhou</div>
+    <div class="footer-tagline">Votre &eacute;quipe terrain en Chine</div>
     <div class="footer-row">
-      <div class="footer-copy">&copy; 2026 CARAXES &mdash; Agent sourcing Chine &middot; Yiwu &amp; Guangzhou</div>
+      <div class="footer-copy">&copy; 2026 CARAXES &mdash; Agent sourcing Chine</div>
       <ul class="footer-links">
         <li><a href="javascript:void(0)" onclick="document.getElementById('modalMentions').style.display='flex';">Mentions l&eacute;gales</a></li>
         <li><a href="javascript:void(0)" onclick="document.getElementById('modalCGV').style.display='flex';">CGV</a></li>
@@ -1453,7 +1516,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
       <p style="margin-bottom:var(--s2);"><strong style="color:var(--text);">&Eacute;diteur du site</strong></p>
       <p style="margin-bottom:var(--s3);">CARAXES &mdash; Agent de Sourcing Chine<br>
       Repr&eacute;sentant l&eacute;gal : Zin&eacute;dine Bensky<br>
-      Adresse : Yiwu, Zhejiang, Chine<br>
+      Adresse : Chine<br>
       Email : <a href="mailto:contact@caraxes.fr" style="color:var(--gold);">contact@caraxes.fr</a></p>
       <p style="margin-bottom:var(--s2);"><strong style="color:var(--text);">H&eacute;bergement</strong></p>
       <p style="margin-bottom:var(--s3);">Vercel Inc. &mdash; 340 S Lemon Ave #4133, Walnut, CA 91789, USA<br>
@@ -1499,6 +1562,30 @@ requestAnimationFrame(function() {
   var hero = document.querySelector('.hero');
   if (hero) hero.classList.add('loaded');
 });
+
+// ── Counter animation ──
+function animateCounters() {
+  document.querySelectorAll('.hero-stat-value').forEach(function(el) {
+    var target = parseInt(el.getAttribute('data-target'));
+    var suffix = el.getAttribute('data-suffix') || '';
+    var duration = 1800;
+    var start = performance.now();
+    function step(now) {
+      var progress = Math.min((now - start) / duration, 1);
+      var ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(target * ease) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+var statsObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) { animateCounters(); statsObs.unobserve(e.target); }
+  });
+}, { threshold: 0.5 });
+var heroStats = document.querySelector('.hero-stats');
+if (heroStats) statsObs.observe(heroStats);
 
 // ── Nav scroll ──
 var nav = document.getElementById('nav');

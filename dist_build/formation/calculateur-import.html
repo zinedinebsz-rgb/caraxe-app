@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARAXES — Calculateur d'Import</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0F0D0B;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #C9A96E;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #C9A96E;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-section,
+        .results-section {
+            background-color: #1A1815;
+            padding: 30px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #C9A96E;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #C9A96E;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-with-unit {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            background-color: #0F0D0B;
+            border: 1px solid #333;
+            color: #EDE6DA;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #C9A96E;
+        }
+
+        .unit {
+            font-size: 13px;
+            color: #999;
+            min-width: 40px;
+        }
+
+        .result-item {
+            background-color: #0F0D0B;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid #C9A96E;
+        }
+
+        .result-item.total {
+            border-left-color: #C9A96E;
+            background-color: rgba(201, 169, 110, 0.1);
+        }
+
+        .result-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            color: #C9A96E;
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .result-value span {
+            font-size: 14px;
+            color: #EDE6DA;
+        }
+
+        .margin-section {
+            background-color: #1A1815;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-top: 2px solid #333;
+            margin-top: 30px;
+        }
+
+        .margin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .profit-display {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 3px solid #4CAF50;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .profit-display .result-label {
+            color: #4CAF50;
+        }
+
+        .profit-display .result-value {
+            color: #4CAF50;
+        }
+
+        .profit-display .margin-percent {
+            font-size: 18px;
+            color: #EDE6DA;
+            margin-top: 10px;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 14px 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #C9A96E;
+            color: #0F0D0B;
+        }
+
+        .btn-primary:hover {
+            background-color: #E8C89C;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            color: #EDE6DA;
+            border: 1px solid #C9A96E;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1A1815;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #333;
+            font-size: 12px;
+            color: #666;
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: #C9A96E;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .info-box {
+            background-color: rgba(201, 169, 110, 0.1);
+            border-left: 3px solid #C9A96E;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #EDE6DA;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .margin-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background-color: white;
+            }
+
+            .input-section,
+            .results-section,
+            .margin-section {
+                background-color: white;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+
+            .footer {
+                display: none;
+            }
+
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CARAXES</h1>
+            <p>Calculateur d'Import Chine → France</p>
+        </div>
+
+        <div class="calculator-grid">
+            <div class="input-section">
+                <h2 class="section-title">Inputs</h2>
+
+                <div class="form-group">
+                    <label for="merchandise-value">Valeur de la Marchandise</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="merchandise-value" placeholder="10000" step="100" min="0" value="10000">
+                        <span class="unit">EUR</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="transport-cost">Frais de Transport (Fret + Assurance)</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="transport-cost" placeholder="2000" step="100" min="0" value="2000">
+                        <span class="unit">EUR</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="customs-rate">Taux de Droits de Douane</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="customs-rate" placeholder="12" step="0.1" min="0" max="100" value="12">
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="vat-rate">Taux de TVA Importation</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="vat-rate" placeholder="20" step="0.1" min="0" max="100" value="20">
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    Les droits de douane et TVA s'appliquent sur la base imposable (valeur + transport). Taux standard UE : douane 12%, TVA 20%.
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2 class="section-title">Coûts d'Import</h2>
+
+                <div class="result-item">
+                    <div class="result-label">Valeur Marchandise</div>
+                    <div class="result-value"><span id="result-merchandise">10 000,00</span> <span>EUR</span></div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">+ Frais Transport</div>
+                    <div class="result-value"><span id="result-transport">2 000,00</span> <span>EUR</span></div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">= Base Imposable</div>
+                    <div class="result-value"><span id="result-tax-base">12 000,00</span> <span>EUR</span></div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">+ Droits de Douane (12%)</div>
+                    <div class="result-value"><span id="result-customs">1 440,00</span> <span>EUR</span></div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">+ TVA Importation (20%)</div>
+                    <div class="result-value"><span id="result-vat">2 696,80</span> <span>EUR</span></div>
+                </div>
+
+                <div class="result-item total">
+                    <div class="result-label">= Coût Total Rendu France</div>
+                    <div class="result-value"><span id="result-total">16 136,80</span> <span>EUR</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="margin-section">
+            <h2 class="section-title">Analyse Rentabilité</h2>
+
+            <div class="margin-grid">
+                <div class="form-group">
+                    <label for="unit-quantity">Nombre d'Unités</label>
+                    <input type="number" id="unit-quantity" placeholder="500" min="1" value="500">
+                </div>
+
+                <div class="form-group">
+                    <label for="selling-price">Prix de Vente Unitaire (TTC)</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="selling-price" placeholder="50" step="1" min="0" value="50">
+                        <span class="unit">EUR</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="margin-grid">
+                <div>
+                    <div class="result-item">
+                        <div class="result-label">Coût par Unité</div>
+                        <div class="result-value"><span id="result-unit-cost">32,27</span> <span>EUR</span></div>
+                    </div>
+                </div>
+
+                <div class="profit-display">
+                    <div class="result-label">Marge Brute par Unité</div>
+                    <div class="result-value"><span id="result-margin-per-unit">17,73</span> <span>EUR</span></div>
+                    <div class="margin-percent">Marge : <strong id="result-margin-percent">35.5%</strong></div>
+                </div>
+            </div>
+
+            <div class="result-item total" style="margin-top: 20px;">
+                <div class="result-label">Profit Total Commande</div>
+                <div class="result-value"><span id="result-total-profit">8 863,20</span> <span>EUR</span></div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" onclick="printCalculator()">🖨️ Imprimer</button>
+            <button class="btn-secondary" onclick="resetCalculator()">↻ Réinitialiser</button>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 CARAXES E-Commerce Mastery</p>
+            <a href="/offre-formation-ecom.html">← Retour à la formation</a>
+        </div>
+    </div>
+
+    <script>
+        const inputs = {
+            merchandise: document.getElementById('merchandise-value'),
+            transport: document.getElementById('transport-cost'),
+            customs: document.getElementById('customs-rate'),
+            vat: document.getElementById('vat-rate'),
+            quantity: document.getElementById('unit-quantity'),
+            selling: document.getElementById('selling-price')
+        };
+
+        const results = {
+            merchandise: document.getElementById('result-merchandise'),
+            transport: document.getElementById('result-transport'),
+            taxBase: document.getElementById('result-tax-base'),
+            customs: document.getElementById('result-customs'),
+            vat: document.getElementById('result-vat'),
+            total: document.getElementById('result-total'),
+            unitCost: document.getElementById('result-unit-cost'),
+            marginPerUnit: document.getElementById('result-margin-per-unit'),
+            marginPercent: document.getElementById('result-margin-percent'),
+            totalProfit: document.getElementById('result-total-profit')
+        };
+
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updateCalculations);
+        });
+
+        function formatNumber(num) {
+            return num.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateCalculations() {
+            const merchandiseValue = parseFloat(inputs.merchandise.value) || 0;
+            const transportCost = parseFloat(inputs.transport.value) || 0;
+            const customsRate = parseFloat(inputs.customs.value) || 0;
+            const vatRate = parseFloat(inputs.vat.value) || 0;
+            const quantity = parseFloat(inputs.quantity.value) || 1;
+            const sellingPrice = parseFloat(inputs.selling.value) || 0;
+
+            // Base calculations
+            const taxBase = merchandiseValue + transportCost;
+            const customsDuties = (taxBase * customsRate) / 100;
+            const vatBase = taxBase + customsDuties;
+            const vatAmount = (vatBase * vatRate) / 100;
+            const totalCost = taxBase + customsDuties + vatAmount;
+            const unitCost = totalCost / quantity;
+            const marginPerUnit = sellingPrice - unitCost;
+            const marginPercent = (marginPerUnit / sellingPrice) * 100;
+            const totalProfit = marginPerUnit * quantity;
+
+            // Update display
+            results.merchandise.textContent = formatNumber(merchandiseValue);
+            results.transport.textContent = formatNumber(transportCost);
+            results.taxBase.textContent = formatNumber(taxBase);
+            results.customs.textContent = formatNumber(customsDuties);
+            results.vat.textContent = formatNumber(vatAmount);
+            results.total.textContent = formatNumber(totalCost);
+            results.unitCost.textContent = formatNumber(unitCost);
+            results.marginPerUnit.textContent = formatNumber(marginPerUnit);
+            results.marginPercent.textContent = formatNumber(marginPercent);
+            results.totalProfit.textContent = formatNumber(totalProfit);
+        }
+
+        function printCalculator() {
+            window.print();
+        }
+
+        function resetCalculator() {
+            inputs.merchandise.value = '10000';
+            inputs.transport.value = '2000';
+            inputs.customs.value = '12';
+            inputs.vat.value = '20';
+            inputs.quantity.value = '500';
+            inputs.selling.value = '50';
+            updateCalculations();
+        }
+
+        // Initial calculation
+        updateCalculations();
+    </script>
+</body>
+</html>

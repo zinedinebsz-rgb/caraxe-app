@@ -339,9 +339,9 @@ export default function ExpeditionTab() {
       {/* ═══════ MODAL: Edit Shipment ═══════ */}
       <Modal open={!!editingShipment} onClose={() => setEditingShipment(null)} title="Modifier l'envoi" maxWidth={480}>
             <ArtDecoDivider width={80} />
-            <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
+            {editingShipment && <div style={{ fontSize: size.xs, color: c.textTertiary, marginBottom: sp[3] }}>
               Client : {clientName(editingShipment.client_id)}
-            </div>
+            </div>}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
               <div>
