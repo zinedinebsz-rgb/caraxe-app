@@ -128,6 +128,11 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "destination": "/landing.html"
+    },
+    {
       "source": "/sourcing.html",
       "has": [{ "type": "host", "value": "caraxes.fr" }],
       "destination": "/sourcing.html"
