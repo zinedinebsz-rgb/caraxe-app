@@ -17,6 +17,12 @@
       "has": [{ "type": "host", "value": "caraxes.fr" }],
       "destination": "https://app.caraxes.fr/dashboard",
       "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "destination": "/landing.html",
+      "permanent": false
     }
   ],
   "headers": [
@@ -102,60 +108,32 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
     }
   ],
-  "rewrites": {
-    "beforeFiles": [
-      {
-        "source": "/",
-        "has": [{ "type": "host", "value": "caraxes.fr" }],
-        "destination": "/landing.html"
-      },
-      {
-        "source": "/sourcing.html",
-        "has": [{ "type": "host", "value": "caraxes.fr" }],
-        "destination": "/sourcing.html"
-      },
-      {
-        "source": "/ecommerce.html",
-        "has": [{ "type": "host", "value": "caraxes.fr" }],
-        "destination": "/ecommerce.html"
-      },
-      {
-        "source": "/vehicules.html",
-        "has": [{ "type": "host", "value": "caraxes.fr" }],
-        "destination": "/vehicules.html"
-      },
-      {
-        "source": "/((?!assets|icons|og-image|manifest|sitemap|robots|blog|formation|offre|merci|rendez|programme|landing|particuliers|commercants|export-vehicules|favicon).*)",
-        "has": [{ "type": "host", "value": "caraxes.fr" }],
-        "destination": "/landing.html"
-      }
-    ],
-    "afterFiles": [
-      { "source": "/offre-formation-ecom.html", "destination": "/offre-formation-ecom.html" },
-      { "source": "/offre-creation-boutique.html", "destination": "/offre-creation-boutique.html" },
-      { "source": "/merci.html", "destination": "/merci.html" },
-      { "source": "/rendez-vous.html", "destination": "/rendez-vous.html" },
-      { "source": "/landing.html", "destination": "/landing.html" },
-      { "source": "/landing-v10.html", "destination": "/landing-v10.html" },
-      { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-      { "source": "/robots.txt", "destination": "/robots.txt" },
-      { "source": "/blog/:path*", "destination": "/blog/:path*" },
-      { "source": "/particuliers.html", "destination": "/particuliers.html" },
-      { "source": "/commercants.html", "destination": "/commercants.html" },
-      { "source": "/export-vehicules.html", "destination": "/export-vehicules.html" },
-      { "source": "/blog-import-chine-france.html", "destination": "/blog-import-chine-france.html" },
-      { "source": "/blog-sourcing-halal.html", "destination": "/blog-sourcing-halal.html" },
-      { "source": "/blog-ecommerce-fournisseur-chine.html", "destination": "/blog-ecommerce-fournisseur-chine.html" },
-      { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
-      { "source": "/og-image.jpg", "destination": "/og-image.jpg" },
-      { "source": "/formation/:path*", "destination": "/formation/:path*" },
-      { "source": "/programme-formation-caraxes.pdf", "destination": "/programme-formation-caraxes.pdf" }
-    ],
-    "fallback": [
-      {
-        "source": "/(.*)",
-        "destination": "/index.html"
-      }
-    ]
-  }
+  "rewrites": [
+    { "source": "/offre-formation-ecom.html", "destination": "/offre-formation-ecom.html" },
+    { "source": "/offre-creation-boutique.html", "destination": "/offre-creation-boutique.html" },
+    { "source": "/merci.html", "destination": "/merci.html" },
+    { "source": "/rendez-vous.html", "destination": "/rendez-vous.html" },
+    { "source": "/landing.html", "destination": "/landing.html" },
+    { "source": "/landing-v10.html", "destination": "/landing-v10.html" },
+    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/robots.txt" },
+    { "source": "/blog/:path*", "destination": "/blog/:path*" },
+    { "source": "/particuliers.html", "destination": "/particuliers.html" },
+    { "source": "/commercants.html", "destination": "/commercants.html" },
+    { "source": "/export-vehicules.html", "destination": "/export-vehicules.html" },
+    { "source": "/sourcing.html", "destination": "/sourcing.html" },
+    { "source": "/ecommerce.html", "destination": "/ecommerce.html" },
+    { "source": "/vehicules.html", "destination": "/vehicules.html" },
+    { "source": "/blog-import-chine-france.html", "destination": "/blog-import-chine-france.html" },
+    { "source": "/blog-sourcing-halal.html", "destination": "/blog-sourcing-halal.html" },
+    { "source": "/blog-ecommerce-fournisseur-chine.html", "destination": "/blog-ecommerce-fournisseur-chine.html" },
+    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
+    { "source": "/og-image.jpg", "destination": "/og-image.jpg" },
+    { "source": "/formation/:path*", "destination": "/formation/:path*" },
+    { "source": "/programme-formation-caraxes.pdf", "destination": "/programme-formation-caraxes.pdf" },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
