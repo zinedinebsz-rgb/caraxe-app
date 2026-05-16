@@ -40,7 +40,7 @@ export default function ClientsTab() {
     console.info('[CARAXES] Feature toggles not yet implemented for client:', client.id)
   }
 
-  const filteredClients = allProfiles.filter(cl => {
+  const filteredClients = (allProfiles || []).filter(cl => cl && cl.id).filter(cl => {
     if (clientTierFilter && (cl.client_tier || DEFAULT_TIER) !== clientTierFilter) return false
     if (search && !(cl.full_name || '').toLowerCase().includes(search.toLowerCase()) && !(cl.email || '').toLowerCase().includes(search.toLowerCase()) && !(cl.company || '').toLowerCase().includes(search.toLowerCase())) return false
     return true
@@ -576,7 +576,7 @@ export default function ClientsTab() {
 
             {/* Toggle admin role */}
             <button onClick={async () => {
-              const isAdmin = clientPasswordModal.role === 'admin'
+              const isAdmin = clientPasswordModal?.role === 'admin'
               const newRole = isAdmin ? 'client' : 'admin'
               try {
                 await updateProfile(clientPasswordModal.id, { role: newRole })
@@ -595,9 +595,9 @@ export default function ClientsTab() {
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgElevated }}>
               <Icon d={icons.shield} size={16} color={c.purple} />
               <div>
-                <div style={{ fontWeight: 700 }}>{clientPasswordModal.role === 'admin' ? 'Retirer les droits admin' : 'Passer en admin'}</div>
+                <div style={{ fontWeight: 700 }}>{clientPasswordModal?.role === 'admin' ? 'Retirer les droits admin' : 'Passer en admin'}</div>
                 <div style={{ fontSize: size.xs, color: c.textTertiary, marginTop: '2px' }}>
-                  {clientPasswordModal.role === 'admin'
+                  {clientPasswordModal?.role === 'admin'
                     ? 'Ce compte redeviendra un compte client standard'
                     : 'Ce compte aura accès au panel d\'administration'
                   }
