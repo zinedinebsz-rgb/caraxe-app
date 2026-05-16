@@ -210,7 +210,7 @@ export default function ClientsTab() {
                       <span style={{ fontWeight: 600, fontSize: size.sm, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {client.full_name || client.email}
                       </span>
-                      {client.role === 'admin' && (
+                      {client?.role === 'admin' && (
                         <span style={{
                           padding: '1px 5px', background: `${c.purple}20`, border: `1px solid ${c.purple}40`,
                           fontSize: '7px', fontFamily: f.mono, fontWeight: 700, color: c.purple,
