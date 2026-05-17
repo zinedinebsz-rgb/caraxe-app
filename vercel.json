@@ -2,25 +2,25 @@
   "redirects": [
     {
       "source": "/login",
-      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
       "destination": "https://app.caraxes.fr/login",
       "permanent": false
     },
     {
       "source": "/admin",
-      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
       "destination": "https://app.caraxes.fr/admin",
       "permanent": false
     },
     {
       "source": "/dashboard",
-      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
       "destination": "https://app.caraxes.fr/dashboard",
       "permanent": false
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "caraxes.fr" }],
+      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
       "destination": "/landing.html",
       "permanent": false
     }
