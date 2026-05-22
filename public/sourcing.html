@@ -2201,7 +2201,7 @@ document.getElementById('ctaForm').addEventListener('submit', function(e) {
     var btn = this.querySelector('button');
     btn.disabled = true;
     btn.textContent = 'Envoi…';
-    fetch('https://nmuqzzedlxilnbpnalsf.supabase.co/rest/v1/leads', {
+    fetch('https://zuebhkibddphtlyvuboe.supabase.co/functions/v1/leads-ingest', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2300,7 +2300,7 @@ function submitForm(e, formType) {
     sourcing: 'Réserver une consultation sourcing'
   };
 
-  fetch('https://nmuqzzedlxilnbpnalsf.supabase.co/rest/v1/leads', {
+  fetch('https://zuebhkibddphtlyvuboe.supabase.co/functions/v1/leads-ingest', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
