@@ -55,7 +55,7 @@ export default function OverviewTab() {
   const stockClients = allProfiles.filter(p => (p.services_enabled || []).includes('stock'))
   const logisticsClients = allProfiles.filter(p => (p.services_enabled || []).includes('logistics'))
   const grossistes = allProfiles.filter(p => p.client_tier === 'grossiste')
-  const detaillants = allProfiles.filter(p => p.client_tier === 'retail')
+  const detaillants = allProfiles.filter(p => p.client_tier === 'detaillant')
   const thisMonth = orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth() && new Date(o.created_at).getFullYear() === new Date().getFullYear())
   const stockValue = inventory.reduce((acc, item) => acc + ((item.unit_price || 0) * (item.quantity || 0)), 0)
   const totalQty = inventory.reduce((acc, item) => acc + (item.quantity || 0), 0)
