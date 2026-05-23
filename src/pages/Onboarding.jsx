@@ -118,6 +118,9 @@ export default function Onboarding({ user, profile, onComplete }) {
     city: '',
     address: '',
     website: '',
+    monthly_volume: '',
+    years_active: '',
+    has_existing_suppliers: '',
   })
   const [saving, setSaving] = useState(false)
   const [stepDir, setStepDir] = useState('forward')
@@ -573,6 +576,56 @@ export default function Onboarding({ user, profile, onComplete }) {
                     onChange={(e) => handleChange('address', e.target.value)} />
                 </Field>
               )}
+
+              {/* ─── Business qualification (helps us calibrate the offer) ─── */}
+              <div style={{
+                marginTop: 8, paddingTop: 18,
+                borderTop: `1px dashed ${c.borderSubtle}`,
+              }}>
+                <p style={{
+                  fontFamily: f.mono, fontSize: 9, color: c.gold,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  margin: '0 0 12px', fontWeight: 600,
+                }}>
+                  ◆ Pour mieux vous accompagner
+                </p>
+
+                <div className="ob-contact-row">
+                  <Field label="Volume d'imports mensuel estimé">
+                    <select className="ob-input"
+                      value={formData.monthly_volume}
+                      onChange={(e) => handleChange('monthly_volume', e.target.value)}>
+                      <option value="">— Sélectionner —</option>
+                      <option value="lt2k">Moins de 2 000 €</option>
+                      <option value="2k_10k">2 000 — 10 000 €</option>
+                      <option value="10k_50k">10 000 — 50 000 €</option>
+                      <option value="50k_plus">Plus de 50 000 €</option>
+                    </select>
+                  </Field>
+                  <Field label="Années d'activité">
+                    <select className="ob-input"
+                      value={formData.years_active}
+                      onChange={(e) => handleChange('years_active', e.target.value)}>
+                      <option value="">— Sélectionner —</option>
+                      <option value="lt1">Moins d'1 an</option>
+                      <option value="1_3">1 à 3 ans</option>
+                      <option value="3_plus">Plus de 3 ans</option>
+                    </select>
+                  </Field>
+                </div>
+
+                <Field label="Avez-vous déjà des fournisseurs ?">
+                  <select className="ob-input"
+                    value={formData.has_existing_suppliers}
+                    onChange={(e) => handleChange('has_existing_suppliers', e.target.value)}>
+                    <option value="">— Sélectionner —</option>
+                    <option value="none">Aucun, je débute le sourcing</option>
+                    <option value="alibaba">Alibaba / AliExpress uniquement</option>
+                    <option value="europe">Fournisseurs européens</option>
+                    <option value="china_direct">Déjà des contacts en Chine</option>
+                  </select>
+                </Field>
+              </div>
             </div>
 
             {/* Recap card */}
