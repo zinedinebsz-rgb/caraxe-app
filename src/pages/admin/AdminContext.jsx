@@ -70,6 +70,53 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     try {
       const [ordersData, clientsData, profilesData, shipmentsData, inventoryData, productsData, categoriesData, shopsData, ecomData, leadsData] = await Promise.all([getOrders().catch(() => []), getAllClients().catch(() => []), getAllProfiles().catch(() => []), getShipments().catch(() => []), getInventory().catch(() => []), getProducts().catch(() => []), getCategories().catch(() => []), getShops().catch(() => []), getEcomServices().catch(() => []), getLeads().catch(() => [])])
       setOrders(ordersData); setClients(clientsData); setAllProfiles(profilesData); setShipments(shipmentsData); setInventory(inventoryData); setProducts(productsData); setCategories(categoriesData); setShops(shopsData); setEcomServices(ecomData); setLeads(leadsData)
+
+      // Hydrate notifications from recent activity (last 14 days)
+      try {
+        const SEVEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000
+        const cutoff = Date.now() - SEVEN_DAYS_MS
+        const seed = []
+        const profileById = new Map((profilesData || []).concat(clientsData || []).map(p => [p.id, p]))
+        const nameOf = (clientId) => {
+          const p = profileById.get(clientId)
+          return p ? (p.full_name || p.email || 'Client') : 'Client'
+        }
+        ;(ordersData || []).forEach(o => {
+          if (!o.created_at) return
+          const t = new Date(o.created_at).getTime()
+          if (t < cutoff) return
+          seed.push({ id: 'o_' + o.id, type: 'order', title: 'Commande', detail: `${o.product || 'Produit'} — ${nameOf(o.client_id)}`, time: new Date(o.created_at), read: false })
+        })
+        ;(clientsData || []).forEach(cl => {
+          if (!cl.created_at) return
+          const t = new Date(cl.created_at).getTime()
+          if (t < cutoff) return
+          seed.push({ id: 'c_' + cl.id, type: 'client', title: 'Nouveau client', detail: cl.full_name || cl.email || 'Inconnu', time: new Date(cl.created_at), read: false })
+        })
+        ;(leadsData || []).forEach(l => {
+          if (!l.created_at) return
+          const t = new Date(l.created_at).getTime()
+          if (t < cutoff) return
+          const title = l.status === 'paid' ? 'Paiement confirmé' : 'Nouveau prospect'
+          seed.push({ id: 'l_' + l.id, type: 'lead', title, detail: `${l.full_name || l.email || 'Inconnu'} — ${l.service_type || 'sourcing'}`, time: new Date(l.created_at), read: false })
+        })
+        ;(ecomData || []).forEach(s => {
+          if (!s.created_at) return
+          const t = new Date(s.created_at).getTime()
+          if (t < cutoff) return
+          const typeLabel = s.service_type === 'creation' ? 'Création boutique' : s.service_type === 'formation' ? 'Formation' : s.service_type
+          seed.push({ id: 'e_' + s.id, type: 'ecom', title: 'Demande e-com', detail: `${typeLabel} — ${nameOf(s.client_id)}`, time: new Date(s.created_at), read: false })
+        })
+        seed.sort((a, b) => b.time - a.time)
+        setNotifications(prev => {
+          const byId = new Map()
+          seed.slice(0, 50).forEach(n => byId.set(n.id, n))
+          prev.forEach(n => { if (!byId.has(n.id)) byId.set(n.id, n) })
+          return Array.from(byId.values()).sort((a, b) => b.time - a.time).slice(0, 50)
+        })
+      } catch (notifErr) {
+        console.warn('Notifications hydration failed (non-blocking):', notifErr)
+      }
     } catch (err) {
       console.error('loadAll error:', err)
       toastRef.current.error(tRef.current('toast.loadDataError'))
