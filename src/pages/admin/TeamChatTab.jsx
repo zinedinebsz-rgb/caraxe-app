@@ -48,7 +48,12 @@ export default function TeamChatTab() {
     setTeamMsgSending(true)
     const text = teamMsgInput; setTeamMsgInput('')
     try {
-      await sendAdminMessage({ senderId: user.id, senderName: profile?.full_name || 'Admin', content: text })
+      const newMsg = await sendAdminMessage({ senderId: user.id, senderName: profile?.full_name || 'Admin', content: text })
+      // Optimistic UI: realtime may not echo self-insert, so push the returned message
+      if (newMsg) {
+        setTeamMessages(prev => prev.some(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
+        setTimeout(() => teamChatRef.current?.scrollTo(0, teamChatRef.current.scrollHeight), 100)
+      }
     } catch (err) {
       setTeamMsgInput(text)
       toast.error('Erreur envoi message')
