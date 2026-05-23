@@ -49,7 +49,7 @@ export default function NotFound() {
           maxWidth: 320,
           lineHeight: 1.6
         }}>
-          Cette page n'existe pas ou a ete deplacee.
+          Cette page n'existe pas ou a été déplacée.
         </p>
         <button
           onClick={() => navigate('/')}
@@ -69,8 +69,38 @@ export default function NotFound() {
           onMouseEnter={(e) => { e.currentTarget.style.background = c.redDeep }}
           onMouseLeave={(e) => { e.currentTarget.style.background = c.red }}
         >
-          Retour a l'accueil
+          Retour à l'accueil
         </button>
+        <div style={{
+          marginTop: sp[4],
+          paddingTop: sp[3],
+          borderTop: `1px solid ${c.border}`,
+          width: '100%',
+          maxWidth: 320,
+        }}>
+          <div style={{
+            fontFamily: f.mono,
+            fontSize: '10px',
+            color: c.textTertiary,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: sp[2],
+            textAlign: 'center',
+          }}>
+            Accès rapide
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: sp[1] }}>
+            <a href="/" style={{ color: c.gold, fontSize: size.xs, textDecoration: 'none', padding: sp[1], borderRadius: radius.md }}>
+              → Mon tableau de bord
+            </a>
+            <a href="/settings" style={{ color: c.textSecondary, fontSize: size.xs, textDecoration: 'none', padding: sp[1], borderRadius: radius.md }}>
+              → Mes paramètres
+            </a>
+            <a href="https://wa.me/8613819652960" target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontSize: size.xs, textDecoration: 'none', padding: sp[1], borderRadius: radius.md }}>
+              → Contacter mon agent CARAXES
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   )
