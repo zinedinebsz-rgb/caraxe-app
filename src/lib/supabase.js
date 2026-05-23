@@ -464,7 +464,7 @@ export async function updateProfile(userId, updates) {
 
 // ─── ALL PROFILES (admin) ───
 // Select only fields needed for admin views — no raw passwords or sensitive metadata
-const ADMIN_PROFILE_FIELDS = 'id, email, full_name, role, client_tier, phone, company, city, country, avatar_url, onboarding_done, created_at, updated_at'
+const ADMIN_PROFILE_FIELDS = 'id, email, full_name, role, client_tier, phone, company, city, country, avatar_url, onboarding_done, monthly_volume, years_active, has_existing_suppliers, created_at, updated_at'
 
 export async function getAllClients({ page = 0, pageSize = 200, paginate = false } = {}) {
   const { data, error, count } = await supabase
