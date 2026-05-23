@@ -376,6 +376,53 @@ export default function ClientsTab() {
                         )}
                       </div>
 
+                      {/* Business qualification (from onboarding) */}
+                      {(client.monthly_volume || client.years_active || client.has_existing_suppliers) && (
+                        <div style={{
+                          marginBottom: sp[3],
+                          padding: sp[2],
+                          background: `${c.gold}08`,
+                          border: `1px solid ${c.gold}22`,
+                          borderInlineStart: `2px solid ${c.gold}`,
+                        }}>
+                          <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.gold, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', fontWeight: 600 }}>
+                            ◆ Profil business
+                          </div>
+                          {client.monthly_volume && (
+                            <div style={{ fontSize: '11px', color: c.textSecondary, marginBottom: '3px' }}>
+                              <span style={{ color: c.textTertiary }}>Volume/mois :</span>{' '}
+                              <strong style={{ color: c.text }}>{({
+                                'lt2k': 'Moins de 2 000 €',
+                                '2k_10k': '2 000 — 10 000 €',
+                                '10k_50k': '10 000 — 50 000 €',
+                                '50k_plus': 'Plus de 50 000 €',
+                              })[client.monthly_volume] || client.monthly_volume}</strong>
+                            </div>
+                          )}
+                          {client.years_active && (
+                            <div style={{ fontSize: '11px', color: c.textSecondary, marginBottom: '3px' }}>
+                              <span style={{ color: c.textTertiary }}>Activité :</span>{' '}
+                              <strong style={{ color: c.text }}>{({
+                                'lt1': "Moins d'1 an",
+                                '1_3': '1 à 3 ans',
+                                '3_plus': 'Plus de 3 ans',
+                              })[client.years_active] || client.years_active}</strong>
+                            </div>
+                          )}
+                          {client.has_existing_suppliers && (
+                            <div style={{ fontSize: '11px', color: c.textSecondary }}>
+                              <span style={{ color: c.textTertiary }}>Fournisseurs :</span>{' '}
+                              <strong style={{ color: c.text }}>{({
+                                'none': 'Aucun, débute',
+                                'alibaba': 'Alibaba uniquement',
+                                'europe': 'Européens',
+                                'china_direct': 'Contacts en Chine',
+                              })[client.has_existing_suppliers] || client.has_existing_suppliers}</strong>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Tier selector */}
                       <div style={{ marginBottom: sp[3] }}>
                         <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>Changer le profil</div>
