@@ -137,7 +137,7 @@ export default function ResetPassword() {
               Mot de passe mis a jour
             </h3>
             <p style={{ fontSize: size.sm, color: c.textSecondary, lineHeight: 1.6 }}>
-              Votre mot de passe a ete modifie avec succes. Vous allez etre redirige vers la connexion...
+              Votre mot de passe a été modifié avec succès. Vous allez être redirigé vers la connexion…
             </p>
             <button onClick={() => navigate('/login')} style={{
               marginTop: sp[3], padding: `12px ${sp[4]}`,
@@ -272,7 +272,7 @@ export default function ResetPassword() {
               onMouseEnter={(e) => { e.currentTarget.style.color = c.red }}
               onMouseLeave={(e) => { e.currentTarget.style.color = c.textTertiary }}
               >
-                Retour a la connexion
+                Retour à la connexion
               </span>
             </div>
           </form>
