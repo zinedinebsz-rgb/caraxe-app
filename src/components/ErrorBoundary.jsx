@@ -87,7 +87,7 @@ export default class ErrorBoundary extends Component {
             fontSize: size.sm, color: c.textSecondary, margin: 0,
             maxWidth: 400, lineHeight: 1.6,
           }}>
-            Une erreur inattendue est survenue. Vos donnees sont en securite.
+            Une erreur inattendue est survenue. Vos données sont en sécurité.
           </p>
         </div>
 
