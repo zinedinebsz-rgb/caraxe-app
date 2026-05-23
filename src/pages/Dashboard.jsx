@@ -50,6 +50,132 @@ const icons = {
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 const fmtQty = (n) => (n || 0).toLocaleString('fr-FR')
+
+/* ─── PDF Export Utility (lazy-loads jsPDF from CDN) ─── */
+async function loadJsPDF() {
+  if (typeof window === 'undefined') throw new Error('SSR')
+  if (window.jspdf) return window.jspdf
+  await new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-jspdf]')
+    if (existing) { existing.addEventListener('load', resolve); existing.addEventListener('error', reject); return }
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+    s.async = true
+    s.dataset.jspdf = 'true'
+    s.onload = resolve
+    s.onerror = () => reject(new Error('Failed to load jsPDF'))
+    document.head.appendChild(s)
+  })
+  return window.jspdf
+}
+
+async function exportOrderToPDF(order, profile) {
+  const { jsPDF } = await loadJsPDF()
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  const W = doc.internal.pageSize.getWidth()
+  let y = 60
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(22)
+  doc.setTextColor(196, 58, 47)
+  doc.text('CARAXES', 50, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(120, 120, 120)
+  doc.text('Agent de Sourcing Chine', 50, y + 14)
+  doc.text('contact@caraxes.fr · Yiwu, Zhejiang, Chine', 50, y + 26)
+
+  doc.setFontSize(10)
+  doc.setTextColor(60, 60, 60)
+  const dateStr = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+  doc.text(`Récap émis le ${dateStr}`, W - 50, y, { align: 'right' })
+  if (order.ref) doc.text(`Réf. ${order.ref}`, W - 50, y + 14, { align: 'right' })
+  y += 60
+
+  doc.setDrawColor(220, 180, 100)
+  doc.setLineWidth(0.6)
+  doc.line(50, y, W - 50, y)
+  y += 30
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(16)
+  doc.setTextColor(40, 40, 40)
+  doc.text(order.product || 'Commande', 50, y)
+  y += 30
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(120, 120, 120)
+  doc.text('CLIENT', 50, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(11)
+  if (profile?.full_name) doc.text(profile.full_name, 50, y + 16)
+  if (profile?.email) doc.text(profile.email, 50, y + 30)
+  if (profile?.phone) doc.text(profile.phone, 50, y + 44)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(120, 120, 120)
+  doc.text('STATUT', W - 200, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(40, 40, 40)
+  doc.setFontSize(11)
+  const statusLabel = String(order.status || '—').toUpperCase()
+  doc.text(statusLabel, W - 200, y + 16)
+  if (order.created_at) doc.text(`Créée le ${new Date(order.created_at).toLocaleDateString('fr-FR')}`, W - 200, y + 30)
+  y += 80
+
+  doc.setDrawColor(230, 230, 230)
+  doc.setLineWidth(0.4)
+  doc.line(50, y, W - 50, y)
+  y += 22
+  const rows = [
+    ['Quantité', `${fmtQty(order.quantity)} unités`],
+    ['Budget', String(order.budget || '–')],
+    ['Référence', order.ref || '–'],
+  ]
+  if (order.city) rows.push(['Ville livraison', order.city])
+  doc.setFontSize(10)
+  rows.forEach(([k, v]) => {
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(120, 120, 120)
+    doc.text(k, 50, y)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(40, 40, 40)
+    doc.text(String(v), 200, y)
+    y += 20
+  })
+  y += 10
+  doc.line(50, y, W - 50, y)
+  y += 24
+
+  if (order.description) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(120, 120, 120)
+    doc.text('DESCRIPTION DU PROJET', 50, y)
+    y += 16
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+    const lines = doc.splitTextToSize(String(order.description), W - 100)
+    doc.text(lines, 50, y)
+    y += lines.length * 14 + 20
+  }
+
+  const footerY = doc.internal.pageSize.getHeight() - 50
+  doc.setDrawColor(220, 180, 100)
+  doc.setLineWidth(0.4)
+  doc.line(50, footerY - 10, W - 50, footerY - 10)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(140, 140, 140)
+  doc.text('CARAXES · Agent de Sourcing Chine · Document généré automatiquement depuis votre espace client.', W / 2, footerY, { align: 'center' })
+  doc.text('Questions ? contact@caraxes.fr · WhatsApp : +86 138 1965 2960', W / 2, footerY + 12, { align: 'center' })
+
+  doc.save(`CARAXES-${order.ref || 'commande'}.pdf`)
+}
 const fmtMoney = (v, decimals = 0) => {
   if (v == null || v === '' || v === 'À définir') return v || '–'
   // If it's already a string with €, currency symbols, ranges etc → display as-is
@@ -1110,6 +1236,34 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       <h3 style={{ fontFamily: f.display, fontSize: size.lg, fontWeight: 700, color: c.text, margin: `0 0 ${sp[2]}` }}>{selectedOrder.product}</h3>
                       <StatusPill status={selectedOrder.status} />
                     </div>
+
+                    {/* PDF Download */}
+                    <button
+                      onClick={async () => {
+                        try {
+                          await exportOrderToPDF(selectedOrder, profile)
+                        } catch (err) {
+                          console.error('PDF export failed:', err)
+                          alert('Impossible de générer le PDF — vérifie ta connexion.')
+                        }
+                      }}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '8px',
+                        padding: `8px ${sp[3]}`, marginBottom: sp[3],
+                        background: 'transparent',
+                        border: `1px solid ${c.gold}33`,
+                        color: c.gold,
+                        fontFamily: f.mono, fontSize: '10px', fontWeight: 600,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        transition: `all 0.2s ${ease.smooth}`,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = `${c.gold}08` }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${c.gold}33`; e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <Icon d={icons.download} size={12} color={c.gold} />
+                      Télécharger en PDF
+                    </button>
 
                     <ArtDecoDivider />
 
