@@ -216,7 +216,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
           </Section>
 
           {/* ═══ COORDONNEES ═══ */}
-          <Section title="Coordonnees" subtitle="Informations de contact et livraison." accent={c.blue} delay={80}>
+          <Section title="Coordonnées" subtitle="Informations de contact et livraison." accent={c.blue} delay={80}>
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
               <div>
                 <Label>Entreprise / Commerce</Label>
@@ -239,7 +239,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
 
               <div>
                 <Label>Adresse de livraison</Label>
-                <input className="set-input" type="text" placeholder="Adresse complete"
+                <input className="set-input" type="text" placeholder="Adresse complète"
                   value={formData.address} onChange={(e) => handleChange('address', e.target.value)} />
               </div>
 
