@@ -57,7 +57,7 @@ const keyframes = `
 .ob-nav { position:fixed; bottom:0; left:0; right:0; z-index:100; padding:16px 24px; background:rgba(12, 11, 10, 0.92); backdrop-filter:blur(16px); border-top:1px solid rgba(42, 40, 37, 0.5); border-radius:${radius.xl} ${radius.xl} 0 0; display:flex; justify-content:space-between; align-items:center }
 `
 
-const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnees']
+const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnées']
 
 /* ── Decorative line ── */
 const Divider = ({ w = 64, my = '16px' }) => (
@@ -520,7 +520,7 @@ export default function Onboarding({ user, profile, onComplete }) {
                 fontFamily:f.display, fontSize:size.lg, fontWeight:700,
                 margin:0, letterSpacing:'-0.01em',
               }}>
-                Vos coordonnees
+                Vos coordonnées
               </h2>
               <Divider w={64} my="12px" />
               <p style={{ fontSize:size.xs, color:c.textSecondary, lineHeight:1.6, margin:0 }}>
