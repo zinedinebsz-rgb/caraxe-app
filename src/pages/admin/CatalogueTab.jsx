@@ -597,7 +597,7 @@ export default function CatalogueTab() {
                 </p>
 
                 {categories.length === 0 ? (
-                  <DragonEmptyState title="Aucune categorie" subtitle="Crée votre premiere categorie pour organiser le catalogue" />
+                  <DragonEmptyState title="Aucune catégorie" subtitle="Créez votre première catégorie pour organiser le catalogue" />
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: sp[3] }}>
                     {categories.map((cat, idx) => {
