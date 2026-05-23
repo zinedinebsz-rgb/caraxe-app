@@ -817,13 +817,13 @@ export function subscribeToNewLeads(callback) {
 
 // ─── ADMIN INTERNAL CHAT ───
 // Uses the existing messages table with a special order_id = 'admin-internal'
-const ADMIN_CHANNEL_ID = 'admin-internal'
+// Admin team chat uses order_id IS NULL (the FK to orders is nullable for this purpose)
 
 export async function getAdminMessages() {
   const { data, error } = await supabase
     .from('messages')
     .select('*')
-    .eq('order_id', ADMIN_CHANNEL_ID)
+    .is('order_id', null)
     .order('created_at', { ascending: true })
     .limit(200)
   if (error) throw error
@@ -836,7 +836,7 @@ export async function sendAdminMessage({ senderId, senderName, content }) {
   const { data, error } = await supabase
     .from('messages')
     .insert({
-      order_id: ADMIN_CHANNEL_ID,
+      order_id: null,
       sender_id: senderId,
       sender_role: 'admin',
       content: sanitize(content),
@@ -856,7 +856,7 @@ export function subscribeToAdminMessages(callback) {
       event: 'INSERT',
       schema: 'public',
       table: 'messages',
-      filter: `order_id=eq.${ADMIN_CHANNEL_ID}`,
+      filter: `order_id=is.null`,
     }, (payload) => callback(payload.new))
     .subscribe()
 }
