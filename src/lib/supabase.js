@@ -232,7 +232,7 @@ export async function getUnreadCounts(userId) {
     .select('order_id')
     .neq('sender_id', userId)
     .eq('read', false)
-    .neq('order_id', 'admin-internal')
+    .not('order_id', 'is', null)
   if (error) throw error
   const counts = {}
   ;(data || []).forEach(m => { counts[m.order_id] = (counts[m.order_id] || 0) + 1 })
@@ -816,7 +816,7 @@ export function subscribeToNewLeads(callback) {
 }
 
 // ─── ADMIN INTERNAL CHAT ───
-// Uses the existing messages table with a special order_id = 'admin-internal'
+// Uses the existing messages table with order_id = NULL for team chat
 // Admin team chat uses order_id IS NULL (the FK to orders is nullable for this purpose)
 
 export async function getAdminMessages() {
