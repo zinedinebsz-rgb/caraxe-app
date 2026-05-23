@@ -95,7 +95,7 @@ export default function Catalogue() {
           marginBottom:28, animation:'fadeIn 0.5s ease-out 0.2s both',
         }}>
           {[
-            { n:'500+', l:'Fournisseurs verifies' },
+            { n:'500+', l:'Fournisseurs vérifiés' },
             { n:'4', l:'Profils clients' },
             { n:'100%', l:'QC filme' },
           ].map((s, i) => (
