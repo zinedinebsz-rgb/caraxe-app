@@ -925,6 +925,9 @@ export default function Dashboard({ user, profile, onSignOut }) {
                         <div style={{ fontFamily: f.body, fontSize: size.xs, color: c.textTertiary, marginTop: sp[1] }}>
                           ~35% d'économie moyenne vs achat direct
                         </div>
+                        <div style={{ fontFamily: f.body, fontSize: '10px', color: c.textTertiary, marginTop: sp[0.5], fontStyle: 'italic', opacity: 0.75 }}>
+                          Moyenne mesurée sur 12 mois d'opérations CARAXES, vs prix Alibaba/AliExpress pour la même catégorie.
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: sp[4], flexWrap: 'wrap' }}>
                         <div>
