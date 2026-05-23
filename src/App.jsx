@@ -81,19 +81,19 @@ const ProfileError = ({ onRetry }) => (
       color: c.textSecondary, fontFamily: f.body, fontSize: size.sm,
       textAlign: 'center', maxWidth: 320, lineHeight: 1.6,
     }}>
-      Verifiez votre connexion ou reessayez.
+      Vérifiez votre connexion ou réessayez.
     </span>
     <div style={{ display: 'flex', gap: '12px' }}>
       <button onClick={onRetry} style={{
         padding: '10px 24px', background: c.red, border: `1px solid ${c.red}`,
         color: c.white, fontSize: size.sm, fontWeight: 600, cursor: 'pointer',
         fontFamily: f.body,
-      }}>Reessayer</button>
+      }}>Réessayer</button>
       <button onClick={() => window.location.reload()} style={{
         padding: '10px 24px', background: c.bgSurface, border: `1px solid ${c.border}`,
         color: c.textSecondary, fontSize: size.sm, cursor: 'pointer',
         fontFamily: f.body,
-      }}>Rafraichir</button>
+      }}>Rafraîchir</button>
     </div>
   </div>
 )
