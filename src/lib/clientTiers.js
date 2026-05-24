@@ -1,6 +1,7 @@
 // ─── CARAXES Client Tiers v2 ───
-// 3 profils clients : Grossiste / Détaillant / E-commerce
+// 5 profils clients : Starter / Grossiste / Détaillant / E-commerce / Pro-BTP
 // Chaque profil = pricing, MOQ, priorité, catalogue dédié
+// NOTE : tier "starter" = client signé qui n'a pas fini son onboarding (limbo state)
 
 import { c } from './theme'
 
@@ -110,6 +111,25 @@ export const TIERS = [
       'sanitaire-plomberie', 'electricite-eclairage', 'revetements-sols',
       'quincaillerie-gros', 'securite-epi',
     ],
+  },
+  {
+    key: 'starter',
+    label: 'En attente',
+    tagline: 'Profil non finalisé · Onboarding en cours',
+    description: 'Client inscrit qui n\'a pas encore complété son onboarding. Profil à qualifier.',
+    icon: '◐',
+    color: c.textTertiary || '#9a8e75',
+    colorSoft: c.bgElevated || '#1a1813',
+    minOrderValue: 0,
+    moqMultiplier: 0,
+    priceMultiplier: 0,
+    priority: 4,
+    priorityLabel: 'À qualifier',
+    benefits: [
+      'Profil à compléter pour débloquer le catalogue',
+      'Onboarding rapide (3 minutes)',
+    ],
+    catalogCategories: [],
   },
 ]
 
