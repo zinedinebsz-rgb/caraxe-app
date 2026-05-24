@@ -40,11 +40,11 @@ export default function CatalogueTab() {
   const [editingCatalogTier, setEditingCatalogTier] = useState(null)
   const [catalogItemForm, setCatalogItemForm] = useState({ name: '', icon: '📦', description: '', priceRange: '', moq: '', margin: '', topProducts: '', locations: '' })
   const [showProductModal, setShowProductModal] = useState(false)
-  const [productForm, setProductForm] = useState({ name: '', description: '', category: '', price_min: '', price_max: '', moq: '1', margin_estimate: '', tags: '', tier_keys: ['retail','wholesale','ecommerce'], active: true, featured: false })
+  const [productForm, setProductForm] = useState({ name: '', description: '', category: '', price_min: '', price_max: '', moq: '1', margin_estimate: '', tags: '', tier_keys: ['detaillant','grossiste','ecommerce'], active: true, featured: false })
   const [editingProduct, setEditingProduct] = useState(null)
   const [productUploading, setProductUploading] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
-  const [categoryForm, setCategoryForm] = useState({ name: '', icon: '📦', description: '', sort_order: 0, active: true, tier_keys: ['retail','wholesale','ecommerce'] })
+  const [categoryForm, setCategoryForm] = useState({ name: '', icon: '📦', description: '', sort_order: 0, active: true, tier_keys: ['detaillant','grossiste','ecommerce'] })
   const [editingCategory, setEditingCategory] = useState(null)
 
   const productFileRef = useRef(null)
@@ -99,7 +99,7 @@ export default function CatalogueTab() {
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.teal }}>
                       <Icon d={icons.plus} size={13} color="currentColor" /> Fournisseur
                     </button>
-                    <button onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', category: '', price_min: '', price_max: '', moq: '1', margin_estimate: '', tags: '', tier_keys: ['retail','wholesale','ecommerce'], active: true, featured: false }); setShowProductModal(true) }} style={{
+                    <button onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', category: '', price_min: '', price_max: '', moq: '1', margin_estimate: '', tags: '', tier_keys: ['detaillant','grossiste','ecommerce'], active: true, featured: false }); setShowProductModal(true) }} style={{
                       padding: `8px ${sp[3]}`, background: c.red, color: c.text, border: 'none',
                       fontFamily: f.mono, fontSize: '10px', fontWeight: 700, cursor: 'pointer',
                       display: 'flex', alignItems: 'center', gap: '6px', letterSpacing: '0.04em',
@@ -290,7 +290,7 @@ export default function CatalogueTab() {
                           name: prod.name || '', description: prod.description || '', category: prod.category || '',
                           price_min: prod.price_min || '', price_max: prod.price_max || '', moq: prod.moq || '1',
                           margin_estimate: prod.margin_estimate || '', tags: (prod.tags || []).join(', '),
-                          tier_keys: prod.tier_keys || ['retail','wholesale','ecommerce'],
+                          tier_keys: prod.tier_keys || ['detaillant','grossiste','ecommerce'],
                           active: prod.active !== false, featured: prod.featured || false,
                         })
                         setShowProductModal(true)
@@ -583,7 +583,7 @@ export default function CatalogueTab() {
                       Gestion des categories
                     </span>
                   </div>
-                  <button onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', icon: '📦', description: '', sort_order: 0, active: true, tier_keys: ['retail','wholesale','ecommerce'] }); setShowCategoryModal(true) }} style={{
+                  <button onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', icon: '📦', description: '', sort_order: 0, active: true, tier_keys: ['detaillant','grossiste','ecommerce'] }); setShowCategoryModal(true) }} style={{
                     padding: `8px ${sp[3]}`, background: c.red, color: c.text, border: 'none',
                     fontFamily: f.body, fontSize: size.sm, fontWeight: 700, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: '6px',
@@ -639,7 +639,7 @@ export default function CatalogueTab() {
 
                           {/* Action buttons */}
                           <div style={{ padding: sp[2], display: 'flex', gap: '6px' }}>
-                            <button onClick={() => { setEditingCategory(cat); setCategoryForm({ name: cat.name, icon: cat.icon, description: cat.description || '', sort_order: cat.sort_order || 0, active: cat.active, tier_keys: cat.tier_keys || ['retail','wholesale','ecommerce'] }); setShowCategoryModal(true) }} style={{
+                            <button onClick={() => { setEditingCategory(cat); setCategoryForm({ name: cat.name, icon: cat.icon, description: cat.description || '', sort_order: cat.sort_order || 0, active: cat.active, tier_keys: cat.tier_keys || ['detaillant','grossiste','ecommerce'] }); setShowCategoryModal(true) }} style={{
                               flex: 1, padding: '6px', background: c.bgElevated, border: `1px solid ${c.border}`, color: c.text, fontFamily: f.body, fontSize: '10px', fontWeight: 600, cursor: 'pointer', transition: `all 0.2s ${ease.smooth}`,
                             }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.gold; e.currentTarget.style.background = `${c.gold}11` }}
@@ -746,7 +746,7 @@ export default function CatalogueTab() {
                         <div>
                           <label style={{ ...labelStyle, marginBottom: sp[2] }}>Tiers disponibles</label>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {['retail', 'wholesale', 'ecommerce'].map(tier => (
+                            {['detaillant', 'grossiste', 'ecommerce'].map(tier => (
                               <label key={tier} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: size.sm }}>
                                 <input type="checkbox" checked={categoryForm.tier_keys.includes(tier)} onChange={e => {
                                   if (e.target.checked) {
