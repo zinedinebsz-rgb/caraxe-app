@@ -101,6 +101,7 @@ export function CommandesSidebar({ selectedId, setSelectedId, setMobileShowDetai
     clientName, activeOrders, deliveredOrders,
     user, t, tToast, toast,
     loadAll, createOrder, setConfirmDialog,
+    preselectedClientId, setPreselectedClientId,
   } = useAdmin()
 
   const searchInputRef = useRef(null)
@@ -108,6 +109,15 @@ export function CommandesSidebar({ selectedId, setSelectedId, setMobileShowDetai
   const [search, setSearch] = useState('')
   const [showCreateOrder, setShowCreateOrder] = useState(false)
   const [createOrderData, setCreateOrderData] = useState({ clientId: '', product: '', quantity: '', budget: '', deadline: '', notes: '' })
+
+  // Auto-open create order with pre-selected client when arriving from ClientsTab "+ CMD" button
+  useEffect(() => {
+    if (preselectedClientId) {
+      setCreateOrderData(prev => ({ ...prev, clientId: preselectedClientId }))
+      setShowCreateOrder(true)
+      setPreselectedClientId(null) // consume once
+    }
+  }, [preselectedClientId, setPreselectedClientId])
 
   const filtered = orders.filter(o => {
     const isDone = o.status === 6 || o.status === 'delivered' || o.status === 'livré' || o.status === 'completed'
