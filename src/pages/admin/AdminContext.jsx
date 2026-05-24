@@ -53,6 +53,8 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
 
   // ── Navigation ──
   const [mainTab, setMainTab] = useState('overview')
+  // Pre-selected client when opening commandes tab from a client row ("+ CMD" button)
+  const [preselectedClientId, setPreselectedClientId] = useState(null)
 
   // ── Notifications ──
   const [notifications, setNotifications] = useState([])
@@ -266,6 +268,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     loadAll,
     // Navigation
     mainTab, setMainTab,
+    preselectedClientId, setPreselectedClientId,
     // Notifications
     notifications, setNotifications, showNotifPanel, setShowNotifPanel,
     unreadNotifs, markAllRead, addNotification, requestNotifPermission, playNotificationSound,
