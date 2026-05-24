@@ -557,7 +557,14 @@ export default function Onboarding({ user, profile, onComplete }) {
               borderRadius: radius.lg, boxShadow: shadow.card,
               padding:24, display:'flex', flexDirection:'column', gap:20,
             }}>
-              {/* full_name a été déplacé au step 1 — c'est le seul champ requis pour finaliser l'onboarding */}
+              {/* full_name est demandé au step 1, mais on le réaffiche ici si l'utilisateur a sauté son saisie (edge case "Compléter mon profil →" cliqué sans avoir rempli le nom) */}
+              {!formData.full_name.trim() && (
+                <Field label="Nom complet *">
+                  <input className="ob-input" type="text" placeholder="Votre nom"
+                    value={formData.full_name}
+                    onChange={(e) => handleChange('full_name', e.target.value)} />
+                </Field>
+              )}
 
               <Field label="Entreprise / Commerce">
                 <input className="ob-input" type="text" placeholder="Nom de votre entreprise"
