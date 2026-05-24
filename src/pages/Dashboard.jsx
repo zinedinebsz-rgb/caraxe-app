@@ -692,7 +692,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
   }
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId)
-  const catalog = getCatalog(profile?.tier_key || DEFAULT_TIER.key)
+  const catalog = getCatalog(profile?.client_tier || DEFAULT_TIER)
 
   // ─── Shared input style — cinematic ───
   const inputStyle = {
