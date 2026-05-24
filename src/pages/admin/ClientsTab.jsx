@@ -372,7 +372,7 @@ export default function ClientsTab() {
                       </div>
 
                       {/* Business qualification (from onboarding) */}
-                      {(client.monthly_volume || client.years_active || client.has_existing_suppliers) && (
+                      {(client.monthly_volume || client.years_active || client.has_existing_suppliers || (client.preferred_categories && client.preferred_categories.length > 0)) && (
                         <div style={{
                           marginBottom: sp[3],
                           padding: sp[2],
@@ -405,7 +405,7 @@ export default function ClientsTab() {
                             </div>
                           )}
                           {client.has_existing_suppliers && (
-                            <div style={{ fontSize: '11px', color: c.textSecondary }}>
+                            <div style={{ fontSize: '11px', color: c.textSecondary, marginBottom: '3px' }}>
                               <span style={{ color: c.textTertiary }}>Fournisseurs :</span>{' '}
                               <strong style={{ color: c.text }}>{({
                                 'none': 'Aucun, débute',
@@ -413,6 +413,12 @@ export default function ClientsTab() {
                                 'europe': 'Européens',
                                 'china_direct': 'Contacts en Chine',
                               })[client.has_existing_suppliers] || client.has_existing_suppliers}</strong>
+                            </div>
+                          )}
+                          {client.preferred_categories && client.preferred_categories.length > 0 && (
+                            <div style={{ fontSize: '11px', color: c.textSecondary, marginTop: '6px' }}>
+                              <span style={{ color: c.textTertiary }}>Catégories d'intérêt :</span>{' '}
+                              <strong style={{ color: c.text }}>{client.preferred_categories.join(' · ')}</strong>
                             </div>
                           )}
                         </div>
@@ -424,7 +430,9 @@ export default function ClientsTab() {
                         <div style={{ display: 'flex', gap: '2px' }}>
                           {TIERS.map(tier => (
                             <button key={tier.key} onClick={() => {
-                              updateProfile(client.id, { client_tier: tier.key }).then(() => loadAll()).catch(err => console.error('Error:', err))
+                              updateProfile(client.id, { client_tier: tier.key })
+                                .then(() => { toast.success(`Profil basculé vers ${tier.label}`); loadAll() })
+                                .catch(err => { toast.error(`Échec changement tier : ${err?.message || 'inconnu'}`); console.error('updateProfile client_tier:', err) })
                             }} style={{
                               flex: 1, padding: '6px 4px',
                               background: (client.client_tier || DEFAULT_TIER) === tier.key ? tier.color : c.bgElevated,
