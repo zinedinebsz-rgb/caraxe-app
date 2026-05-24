@@ -57,7 +57,8 @@ const keyframes = `
 .ob-nav { position:fixed; bottom:0; left:0; right:0; z-index:100; padding:16px 24px; background:rgba(12, 11, 10, 0.92); backdrop-filter:blur(16px); border-top:1px solid rgba(42, 40, 37, 0.5); border-radius:${radius.xl} ${radius.xl} 0 0; display:flex; justify-content:space-between; align-items:center }
 `
 
-const STEPS = ['Bienvenue', 'Profil', 'Catalogue', 'Coordonnées']
+// Onboarding minimal : 2 étapes essentielles + 2 optionnelles pour les utilisateurs qui veulent compléter
+const STEPS = ['Bienvenue', 'Profil', 'Catalogue · optionnel', 'Détails · optionnel']
 
 /* ── Decorative line ── */
 const Divider = ({ w = 64, my = '16px' }) => (
@@ -381,6 +382,24 @@ export default function Onboarding({ user, profile, onComplete }) {
                 )
               })}
             </div>
+
+            {/* Nom complet — déplacé du step 3 ici car c'est le seul champ vraiment essentiel */}
+            <div style={{ marginTop: sp[3], maxWidth: 540, marginInlineStart: 'auto', marginInlineEnd: 'auto' }}>
+              <Field label="Votre prénom et nom *">
+                <input
+                  className="ob-input"
+                  type="text"
+                  value={formData.full_name}
+                  onChange={(e) => handleChange('full_name', e.target.value)}
+                  placeholder="ex: Karim El Idrissi"
+                  autoComplete="name"
+                  style={{ width: '100%' }}
+                />
+              </Field>
+              <p style={{ fontSize: 11, color: c.textTertiary, marginTop: 6, fontStyle: 'italic' }}>
+                Le reste (entreprise, téléphone, volume mensuel) est optionnel et configurable plus tard.
+              </p>
+            </div>
           </div>
         )}
 
@@ -538,11 +557,7 @@ export default function Onboarding({ user, profile, onComplete }) {
               borderRadius: radius.lg, boxShadow: shadow.card,
               padding:24, display:'flex', flexDirection:'column', gap:20,
             }}>
-              <Field label="Nom complet *">
-                <input className="ob-input" type="text" placeholder="Votre nom"
-                  value={formData.full_name}
-                  onChange={(e) => handleChange('full_name', e.target.value)} />
-              </Field>
+              {/* full_name a été déplacé au step 1 — c'est le seul champ requis pour finaliser l'onboarding */}
 
               <Field label="Entreprise / Commerce">
                 <input className="ob-input" type="text" placeholder="Nom de votre entreprise"
@@ -662,17 +677,28 @@ export default function Onboarding({ user, profile, onComplete }) {
           <button className="ob-btn-secondary" onClick={() => goTo(step - 1)}>
             Retour
           </button>
-          {step < 3 ? (
-            <button className="ob-btn-primary" onClick={() => goTo(step + 1)}>
-              Continuer
-            </button>
-          ) : (
-            <button className="ob-btn-gold"
-              onClick={handleFinish}
-              disabled={!formData.full_name.trim() || saving}>
-              {saving ? 'Enregistrement...' : 'Terminer'}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: sp[2], alignItems: 'center' }}>
+            {/* Étapes 1 et 2 : laisser le choix entre tout finir maintenant ou approfondir */}
+            {(step === 1 || step === 2) && (
+              <button className="ob-btn-gold"
+                onClick={handleFinish}
+                disabled={!formData.full_name.trim() || saving}
+                title={!formData.full_name.trim() ? 'Saisissez votre nom pour terminer' : 'Termine maintenant — vous pourrez compléter vos infos depuis Paramètres'}>
+                {saving ? 'Enregistrement...' : 'Terminer maintenant'}
+              </button>
+            )}
+            {step < 3 ? (
+              <button className="ob-btn-primary" onClick={() => goTo(step + 1)}>
+                {step === 1 ? 'Compléter mon profil →' : 'Continuer'}
+              </button>
+            ) : (
+              <button className="ob-btn-gold"
+                onClick={handleFinish}
+                disabled={!formData.full_name.trim() || saving}>
+                {saving ? 'Enregistrement...' : 'Terminer'}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
