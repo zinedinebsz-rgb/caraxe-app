@@ -10,7 +10,7 @@ import { Modal } from '../../components/Toast'
 
 export default function ClientsTab() {
   const {
-    mainTab, orders, allProfiles, setMainTab,
+    mainTab, orders, allProfiles, setMainTab, setPreselectedClientId,
     t, toast, tToast, loadAll,
     updateProfile, resetPassword,
     getClientOrderCount, getClientLastOrderDate,
@@ -29,15 +29,10 @@ export default function ClientsTab() {
 
   if (mainTab !== 'clients') return null
 
-  // Navigate to commandes tab (optionally pre-selecting a client)
+  // Navigate to commandes tab and pre-select the client for the new order form
   const openCreateOrder = (clientId) => {
-    // TODO: pass clientId as pre-filter when commandes tab supports it
+    if (clientId) setPreselectedClientId(clientId)
     setMainTab('commandes')
-  }
-  // Feature toggles — placeholder until modal is implemented
-  const openClientFeatures = (client) => {
-    // TODO: implement feature toggles modal in AdminContext
-    console.info('[CARAXES] Feature toggles not yet implemented for client:', client.id)
   }
 
   const filteredClients = (allProfiles || []).filter(cl => cl && cl.id).filter(cl => {
@@ -489,22 +484,6 @@ export default function ClientsTab() {
                         </div>
                       </div>
 
-                      {/* ── FEATURE TOGGLES BUTTON ── */}
-                      <div style={{ marginTop: sp[2] }}>
-                        <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: sp[1] }}>Dashboard du client</div>
-                        <button onClick={() => openClientFeatures(client)} style={{
-                          padding: `${sp[1]} ${sp[2]}`, width: '100%',
-                          background: c.bgElevated, border: `1px solid ${c.teal}22`,
-                          color: c.text, fontSize: size.xs, fontFamily: f.body, cursor: 'pointer',
-                          textAlign: 'start', display: 'flex', alignItems: 'center', gap: sp[2],
-                          transition: `all 0.2s ${ease.smooth}`,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.teal; e.currentTarget.style.background = `${c.teal}08` }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${c.teal}22`; e.currentTarget.style.background = c.bgElevated }}>
-                          <Icon d={icons.edit} size={12} color={c.teal} />
-                          Gérer les fonctionnalités du Dashboard
-                        </button>
-                      </div>
                     </div>
 
                     {/* Right: Orders */}
