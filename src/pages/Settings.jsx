@@ -254,7 +254,7 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
           {/* ═══ PROFIL REVENDEUR ═══ */}
           <Section title="Profil revendeur" subtitle="Votre tier determine vos prix, quantites minimales et priorite." accent={currentTier.color} delay={160}>
             <div className="set-tier-grid">
-              {TIERS.map((tier) => {
+              {TIERS.filter(t => t.key !== 'starter').map((tier) => {
                 const sel = formData.client_tier === tier.key
                 return (
                   <div key={tier.key} onClick={() => handleChange('client_tier', tier.key)}
