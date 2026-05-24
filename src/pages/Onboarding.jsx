@@ -289,7 +289,7 @@ export default function Onboarding({ user, profile, onComplete }) {
             </div>
 
             <div className="ob-tier-grid">
-              {TIERS.map((tier, i) => {
+              {TIERS.filter(t => t.key !== 'starter').map((tier, i) => {
                 const sel = selectedTier === tier.key
                 return (
                   <div key={tier.key}
