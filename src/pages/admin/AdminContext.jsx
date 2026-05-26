@@ -239,9 +239,9 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
 
   const clientName = useCallback((clientId) => {
     const cl = profilesMap.get(clientId)
-    return cl ? (cl.full_name || cl.email) : 'Inconnu'
+    return (cl && (cl.full_name || cl.email)) || 'Inconnu'
   }, [profilesMap])
-  const clientInitial = useCallback((clientId) => clientName(clientId).charAt(0).toUpperCase(), [clientName])
+  const clientInitial = useCallback((clientId) => String(clientName(clientId) || '?').charAt(0).toUpperCase() || '?', [clientName])
   const getClientOrderCount = useCallback((clientId) => orders.filter(o => o.client_id === clientId).length, [orders])
   const getClientLastOrderDate = useCallback((clientId) => {
     const clientOrders = orders.filter(o => o.client_id === clientId)

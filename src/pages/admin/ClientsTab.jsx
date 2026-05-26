@@ -174,7 +174,7 @@ export default function ClientsTab() {
         {sortedClients.map((client, i) => {
           const orderCount = getClientOrderCount(client.id)
           const lastOrderDate = getClientLastOrderDate(client.id)
-          const initial = (client.full_name || client.email).charAt(0).toUpperCase()
+          const initial = String(client.full_name || client.email || '?').charAt(0).toUpperCase() || '?'
           const tier = getTierByKey(client.client_tier || DEFAULT_TIER)
           const isSelected = selectedClientTab === client.id
           const sc = scoreById.get(client.id) || { score: 0, band: 'D', ltv: 0, isTop20: false, recencyDays: null }

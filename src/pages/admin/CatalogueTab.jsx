@@ -182,7 +182,7 @@ export default function CatalogueTab() {
                           .filter(s => {
                             if (!supplierSearch.trim()) return true
                             const q = supplierSearch.toLowerCase()
-                            return s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q) || (s.specialty || '').toLowerCase().includes(q) || s.category.toLowerCase().includes(q)
+                            return (s.name || '').toLowerCase().includes(q) || (s.city || '').toLowerCase().includes(q) || (s.specialty || '').toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q)
                           })
                           .map((s, idx) => (
                           <tr key={s.id} style={{

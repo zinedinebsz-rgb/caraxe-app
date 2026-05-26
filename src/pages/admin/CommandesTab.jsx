@@ -125,7 +125,7 @@ export function CommandesSidebar({ selectedId, setSelectedId, setMobileShowDetai
     if (filter === 'done' && !isDone) return false
     if (search) {
       const q = search.toLowerCase()
-      return (o.product || '').toLowerCase().includes(q) || o.ref?.toLowerCase().includes(q) || clientName(o.client_id).toLowerCase().includes(q)
+      return (o.product || '').toLowerCase().includes(q) || (o.ref || '').toLowerCase().includes(q) || (clientName(o.client_id) || '').toLowerCase().includes(q)
     }
     return true
   })

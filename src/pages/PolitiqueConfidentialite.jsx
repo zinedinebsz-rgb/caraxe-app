@@ -50,7 +50,7 @@ export default function PolitiqueConfidentialite() {
     },
     {
       title: 'Transferts internationaux',
-      content: 'Certains de nos sous-traitants (Supabase, Stripe) opèrent depuis les États-Unis. Ces transferts sont protégés par les conditions d\'utilisation et clauses contractuelles appropriées.'
+      content: 'CARAXES opère en partie depuis la Chine (équipe terrain à Yiwu pour la coordination fournisseurs). Vos données peuvent donc être consultées depuis la Chine par les membres autorisés de l\'équipe CARAXES, dans le cadre strict de l\'exécution de votre contrat (art. 49.1.b du RGPD). Ces accès sont limités aux finalités contractuelles, encadrés par des engagements de confidentialité, et restreints au personnel strictement nécessaire. Par ailleurs, certains de nos sous-traitants (Supabase Inc., Stripe Inc.) opèrent depuis les États-Unis ; ces transferts sont encadrés par les clauses contractuelles types de la Commission européenne.'
     },
     {
       title: 'Droits des utilisateurs',
@@ -65,7 +65,7 @@ export default function PolitiqueConfidentialite() {
     },
     {
       title: 'Exercer vos droits',
-      content: 'Pour exercer l\'un de ces droits, contactez-nous à : contact@caraxes.fr. Nous répondrons à votre demande dans un délai de 30 jours.'
+      content: 'Pour exercer l\'un de ces droits, contactez-nous à : contact@caraxes.fr. Nous répondrons à votre demande dans un délai de 30 jours. Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation auprès de la CNIL : 3 place de Fontenoy, 75007 Paris — cnil.fr.'
     },
     {
       title: 'Cookies',
