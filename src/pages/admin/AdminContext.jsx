@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback, us
 import {
   getOrders, updateOrder, deleteOrder, getMessages, sendMessage,
   getDocuments, uploadDocument, getDocumentUrl, getAllClients, getAllProfiles, createOrder,
-  subscribeToMessages, subscribeToOrders, subscribeToNewClients, subscribeToNewOrders, subscribeToNewEcomServices, subscribeToNewLeads, supabase, updateProfile, resetPassword,
+  subscribeToMessages, subscribeToAllMessages, subscribeToOrders, subscribeToNewClients, subscribeToNewOrders, subscribeToNewEcomServices, subscribeToNewLeads, supabase, updateProfile, resetPassword,
   getAdminMessages, sendAdminMessage, subscribeToAdminMessages, playNotificationSound,
   getLeads, updateLead, deleteLead,
   getShipments, createShipment, updateShipment, deleteShipment, getInventory, updateInventoryItem, createInventoryItem, deleteInventoryItem,
@@ -203,6 +203,16 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     })
     return () => { supabase.removeChannel(ch) }
   }, [addNotification, debouncedLoadAll])
+
+  // ── New client messages on orders ──
+  useEffect(() => {
+    const ch = subscribeToAllMessages((newMsg) => {
+      if (newMsg.order_id && newMsg.sender_role !== 'admin') {
+        addNotification('message', 'Nouveau message client', (newMsg.content || '').slice(0, 60) || 'Message recu')
+      }
+    }, 'admin-order-messages')
+    return () => { supabase.removeChannel(ch) }
+  }, [addNotification])
 
   // ── Team Chat: unread badge when not on tab ──
   useEffect(() => {
