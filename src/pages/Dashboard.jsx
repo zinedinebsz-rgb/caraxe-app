@@ -5,7 +5,7 @@ import { c, f, size, sp, shadow, ease, transition, radius, gradient, glass, STAT
 import {
   getOrders, createOrder, getMessages, sendMessage,
   markMessagesRead, getDocuments, getDocumentUrl,
-  subscribeToMessages, subscribeToOrders, subscribeToProducts, subscribeToShipments, subscribeToInventory, supabase,
+  subscribeToMessages, subscribeToAllMessages, subscribeToOrders, subscribeToProducts, subscribeToShipments, subscribeToInventory, supabase,
   getShipments, createShipment, getInventory, getActiveProducts,
   getShops, createEcomOrder, getEcomServices, getUnreadCounts, playNotificationSound,
 } from '../lib/supabase'
@@ -490,6 +490,10 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const [siteCreationForm, setSiteCreationForm] = useState({ shopName: '', platform: 'Shopify', category: '', branding: 'none' })
   const [ecomServices, setEcomServices] = useState([])
   const [formationMode, setFormationMode] = useState('mastery') // 'mastery' | 'express'
+  const selectedOrderIdRef = useRef(null)
+  const ordersRef = useRef([])
+  useEffect(() => { selectedOrderIdRef.current = selectedOrderId }, [selectedOrderId])
+  useEffect(() => { ordersRef.current = orders }, [orders])
 
   // ─── MEMOIZED COMPUTED VALUES ───
   const activeOrders = useMemo(() => orders.filter(o => !isDelivered(o.status)), [orders])
@@ -532,7 +536,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
           if (n && o && n.status !== o.status && notificationPermission() === 'granted') {
             sendLocalNotification({
               title: 'CARAXES — statut mis à jour',
-              body: `Commande ${n.reference || n.id?.slice(0, 8) || ''} : ${n.status}`,
+              body: `Commande ${n.reference || n.id?.slice(0, 8) || ''} : ${(typeof n.status === 'number' ? STATUSES[n.status]?.label : n.status) || n.status}`,
               url: '/',
               tag: `order-${n.id}`,
             })
@@ -559,12 +563,25 @@ export default function Dashboard({ user, profile, onSignOut }) {
         getActiveProducts(user.id).then((list) => setDynamicProducts(list || [])).catch(() => {})
       }
     })
+    // Global: notify on new agent message on any of the client's orders
+    const unsubMsgGlobal = subscribeToAllMessages((newMsg) => {
+      if (!newMsg.order_id || newMsg.sender_role !== 'admin') return
+      if (!ordersRef.current.some(o => o.id === newMsg.order_id)) return
+      getUnreadCounts(user.id).then((c) => setUnreadCounts(c || {})).catch(() => {})
+      if (newMsg.order_id !== selectedOrderIdRef.current) {
+        playNotificationSound()
+        if (notificationPermission() === 'granted') {
+          sendLocalNotification({ title: 'CARAXES \u2014 nouveau message', body: 'Votre agent vous a r\u00e9pondu', url: '/', tag: `msg-${newMsg.order_id}` })
+        }
+      }
+    }, `client-messages-${user.id}`)
 
     return () => {
       if (unsubOrders) supabase.removeChannel(unsubOrders)
       if (unsubShipments) supabase.removeChannel(unsubShipments)
       if (unsubInventory) supabase.removeChannel(unsubInventory)
       if (unsubProducts) supabase.removeChannel(unsubProducts)
+      if (unsubMsgGlobal) supabase.removeChannel(unsubMsgGlobal)
     }
   }, [user?.id])
 
