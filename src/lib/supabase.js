@@ -304,6 +304,17 @@ export function subscribeToMessages(orderId, callback) {
     .subscribe()
 }
 
+export function subscribeToAllMessages(callback, channelName = 'all-messages') {
+  return supabase
+    .channel(channelName)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+    }, (payload) => callback(payload.new))
+    .subscribe()
+}
+
 export function subscribeToOrders(callback) {
   return supabase
     .channel('orders-changes')
