@@ -15,7 +15,7 @@ RETURNS boolean AS $$
     WHERE id = auth.uid()
     AND role = 'admin'
   );
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+$$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 
 -- ── SHIPMENTS ──
