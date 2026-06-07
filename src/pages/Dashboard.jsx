@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { c, f, size, sp, shadow, ease, transition, radius, gradient, glass, STATUSES } from '../lib/theme'
+import { c, f, size, sp, shadow, ease, transition, radius, gradient, glass, STATUSES, isDelivered } from '../lib/theme'
 import {
   getOrders, createOrder, getMessages, sendMessage,
   markMessagesRead, getDocuments, getDocumentUrl,
@@ -492,8 +492,8 @@ export default function Dashboard({ user, profile, onSignOut }) {
   const [formationMode, setFormationMode] = useState('mastery') // 'mastery' | 'express'
 
   // ─── MEMOIZED COMPUTED VALUES ───
-  const activeOrders = useMemo(() => orders.filter(o => o.status !== 'delivered'), [orders])
-  const deliveredOrders = useMemo(() => orders.filter(o => o.status === 'delivered'), [orders])
+  const activeOrders = useMemo(() => orders.filter(o => !isDelivered(o.status)), [orders])
+  const deliveredOrders = useMemo(() => orders.filter(o => isDelivered(o.status)), [orders])
   const formationServices = useMemo(() => ecomServices.filter(s => s.service_type === 'formation'), [ecomServices])
   const creationServices = useMemo(() => ecomServices.filter(s => s.service_type === 'creation'), [ecomServices])
 

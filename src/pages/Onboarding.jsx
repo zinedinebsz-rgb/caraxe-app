@@ -155,10 +155,8 @@ export default function Onboarding({ user, profile, onComplete }) {
       { full_name: formData.full_name, company: formData.company, phone: formData.phone, city: formData.city, client_tier: selectedTier, onboarding_done: true },
       // 3) Without client_tier (CHECK constraint might block)
       { full_name: formData.full_name, company: formData.company, phone: formData.phone, onboarding_done: true },
-      // 4) Absolute minimum — just name + onboarding flag
-      { full_name: formData.full_name, onboarding_done: true },
-      // 5) Just the name (onboarding_done column might not exist!)
-      { full_name: formData.full_name || 'Client' },
+      // 4) Absolute minimum — name + onboarding flag (always keep onboarding_done so user is not looped back)
+      { full_name: formData.full_name || 'Client', onboarding_done: true },
     ]
 
     for (let i = 0; i < attempts.length; i++) {

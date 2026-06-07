@@ -5,9 +5,14 @@ export default function MentionsLegales() {
     {
       title: 'Propriétaire du site',
       content: [
-        { label: 'Raison sociale', value: 'CARAXES' },
+        { label: 'Entrepreneur individuel', value: '[Prénom NOM — à compléter]' },
+        { label: 'Nom commercial', value: 'CARAXES' },
         { label: 'Statut juridique', value: 'Micro-entreprise (Entreprise Individuelle)' },
+        { label: 'Adresse', value: '[Adresse complète — à compléter]' },
+        { label: 'SIRET', value: '[SIRET — à compléter après immatriculation]' },
         { label: 'Email', value: 'contact@caraxes.fr' },
+        { label: 'Téléphone', value: '[Téléphone — à compléter]' },
+        { label: 'Directeur de la publication', value: '[Prénom NOM — à compléter]' },
       ]
     },
     {
@@ -143,7 +148,7 @@ export default function MentionsLegales() {
           color: c.textTertiary,
           textAlign: 'center',
         }}>
-          Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+          Dernière mise à jour : {'07/06/2026'}
         </div>
       </div>
     </div>

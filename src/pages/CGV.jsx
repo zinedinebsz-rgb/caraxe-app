@@ -3,66 +3,90 @@ import { c, f, size, sp, radius, shadow } from '../lib/theme'
 export default function CGV() {
   const sections = [
     {
-      title: 'Objet',
-      content: 'Les présentes conditions générales de vente régissent les services d\'agent de sourcing fournis par CARAXES. Ces services incluent :',
+      title: "1. Objet et champ d'application",
+      content: "Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre CARAXES, micro-entreprise (entrepreneur individuel), et tout client, professionnel ou consommateur, souscrivant à ses services d'agent de sourcing et d'achat en Chine. Toute commande implique l'acceptation pleine et entière des présentes CGV.",
       list: [
-        'Recherche et identification de fournisseurs en Chine',
-        'Contrôle de qualité et audits fournisseurs',
-        'Négociation de prix et délais',
-        'Gestion logistique et expédition',
+        "Recherche et identification de fournisseurs en Chine",
+        "Contrôle de qualité et audits fournisseurs",
+        "Négociation de prix et délais",
+        "Gestion logistique et expédition",
       ]
     },
     {
-      title: 'Tarification',
-      content: 'Les tarifs des services de CARAXES sont établis au cas par cas sur devis, selon la nature et l\'importance de la prestation demandée. Aucun service n\'est fourni sans devis préalable accepté par le client.'
+      title: "2. Identité du vendeur",
+      content: "Le service est édité par : [Prénom NOM — à compléter], entrepreneur individuel exerçant sous le nom commercial CARAXES — Adresse : [Adresse complète — à compléter] — Email : contact@caraxes.fr — Téléphone : [Téléphone — à compléter] — SIRET : [à compléter après immatriculation]."
     },
     {
-      title: 'Conditions de paiement',
-      content: 'Le paiement s\'effectue via la plateforme Stripe selon les conditions suivantes :',
+      title: "3. Prix",
+      content: "Les prix des services sont établis sur devis individuel, en euros et toutes taxes comprises (TTC). Mention TVA : « TVA non applicable, art. 293 B du CGI » (franchise en base de TVA). Aucun service n'est fourni sans devis préalablement accepté par le client. Les éventuels frais de livraison, droits de douane et taxes d'importation sont indiqués séparément avant la conclusion du contrat."
+    },
+    {
+      title: "4. Commande et paiement",
+      content: "La commande est réputée ferme après acceptation du devis et règlement selon les modalités convenues. Le paiement s'effectue de manière sécurisée via la plateforme Stripe.",
       list: [
-        'Le paiement doit être effectué avant le début de la prestation, sauf accord contraire',
-        'Les moyens de paiement acceptés : cartes bancaires (Visa, Mastercard)',
-        'Les factures sont émises automatiquement et accessibles dans votre espace client',
+        "Moyens acceptés : cartes bancaires (Visa, Mastercard)",
+        "Le paiement est exigible avant le début de la prestation, sauf accord écrit contraire",
+        "Une facture est émise et mise à disposition dans l'espace client",
       ]
     },
     {
-      title: 'Délais et respect des engagements',
-      content: 'CARAXES s\'engage à respecter les délais convenus lors de la signature du devis. En cas de dépassement imprévu, CARAXES en informera le client au plus tôt. Les délais ne commencent qu\'après validation du paiement.'
-    },
-    {
-      title: 'Limitation de responsabilité',
-      content: 'CARAXES ne peut être tenu responsable :',
+      title: "5. Droit de rétractation (consommateurs)",
+      content: "Conformément à l'article L.221-18 du Code de la consommation, le client consommateur dispose d'un délai de quatorze (14) jours à compter de la conclusion du contrat pour exercer son droit de rétractation, sans avoir à motiver sa décision. Pour l'exercer, il notifie sa décision par déclaration dénuée d'ambiguïté (courrier ou email à contact@caraxes.fr), ou via le formulaire type ci-dessous.",
       list: [
-        'Des changements de marché ou de disponibilité des fournisseurs en Chine',
-        'Des modifications réglementaires douanières ou commerciales',
-        'Des retards de expéditions due à des facteurs externes (grèves portuaires, aéroport fermé)',
-        'Des défauts de produits non signalés lors du contrôle de qualité',
+        "Formulaire type — À l'attention de CARAXES, [Adresse], contact@caraxes.fr :",
+        "« Je vous notifie par la présente ma rétractation du contrat portant sur la prestation de services ci-dessous : commandée le […] / reçue le […] — Nom du consommateur — Adresse — Date — Signature (si papier). »",
       ],
-      note: 'La responsabilité de CARAXES est limitée au montant de la prestation facturée.'
+      note: "Exception (art. L.221-28) : le client peut demander l'exécution du service avant la fin du délai de 14 jours. S'il le fait expressément et que le service est pleinement exécuté avant la fin du délai, il renonce à son droit de rétractation. Si le service est partiellement exécuté, un montant proportionnel reste dû en cas de rétractation."
     },
     {
-      title: 'Droits de propriété intellectuelle',
-      content: 'Tous les documents fournis par CARAXES (rapports, analyses, devis) sont la propriété de CARAXES. Le client est autorisé à les utiliser à titre privé mais ne peut les reproduire ou les commercialiser sans accord préalable.'
+      title: "6. Garanties légales",
+      content: "Indépendamment de toute garantie commerciale, le client consommateur bénéficie des garanties légales suivantes :",
+      list: [
+        "Garantie légale de conformité (art. L.217-3 et suivants du Code de la consommation)",
+        "Garantie contre les vices cachés (art. 1641 et suivants du Code civil)",
+      ],
+      note: "Pour mettre en œuvre ces garanties, le client contacte CARAXES à contact@caraxes.fr."
     },
     {
-      title: 'Confidentialité',
-      content: 'CARAXES s\'engage à respecter la confidentialité des informations commerciales échangées lors de la collaboration, sauf si la divulgation est requise par la loi.'
+      title: "7. Délais et exécution",
+      content: "CARAXES s'engage à respecter les délais convenus lors de l'acceptation du devis. Les délais courent à compter de la validation du paiement. En cas de retard imprévu, CARAXES en informe le client dans les meilleurs délais."
     },
     {
-      title: 'Résiliation',
-      content: 'Le client peut résilier un contrat en cours en notifiant CARAXES par email. Les frais déjà engagés restent dus. CARAXES peut résilier en cas de non-paiement ou de comportement inapproprié du client.'
+      title: "8. Limitation de responsabilité",
+      content: "Dans les limites permises par la loi (et sans exclure la responsabilité en cas de manquement aux garanties légales ci-dessus), CARAXES ne saurait être tenu responsable :",
+      list: [
+        "Des évolutions de marché ou de disponibilité des fournisseurs en Chine",
+        "Des modifications réglementaires douanières ou commerciales",
+        "Des retards d'expédition dus à des facteurs externes (grèves portuaires, fermeture d'aéroport)",
+        "Des défauts de produits non décelables lors du contrôle de qualité convenu",
+      ],
+      note: "Pour les clients professionnels, la responsabilité de CARAXES est limitée au montant de la prestation facturée."
     },
     {
-      title: 'Données personnelles',
-      content: 'Les données personnelles sont traitées selon notre Politique de Confidentialité accessible à tout moment sur le site.'
+      title: "9. Données personnelles",
+      content: "Les données personnelles sont traitées conformément au RGPD et à notre Politique de Confidentialité accessible sur le site. Le client dispose de droits d'accès, de rectification, d'effacement et d'opposition qu'il peut exercer à contact@caraxes.fr."
     },
     {
-      title: 'Droit applicable',
-      content: 'Les présentes CGV sont régies par la loi française et les litiges seront soumis aux tribunaux commerciaux compétents.'
+      title: "10. Médiation de la consommation",
+      content: "Conformément aux articles L.612-1 et suivants du Code de la consommation, le client consommateur peut recourir gratuitement à un médiateur de la consommation en vue de la résolution amiable d'un litige, après avoir tenté de le résoudre directement auprès de CARAXES.",
+      list: [
+        "Médiateur : [Nom du médiateur — à compléter après adhésion]",
+        "Adresse : [Adresse du médiateur — à compléter]",
+        "Site / saisine en ligne : [URL du médiateur — à compléter]",
+        "Plateforme européenne de règlement en ligne des litiges (RLL) : https://ec.europa.eu/consumers/odr",
+      ]
     },
     {
-      title: 'Modifications',
-      content: 'CARAXES se réserve le droit de modifier ces CGV à tout moment. Les modifications seront communiquées aux clients par email ou publication sur le site.'
+      title: "11. Droit applicable et litiges",
+      content: "Les présentes CGV sont régies par le droit français. En cas de litige, une solution amiable sera recherchée en priorité. À défaut, le consommateur peut saisir à son choix l'une des juridictions territorialement compétentes au sens du Code de procédure civile, ou la juridiction du lieu où il demeurait au moment de la conclusion du contrat (art. R.631-3 du Code de la consommation). Pour les clients professionnels, compétence est attribuée aux tribunaux compétents du ressort du siège de CARAXES."
+    },
+    {
+      title: "12. Propriété intellectuelle",
+      content: "Les documents produits par CARAXES (rapports, analyses, devis) restent sa propriété. Le client est autorisé à les utiliser pour ses besoins propres mais ne peut les reproduire ou les commercialiser sans accord préalable écrit."
+    },
+    {
+      title: "13. Modifications",
+      content: "CARAXES se réserve le droit de modifier les présentes CGV. Les CGV applicables sont celles en vigueur à la date de la commande."
     }
   ]
 
@@ -172,7 +196,7 @@ export default function CGV() {
           color: c.textTertiary,
           textAlign: 'center',
         }}>
-          Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+          Dernière mise à jour : {'07/06/2026'}
         </div>
       </div>
     </div>
