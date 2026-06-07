@@ -6,7 +6,7 @@ import { supabase } from './supabase'
 // VAPID public key (base64url). Exposed intentionally — it's a public key.
 // Private counterpart lives only in the Supabase Edge Function env.
 export const VAPID_PUBLIC_KEY =
-  'BF402QrdCSf5IuBUV21a5BrmHpo-ZlfSGIYspwLkm7sNt-XLunQ802jKApO7ceydrwLX_tQQtYcjgDb2VLh3Yio'
+  'BDVdpl8EdOzhyEpydGwRIIPLLy5OKs1mmoPLd0JQxIbr3DtqFP0oAwAllNVboRv0DIOWfEVHv-gPIU_ubQaENow'
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
