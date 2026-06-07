@@ -169,3 +169,13 @@ export const STATUSES = [
   { key: 'shipping',    label: 'Expédition',               color: c.teal,          bg: c.tealSoft },
   { key: 'delivered',   label: 'Livré',                    color: c.green,         bg: c.greenSoft },
 ]
+
+
+// ─── STATUS HELPERS (shared) ───
+export function statusKey(status) {
+  if (typeof status === 'number') return STATUSES[status]?.key || STATUSES[0].key
+  return STATUSES.find((s) => s.key === status)?.key || status || STATUSES[0].key
+}
+export function isDelivered(status) {
+  return statusKey(status) === 'delivered' || status === 'livré'
+}

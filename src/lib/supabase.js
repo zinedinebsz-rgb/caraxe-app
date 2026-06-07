@@ -849,9 +849,9 @@ export async function sendAdminMessage({ senderId, senderName, content }) {
   return data
 }
 
-export function subscribeToAdminMessages(callback) {
+export function subscribeToAdminMessages(callback, channelName = 'admin-internal-chat') {
   return supabase
-    .channel('admin-internal-chat')
+    .channel(channelName)
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',

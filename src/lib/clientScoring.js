@@ -23,10 +23,17 @@ const TIER_WEIGHT = {
   elite: 5, prestige: 4, royal: 4, gold: 3, silver: 2, bronze: 1, starter: 1, default: 1,
 }
 
+function parseBudget(b) {
+  if (typeof b === 'number') return b
+  if (!b) return 0
+  const n = parseFloat(String(b).replace(/[^\d.,-]/g, '').replace(',', '.'))
+  return isNaN(n) ? 0 : n
+}
+
 export function computeClientScore(client, orders = []) {
   const clientOrders = orders.filter((o) => o.client_id === client.id)
   const orderCount = clientOrders.length
-  const ltv = clientOrders.reduce((sum, o) => sum + (Number(o.budget) || 0), 0)
+  const ltv = clientOrders.reduce((sum, o) => sum + parseBudget(o.budget), 0)
 
   // Recency — days since most recent order (or since profile creation if none).
   const dates = clientOrders
