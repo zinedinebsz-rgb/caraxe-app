@@ -215,8 +215,8 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
         setTeamUnreadCount(prev => prev + 1)
         playNotificationSound()
       }
-    })
-    return () => { sub?.unsubscribe?.() || supabase.removeChannel(sub) }
+    }, 'admin-chat-badge')
+    return () => { supabase.removeChannel(sub) }
   }, [mainTab, user?.id])
 
   // Reset on tab switch
@@ -246,7 +246,8 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
   const getClientLastOrderDate = useCallback((clientId) => {
     const clientOrders = orders.filter(o => o.client_id === clientId)
     if (clientOrders.length === 0) return null
-    return new Date(clientOrders[0].created_at)
+    const times = clientOrders.map(o => new Date(o.created_at).getTime()).filter(t => !isNaN(t))
+    return times.length ? new Date(Math.max(...times)) : null
   }, [orders])
 
   const activeOrders = useMemo(() => orders.filter(o => o.status !== 6 && o.status !== 'delivered').length, [orders])

@@ -452,7 +452,7 @@ export default function CatalogueTab() {
                 {/* Expanded tier categories */}
                 {expandedTier && (() => {
                   const tier = TIERS.find(t => t.key === expandedTier)
-                  const cats = getEffectiveCatalog(expandedTier).filter(cat => !catalogSearch || cat.name.toLowerCase().includes(catalogSearch.toLowerCase()) || cat.topProducts?.some(p => p.toLowerCase().includes(catalogSearch.toLowerCase())))
+                  const cats = getEffectiveCatalog(expandedTier).filter(cat => !catalogSearch || (cat.name || '').toLowerCase().includes(catalogSearch.toLowerCase()) || cat.topProducts?.some(p => p.toLowerCase().includes(catalogSearch.toLowerCase())))
                   if (!tier) return null
                   return (
                     <div style={{  }}>

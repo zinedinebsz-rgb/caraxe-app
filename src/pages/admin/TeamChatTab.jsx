@@ -32,13 +32,14 @@ export default function TeamChatTab() {
       }).catch(console.error)
     }
     const sub = subscribeToAdminMessages((newMsg) => {
-      setTeamMessages(prev => [...prev, newMsg])
+      // feed channel
+      setTeamMessages(prev => prev.some(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
       if (newMsg.sender_id !== user?.id) {
         playNotificationSound()
       }
       setTimeout(() => teamChatRef.current?.scrollTo(0, teamChatRef.current.scrollHeight), 100)
-    })
-    return () => { sub?.unsubscribe?.() || supabase.removeChannel(sub) }
+    }, 'admin-chat-feed')
+    return () => { supabase.removeChannel(sub) }
   }, [mainTab, user?.id])
 
   // ── Team Chat: send internal message ──
