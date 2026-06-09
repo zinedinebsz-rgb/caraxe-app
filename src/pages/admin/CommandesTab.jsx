@@ -5,6 +5,7 @@ import { VERIFIED_SUPPLIERS } from '../../lib/catalogsByProfile'
 import { TIERS, getTierByKey, DEFAULT_TIER } from '../../lib/clientTiers'
 import StatusPill, { ProgressBar } from '../../components/StatusPill'
 import { useAdmin } from './AdminContext'
+import { sendPushToUser } from '../../lib/push'
 import {
   Icon, icons, fmtDate, DragonEmptyState, ArtDecoDivider,
   focusGlow, inputStyle, labelStyle, MAX_FILE_SIZE,
@@ -424,6 +425,11 @@ export default function CommandesDetail({ selectedId, setMobileShowDetail }) {
           const statusIndex = STATUSES.findIndex(s => s.key === newStatusKey)
           const progress = Math.round((statusIndex / (STATUSES.length - 1)) * 100)
           await updateOrder(selectedId, { status: statusIndex, progress })
+          // Notify client by push (works even app closed) — non-blocking
+          const _ord = orders.find(o => o.id === selectedId)
+          if (_ord?.client_id) {
+            sendPushToUser({ userId: _ord.client_id, title: 'CARAXES — statut mis à jour', body: `Votre commande ${_ord.ref || _ord.id?.slice(0, 8)} : ${statusLabel}`, url: '/', tag: `order-${_ord.id}` }).catch(() => {})
+          }
           // Auto-create shipment when order goes to "shipping" (index 5)
           if (statusIndex === 5) {
             const order = orders.find(o => o.id === selectedId)
