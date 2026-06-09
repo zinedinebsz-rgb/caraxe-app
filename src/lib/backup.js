@@ -51,12 +51,14 @@ export async function exportFullBackupJSON() {
     supabase.from('documents').select('*').in('order_id', orderIds.length ? orderIds : ['_']).order('created_at', { ascending: false }),
   ])
 
+  if (messagesRes.error) console.warn('backup messages error:', messagesRes.error.message)
+  if (documentsRes.error) console.warn('backup documents error:', documentsRes.error.message)
   const backup = {
     _meta: {
       version: '1.0',
       exported_at: new Date().toISOString(),
       exported_by: 'CARAXES Admin Panel',
-      supabase_project: 'nmuqzzedlxilnbpnalsf',
+      supabase_project: (import.meta?.env?.VITE_SUPABASE_URL || '').replace(/^https?:\/\//,'').split('.')[0] || 'caraxe',
     },
     profiles: profiles || [],
     orders: orders || [],
@@ -65,7 +67,7 @@ export async function exportFullBackupJSON() {
     stats: {
       total_clients: (profiles || []).length,
       total_orders: (orders || []).length,
-      active_orders: (orders || []).filter(o => o.status !== 'delivered' && o.status !== 'completed').length,
+      active_orders: (orders || []).filter(o => o.status !== 'delivered' && o.status !== 'completed' && o.status !== 6).length,
       total_messages: (messagesRes.data || []).length,
       total_documents: (documentsRes.data || []).length,
     },
