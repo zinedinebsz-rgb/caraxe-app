@@ -159,6 +159,9 @@ h3 { font-size: var(--text-xl); }
 .rv-blur.hide { opacity: 0; filter: blur(8px); transform: translateY(20px); }
 .rv-blur.vis { opacity: 1; filter: blur(0); transform: translateY(0); }
 
+/* Hero entrance — JS-independent, time-bounded (a11y: reduced-motion respected) */
+@keyframes heroIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
 
 /* ═══════════════════
    NAVBAR
@@ -278,6 +281,7 @@ h3 { font-size: var(--text-xl); }
   opacity: 0; transform: translateY(20px);
   transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
   transition-delay: 0.2s;
+  animation: heroIn 0.6s var(--ease) 0.04s both;
 }
 .hero.loaded .hero-tag { opacity: 1; transform: none; }
 .hero-tag::before {
@@ -293,6 +297,7 @@ h3 { font-size: var(--text-xl); }
   opacity: 0; transform: translateY(20px);
   transition: opacity 1s var(--ease), transform 1s var(--ease);
   transition-delay: 0.35s;
+  animation: heroIn 0.6s var(--ease) 0.12s both;
 }
 .hero.loaded h1 { opacity: 1; transform: none; }
 .hero h1 em {
@@ -309,6 +314,7 @@ h3 { font-size: var(--text-xl); }
   opacity: 0; transform: translateY(20px);
   transition: opacity 1s var(--ease), transform 1s var(--ease);
   transition-delay: 0.5s;
+  animation: heroIn 0.6s var(--ease) 0.24s both;
 }
 .hero.loaded .hero-sub { opacity: 1; transform: none; }
 
@@ -317,6 +323,7 @@ h3 { font-size: var(--text-xl); }
   opacity: 0; transform: translateY(20px);
   transition: opacity 1s var(--ease), transform 1s var(--ease);
   transition-delay: 0.65s;
+  animation: heroIn 0.6s var(--ease) 0.36s both;
 }
 .hero.loaded .hero-actions { opacity: 1; transform: none; }
 
@@ -360,6 +367,7 @@ h3 { font-size: var(--text-xl); }
   opacity: 0; transform: translateY(20px);
   transition: opacity 1s var(--ease), transform 1s var(--ease);
   transition-delay: 0.85s;
+  animation: heroIn 0.6s var(--ease) 0.48s both;
 }
 .hero.loaded .hero-stats { opacity: 1; transform: none; }
 .hero-stat-value {
@@ -406,6 +414,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   opacity: 0;
   transition: opacity 1s var(--ease);
   transition-delay: 1.2s;
+  animation: heroIn 0.6s var(--ease) 0.6s both;
 }
 .hero.loaded .scroll-hint { opacity: 1; }
 .scroll-hint span {
@@ -1413,6 +1422,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 .back-to-top svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-tag, .hero h1, .hero-sub, .hero-actions, .hero-stats, .scroll-hint { animation: none !important; opacity: 1 !important; transform: none !important; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
