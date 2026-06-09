@@ -146,6 +146,8 @@ export const getTierColor = (key) => getTierByKey(key)?.color || c.blue
 export function getTierPrice(category, tierKey) {
   const tier = getTierByKey(tierKey)
   if (!tier || !category) return category?.priceRange || '—'
+  // starter / profil non qualifié : prix non applicable tant que l'onboarding n'est pas fini
+  if (!tier.priceMultiplier) return 'À qualifier'
 
   const match = category.priceRange?.match(/([\d.]+)-([\d.]+)/)
   if (!match) return category.priceRange || '—'
