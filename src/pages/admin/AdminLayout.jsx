@@ -165,7 +165,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
       }}>
         {/* Left: hamburger + breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: sp[2] }}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
+          <button aria-label="Ouvrir/fermer le menu" onClick={() => setSidebarOpen(!sidebarOpen)} style={{
             background: 'none', border: 'none', color: c.text, cursor: 'pointer', padding: sp[1],
             display: 'flex', alignItems: 'center',
           }}>
@@ -180,7 +180,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
         </div>
 
         {/* Center: search bar (hidden on mobile — use hamburger menu) */}
-        <button onClick={() => setShowCommandBar(true)} style={{
+        <button aria-label="Recherche" onClick={() => setShowCommandBar(true)} style={{
           display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: sp[2], padding: `6px ${sp[3]}`,
           background: c.bgInput, border: 'none', borderBottom: `1px solid ${c.border}`,
           cursor: 'pointer', transition: `all 0.25s ${ease.expo}`, minWidth: 220,
@@ -205,7 +205,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
           </div>
           {/* Notification bell */}
           <div style={{ position: 'relative' }}>
-            <button onClick={() => { requestNotifPermission(); setShowNotifPanel(!showNotifPanel); if (!showNotifPanel) markAllRead() }} style={{
+            <button aria-label="Notifications" onClick={() => { requestNotifPermission(); setShowNotifPanel(!showNotifPanel); if (!showNotifPanel) markAllRead() }} style={{
               background: 'transparent', border: `1px solid ${unreadNotifs > 0 ? c.borderGold : c.borderSubtle}`,
               width: 34, height: 34, display: 'flex', borderRadius: radius.md,
               alignItems: 'center', justifyContent: 'center', color: unreadNotifs > 0 ? c.gold : c.textTertiary, cursor: 'pointer',
@@ -320,7 +320,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
             }}>{(profile?.full_name || 'A')[0].toUpperCase()}</div>
           </div>
           {/* Logout */}
-          <button onClick={onSignOut} style={{
+          <button aria-label="Déconnexion" onClick={onSignOut} style={{
             background: 'transparent', border: `1px solid ${c.border}`,
             width: 32, height: 32, display: 'flex',
             alignItems: 'center', justifyContent: 'center', color: c.textTertiary, cursor: 'pointer',
@@ -427,7 +427,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
               </div>
             )}
             {/* Collapse button */}
-            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{
+            <button aria-label="Réduire le menu" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{
               position: 'absolute', top: sidebarCollapsed ? 12 : 12, right: sidebarCollapsed ? 'auto' : 8,
               left: sidebarCollapsed ? '50%' : 'auto',
               transform: sidebarCollapsed ? 'translateX(-50%)' : 'none',
@@ -446,7 +446,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
           {/* Nav items — Grouped */}
           <nav className="admin-sidebar-nav" style={{ display: 'flex', flexDirection: 'column', flex: 0, gap: '0px', padding: sidebarCollapsed ? `${sp[2]} 4px` : `${sp[2]}`, position: 'relative', zIndex: 1 }}>
             {sidebarCollapsed && (
-              <button onClick={() => setSidebarCollapsed(false)} style={{
+              <button aria-label="Déployer le menu" onClick={() => setSidebarCollapsed(false)} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0',
                 background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', marginBottom: 4,
               }}
@@ -588,7 +588,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
               onMouseLeave={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.color = c.textSecondary }}
               ><Icon d={icons.download} size={10} color="currentColor" /> CSV</button>
             </div>
-            <button onClick={onSignOut} style={{
+            <button aria-label="Déconnexion" onClick={onSignOut} style={{
               width: '100%', padding: `6px ${sp[2]}`,
               background: 'transparent', border: `1px solid ${c.border}`,
               color: c.textTertiary, fontSize: '9px', fontFamily: f.mono, cursor: 'pointer',

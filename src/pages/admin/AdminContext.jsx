@@ -30,6 +30,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
   // Stable refs to avoid re-render loops (toast/t are not referentially stable)
   const toastRef = useRef(toast)
   const tRef = useRef(t)
+  const allProfilesRef = useRef([])
   useEffect(() => { toastRef.current = toast }, [toast])
   useEffect(() => { tRef.current = t }, [t])
 
@@ -67,6 +68,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
   const [teamUnreadCount, setTeamUnreadCount] = useState(0)
 
   const debounceRef = useRef(null)
+  useEffect(() => { allProfilesRef.current = allProfiles }, [allProfiles])
 
   const loadAll = useCallback(async () => {
     try {
@@ -141,7 +143,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
 
   // ── NOTIFICATION SYSTEM ──
   const addNotification = useCallback((type, title, detail) => {
-    const notif = { id: Date.now(), type, title, detail, time: new Date(), read: false }
+    const notif = { id: (globalThis.crypto?.randomUUID?.() || `n_${Date.now()}_${Math.random().toString(36).slice(2)}`), type, title, detail, time: new Date(), read: false }
     setNotifications(prev => [notif, ...prev].slice(0, 50))
     playNotificationSound()
     if (Notification?.permission === 'granted') {
@@ -168,18 +170,18 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
 
   useEffect(() => {
     const ch = subscribeToNewOrders((newOrder) => {
-      const cl = allProfiles.find(x => x.id === newOrder.client_id)
+      const cl = allProfilesRef.current.find(x => x.id === newOrder.client_id)
       const name = cl ? (cl.full_name || cl.email) : 'Client'
       toast.success(tToast('newOrderNotif', { name }))
       addNotification('order', 'Nouvelle commande', `${newOrder.product || 'Produit'} — ${name}`)
       debouncedLoadAll()
     })
     return () => { supabase.removeChannel(ch) }
-  }, [addNotification, debouncedLoadAll, allProfiles])
+  }, [addNotification, debouncedLoadAll])
 
   useEffect(() => {
     const ch = subscribeToNewEcomServices((newService) => {
-      const cl = allProfiles.find(x => x.id === newService.client_id)
+      const cl = allProfilesRef.current.find(x => x.id === newService.client_id)
       const name = cl ? (cl.full_name || cl.email) : 'Client'
       const typeLabel = newService.service_type === 'creation' ? 'Création boutique' : newService.service_type === 'formation' ? 'Formation' : newService.service_type
       toast.success(tToast('newEcomNotif', { type: typeLabel }))
@@ -187,7 +189,7 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
       debouncedLoadAll()
     })
     return () => { supabase.removeChannel(ch) }
-  }, [addNotification, debouncedLoadAll, allProfiles])
+  }, [addNotification, debouncedLoadAll])
 
   useEffect(() => {
     const ch = subscribeToNewLeads((payload) => {
