@@ -292,6 +292,8 @@ export default function Onboarding({ user, profile, onComplete }) {
                 const sel = selectedTier === tier.key
                 return (
                   <div key={tier.key}
+                    role="button" tabIndex={0} aria-pressed={sel}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedTier(tier.key); setSelectedCategories([]) } }}
                     onClick={() => { setSelectedTier(tier.key); setSelectedCategories([]) }}
                     style={{
                       padding:0, background: sel ? c.bgElevated : gradient.card,
@@ -430,6 +432,8 @@ export default function Onboarding({ user, profile, onComplete }) {
                 const sel = selectedCategories.includes(cat.id)
                 return (
                   <div key={cat.id}
+                    role="button" tabIndex={0} aria-pressed={sel}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCategory(cat.id) } }}
                     onClick={() => toggleCategory(cat.id)}
                     style={{
                       padding:16, position:'relative',
