@@ -917,3 +917,15 @@ export function playNotificationSound() {
     // Silent fail — audio not supported
   }
 }
+
+
+// ─── AUDIT LOG (admin, lecture seule via RLS) ───
+export async function getAuditLog(limit = 100) {
+  const { data, error } = await supabase
+    .from('audit_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) { console.error('getAuditLog error:', error); return [] }
+  return data || []
+}
