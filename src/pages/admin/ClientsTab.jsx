@@ -718,8 +718,9 @@ export default function ClientsTab() {
                   const { error } = await resetPassword(clientPasswordModal.email)
                   if (error) throw error
                   toast.success(tToast('resetEmailSentTo', { email: clientPasswordModal.email }))
-                  setPasswordAction('done')
-                  setLastSetPassword('')
+                  setClientPasswordModal(null)
+                  setPasswordAction(null)
+                  setNewTempPassword('')
                 } catch (err) {
                   toast.error(tToast('genericError', { error: err.message || 'Inconnue' }))
                 } finally { setPasswordLoading(false) }
@@ -802,7 +803,7 @@ export default function ClientsTab() {
                   await updateProfile(clientPasswordModal.id, {
                     onboarding_done: false,
                     client_tier: null,
-                    company_name: null,
+                    company: null,
                     phone: null,
                     city: null,
                   })

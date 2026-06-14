@@ -87,8 +87,12 @@ export function LeadsPipelineTab() {
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PIPELINE_STAGES.filter(s => !['churned'].includes(s.key)).length}, minmax(200px, 1fr))`, gap: sp[2], overflowX: 'auto', paddingBottom: sp[2] }}>
       {PIPELINE_STAGES.filter(s => s.key !== 'churned').map((stage, stageIdx) => {
         const stageLeads = getStageLeads(stage.key)
-        const nextStage = PIPELINE_STAGES[stageIdx + 1]
-        const prevStage = stageIdx > 0 ? PIPELINE_STAGES[stageIdx - 1] : null
+        const FLOW = ['form_submitted', 'payment_pending', 'paid', 'account_created', 'onboarding', 'active']
+        const fi = FLOW.indexOf(stage.key)
+        const nextKey = fi >= 0 ? (FLOW[fi + 1] || null) : (stage.key === 'payment_failed' ? 'payment_pending' : null)
+        const prevKey = fi > 0 ? FLOW[fi - 1] : null
+        const nextStage = nextKey ? PIPELINE_STAGES.find(s => s.key === nextKey) : null
+        const prevStage = prevKey ? PIPELINE_STAGES.find(s => s.key === prevKey) : null
         return (
           <div key={stage.key} style={{ background: c.bgCard, border: `1px solid ${c.borderSubtle}`, minHeight: 300, display: 'flex', flexDirection: 'column', borderRadius: radius.sm, overflow: 'hidden' }}>
             {/* Stage header */}
@@ -437,7 +441,7 @@ export function OrdersPipelineTab() {
               setKanbanDrag(null)
               if (!data || data.fromIdx === statusIdx) return
               try {
-                await updateOrder(data.orderId, { status: statusIdx })
+                await updateOrder(data.orderId, { status: statusIdx, progress: Math.round((statusIdx / (STATUSES.length - 1)) * 100) })
                 // Fire-and-forget push notification to the order's client.
                 try {
                   const draggedOrder = orders.find(o => o.id === data.orderId)
@@ -622,7 +626,7 @@ export function OrdersPipelineTab() {
                       {prevStatus && (
                         <button onClick={async () => {
                           try {
-                            await updateOrder(order.id, { status: statusIdx - 1 })
+                            await updateOrder(order.id, { status: statusIdx - 1, progress: Math.round(((statusIdx - 1) / (STATUSES.length - 1)) * 100) })
                             if (order.client_id) {
                               sendPushToUser({ userId: order.client_id, title: 'CARAXES — statut mis à jour', body: `Votre commande ${order.ref || order.id?.slice(0, 8)} : ${prevStatus.label}`, url: '/', tag: `order-${order.id}` }).catch(() => {})
                             }
@@ -635,7 +639,7 @@ export function OrdersPipelineTab() {
                       {nextStatus && (
                         <button onClick={async () => {
                           try {
-                            await updateOrder(order.id, { status: statusIdx + 1 })
+                            await updateOrder(order.id, { status: statusIdx + 1, progress: Math.round(((statusIdx + 1) / (STATUSES.length - 1)) * 100) })
                             if (order.client_id) {
                               sendPushToUser({ userId: order.client_id, title: 'CARAXES — statut mis à jour', body: `Votre commande ${order.ref || order.id?.slice(0, 8)} : ${nextStatus.label}`, url: '/', tag: `order-${order.id}` }).catch(() => {})
                             }

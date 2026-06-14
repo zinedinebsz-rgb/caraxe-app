@@ -56,7 +56,7 @@ export default function OverviewTab() {
   const logisticsClients = allProfiles.filter(p => (p.services_enabled || []).includes('logistics'))
   const grossistes = allProfiles.filter(p => p.client_tier === 'grossiste')
   const detaillants = allProfiles.filter(p => p.client_tier === 'detaillant')
-  const proClients = allProfiles.filter(p => p.client_tier === 'pro' || p.client_tier === 'btp')
+  const proClients = allProfiles.filter(p => p.client_tier === 'pro')
   const starterClients = allProfiles.filter(p => p.client_tier === 'starter')
   const thisMonth = orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth() && new Date(o.created_at).getFullYear() === new Date().getFullYear())
   const stockValue = inventory.reduce((acc, item) => acc + ((item.unit_price || 0) * (item.quantity || 0)), 0)
@@ -150,7 +150,7 @@ export default function OverviewTab() {
 
       {/* ── ACTIONS RAPIDES — Compact Command Style ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], marginBottom: sp[4] }}>
-        <button onClick={() => { /* setShowCommandBar handled by parent */ }} style={{
+        <button onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))} style={{
           padding: `10px ${sp[3]}`, background: c.bgCard, border: `1px solid ${c.borderSubtle}`,
           color: c.textTertiary, fontSize: '12px', fontFamily: f.body,
           cursor: 'pointer', display: 'flex', alignItems: 'center', gap: sp[2],
@@ -185,7 +185,7 @@ export default function OverviewTab() {
 
       {/* ── STATS PRINCIPALES — Dual Tier + Sparklines ── */}
       {(() => {
-          const lastMonth = orders.filter(o => { const d = new Date(o.created_at); const now = new Date(); return d.getMonth() === (now.getMonth() - 1 + 12) % 12 })
+          const lastMonth = orders.filter(o => { const d = new Date(o.created_at); const lm = new Date(); lm.setMonth(lm.getMonth() - 1); return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear() })
           const trendClients = allProfiles.filter(p => { const d = new Date(p.created_at); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }).length
           const primaryStats = [
             { label: 'Clients', value: allProfiles.length, color: c.gold, sub: `${grossistes.length} grossistes · ${detaillants.length} détaillants · ${ecomClients.length} e-com${proClients.length > 0 ? ` · ${proClients.length} pro/BTP` : ''}${starterClients.length > 0 ? ` · ${starterClients.length} starter` : ''}`, click: () => setMainTab('clients'), trend: trendClients > 0 ? `+${trendClients}` : null, trendUp: true, sparkline: [3, 5, 8, 6, 10, 12, allProfiles.length] },

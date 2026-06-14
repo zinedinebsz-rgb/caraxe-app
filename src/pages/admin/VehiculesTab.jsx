@@ -125,7 +125,7 @@ export default function VehiculesTab() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: sp[2], marginBottom: sp[4] }}>
         {[
           { label: 'Demandes totales', value: vehicleRequests.length, color: c.red },
-          { label: 'En cours', value: vehicleRequests.filter(v => v.status !== 'delivered' && v.status !== 'completed' && v.status !== 'cancelled').length, color: c.amber },
+          { label: 'En cours', value: vehicleRequests.filter(v => v.status !== 6 && v.status !== 'delivered' && v.status !== 'completed' && v.status !== 'cancelled').length, color: c.amber },
           { label: 'Budget total', value: fmtMoney(vehicleRequests.reduce((sum, v) => sum + (parseFloat(v.budget) || 0), 0)), color: c.gold },
           { label: 'Clients', value: [...new Set(vehicleRequests.map(v => v.client_id))].length, color: c.teal },
         ].map((stat, i) => (

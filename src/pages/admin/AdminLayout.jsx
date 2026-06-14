@@ -1,5 +1,5 @@
 /* ── CARAXES Admin — Layout (Sidebar + Header + Command Bar) ── */
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAdmin } from './AdminContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { Icon, icons, DragonMark, ArtDecoDivider, SkeletonCard, SidebarTooltip, MiniSparkline, keyframes, scrollbarCSS } from './AdminShared'
@@ -39,6 +39,11 @@ export default function AdminLayout({ children, commandesSidebar }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [hoveredTab, setHoveredTab] = useState(null)
   const [showCommandBar, setShowCommandBar] = useState(false)
+  useEffect(() => {
+    const onKey = (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setShowCommandBar(true) } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const [cmdSearch, setCmdSearch] = useState('')
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 

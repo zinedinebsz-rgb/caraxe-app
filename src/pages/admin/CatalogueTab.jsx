@@ -511,7 +511,7 @@ export default function CatalogueTab() {
                               <div style={{ padding: `${sp[2]} ${sp[3]}` }}>
                                 <div style={{ fontFamily: f.mono, fontSize: '8px', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Produits phares</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                  {cat.topProducts.map((tp, tpi) => (
+                                  {(cat.topProducts || []).map((tp, tpi) => (
                                     <span key={tpi} style={{
                                       padding: '2px 8px', background: c.bgElevated, border: `1px solid ${c.borderSubtle}`,
                                       fontSize: '10px', color: c.textSecondary, fontFamily: f.body,
