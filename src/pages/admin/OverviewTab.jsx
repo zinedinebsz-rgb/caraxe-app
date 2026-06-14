@@ -83,7 +83,7 @@ export default function OverviewTab() {
           <div style={{ display: 'flex', gap: sp[1] }}>
           <button onClick={async () => {
             toast.success(t('toast.exportJSONInProgress'))
-            try { const s = await exportFullBackupJSON(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices); toast.success(tToast('exportJSONSuccess', { clients: s.total_clients, orders: s.total_orders })) }
+            try { const s = await exportFullBackupJSON(); toast.success(tToast('exportJSONSuccess', { clients: s.total_clients, orders: s.total_orders })) }
             catch (e) { toast.error(t('toast.exportJSONError')) }
           }} style={{
             padding: `8px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.gold}`,
@@ -98,7 +98,7 @@ export default function OverviewTab() {
           </button>
           <button onClick={async () => {
             toast.success(t('toast.exportCSVInProgress'))
-            try { const s = await exportBackupCSVs(orders, clients, allProfiles, products, shipments, inventory, categories, shops, ecomServices); toast.success(tToast('exportCSVSuccess', { clients: s.total_clients, orders: s.total_orders })) }
+            try { const s = await exportBackupCSVs(); toast.success(tToast('exportCSVSuccess', { clients: s.total_clients, orders: s.total_orders })) }
             catch (e) { toast.error(t('toast.exportCSVError')) }
           }} style={{
             padding: `8px ${sp[2]}`, background: 'transparent', border: `1px solid ${c.border}`,

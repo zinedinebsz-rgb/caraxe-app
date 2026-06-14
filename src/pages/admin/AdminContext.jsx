@@ -262,8 +262,8 @@ export function AdminProvider({ user, profile, onSignOut, children }) {
     return times.length ? new Date(Math.max(...times)) : null
   }, [orders])
 
-  const activeOrders = useMemo(() => orders.filter(o => o.status !== 6 && o.status !== 'delivered').length, [orders])
-  const deliveredOrders = useMemo(() => orders.filter(o => o.status === 6 || o.status === 'delivered' || o.status === 'livré').length, [orders])
+  const activeOrders = useMemo(() => orders.filter(o => o.status !== 6 && o.status !== 'delivered' && o.status !== 'livré' && o.status !== 'completed').length, [orders])
+  const deliveredOrders = useMemo(() => orders.filter(o => o.status === 6 || o.status === 'delivered' || o.status === 'livré' || o.status === 'completed').length, [orders])
 
   const value = useMemo(() => ({
     // Props
