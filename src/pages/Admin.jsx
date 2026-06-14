@@ -26,6 +26,7 @@ const LeadsPipelineTab = lazy(() => import('./admin/PipelineTab').then(m => ({ d
 const OrdersPipelineTab = lazy(() => import('./admin/PipelineTab').then(m => ({ default: m.OrdersPipelineTab })))
 const ClientsTab = lazy(() => import('./admin/ClientsTab'))
 const TeamChatTab = lazy(() => import('./admin/TeamChatTab'))
+const AuditLogTab = lazy(() => import('./admin/AuditLogTab'))
 
 // Minimal loading fallback
 const TabLoader = () => (
@@ -60,6 +61,7 @@ function AdminContent() {
         {mainTab === 'orders_pipeline' && <ErrorBoundary name="OrdersPipeline"><OrdersPipelineTab /></ErrorBoundary>}
         {mainTab === 'clients' && <ErrorBoundary name="Clients"><ClientsTab /></ErrorBoundary>}
         {mainTab === 'team_chat' && <ErrorBoundary name="TeamChat"><TeamChatTab /></ErrorBoundary>}
+        {mainTab === 'audit' && <ErrorBoundary name="Audit"><AuditLogTab /></ErrorBoundary>}
       </Suspense>
 
       {/* Global confirm dialog */}
