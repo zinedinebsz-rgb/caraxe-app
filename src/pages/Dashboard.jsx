@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { c, f, size, sp, shadow, ease, transition, radius, gradient, glass, STATUSES, isDelivered } from '../lib/theme'
+
+const SHIP_STATUSES = ['production', 'QC', 'douanes', 'transit', 'livré']
+const SHIP_LABELS = { production: 'Production', QC: 'Contrôle qualité', douanes: 'Douanes', transit: 'En transit', 'livré': 'Livré' }
+const shipStatusKey = (s) => (typeof s === 'number' ? (SHIP_STATUSES[s] || 'production') : (s || 'production'))
 import {
   getOrders, createOrder, getMessages, sendMessage,
   markMessagesRead, getDocuments, getDocumentUrl,
@@ -536,7 +540,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
           if (n && o && n.status !== o.status && notificationPermission() === 'granted') {
             sendLocalNotification({
               title: 'CARAXES — statut mis à jour',
-              body: `Commande ${n.reference || n.id?.slice(0, 8) || ''} : ${(typeof n.status === 'number' ? STATUSES[n.status]?.label : n.status) || n.status}`,
+              body: `Commande ${n.ref || n.id?.slice(0, 8) || ''} : ${(typeof n.status === 'number' ? STATUSES[n.status]?.label : n.status) || n.status}`,
               url: '/',
               tag: `order-${n.id}`,
             })
@@ -547,19 +551,19 @@ export default function Dashboard({ user, profile, onSignOut }) {
     })
     const unsubShipments = subscribeToShipments((payload) => {
       const row = payload?.new || payload?.old
-      if (row && row.user_id === user.id) {
+      if (row && row.client_id === user.id) {
         getShipments(user.id).then((list) => setShipments(list || [])).catch(() => {})
       }
     })
     const unsubInventory = subscribeToInventory((payload) => {
       const row = payload?.new || payload?.old
-      if (row && row.user_id === user.id) {
+      if (row && row.client_id === user.id) {
         getInventory(user.id).then((list) => setInventory(list || [])).catch(() => {})
       }
     })
     const unsubProducts = subscribeToProducts((payload) => {
       const row = payload?.new || payload?.old
-      if (row && row.user_id === user.id) {
+      if (row) {
         getActiveProducts(user.id).then((list) => setDynamicProducts(list || [])).catch(() => {})
       }
     })
@@ -1098,7 +1102,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: sp[2] }}>
                     {ecomServices.slice(0, 3).map((svc, idx) => {
                       const svcType = SERVICE_TYPES[svc.service_type] || SERVICE_TYPES.creation
-                      const currentStep = svcType.steps.findIndex(s => s.key === svc.status) || 0
+                      const currentStep = Math.max(0, svcType.steps.findIndex(s => s.key === svc.status))
                       const progress = Math.round(((currentStep + 1) / svcType.steps.length) * 100)
                       return (
                         <AnimCard key={svc.id} delay={idx * 70}>
@@ -1664,7 +1668,9 @@ export default function Dashboard({ user, profile, onSignOut }) {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: sp[3] }}>
                   {shipments.map((ship, idx) => {
-                    const statusObj = (typeof ship.status === 'number' ? STATUSES[ship.status] : STATUSES.find(s => s.key === ship.status)) || STATUSES[0]
+                    const shipKey = shipStatusKey(ship.status)
+                    const shipColorMap = { production: c.red, QC: c.amber, douanes: c.purple, transit: c.teal, 'livré': c.green }
+                    const statusObj = { color: shipColorMap[shipKey] || c.teal, label: SHIP_LABELS[shipKey] || shipKey }
                     return (
                       <AnimCard key={ship.id} delay={idx * 50}>
                         <GlassCard goldTop={false} style={{ borderTop: `2px solid ${statusObj.color}` }}>
@@ -1674,7 +1680,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
                             </div>
                             <span style={{ fontSize: size.xs, color: c.textTertiary }}>{fmtDate(ship.created_at)}</span>
                           </div>
-                          <StatusPill status={ship.status} />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', fontSize: size.xs, fontFamily: f.mono, fontWeight: 500, letterSpacing: '0.04em', background: statusObj.color + '18', color: statusObj.color, border: `1px solid ${statusObj.color}33`, whiteSpace: 'nowrap' }}><span style={{ width: 5, height: 5, background: statusObj.color, transform: 'rotate(45deg)', flexShrink: 0 }} />{statusObj.label}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: sp[2], margin: `${sp[2]} 0`, fontSize: size.sm, color: c.textSecondary }}>
                             <span>{ship.origin || 'Yiwu'}</span>
                             <span style={{ color: c.goldDim }}>\u2192</span>
@@ -1701,7 +1707,7 @@ export default function Dashboard({ user, profile, onSignOut }) {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: sp[2] }}>
                   {inventory.map((item, idx) => {
-                    const isLow = item.quantity < (item.min_stock || 10)
+                    const isLow = item.quantity < (item.alert_threshold ?? 10)
                     return (
                       <AnimCard key={item.id} delay={idx * 40}>
                         <GlassCard goldTop={false} hoverLift={true} style={{

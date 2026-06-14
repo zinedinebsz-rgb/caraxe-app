@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { c, f, size, sp, shadow, ease, radius, gradient, transition } from '../lib/theme'
 import { TIERS, getTierByKey, DEFAULT_TIER } from '../lib/clientTiers'
 import { updateProfile, supabase } from '../lib/supabase'
@@ -79,11 +79,11 @@ export default function Settings({ user, profile, onBack, onUpdate }) {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [notifs, setNotifs] = useState({
-    orders: true,
-    messages: true,
-    promos: false,
+  const [notifs, setNotifs] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem('caraxes_notifs') || 'null'); if (saved && typeof saved === 'object') return saved } catch {}
+    return { orders: true, messages: true, promos: false }
   })
+  useEffect(() => { try { localStorage.setItem('caraxes_notifs', JSON.stringify(notifs)) } catch {} }, [notifs])
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))

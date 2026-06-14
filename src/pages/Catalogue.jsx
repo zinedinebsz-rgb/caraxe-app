@@ -134,7 +134,7 @@ export default function Catalogue() {
             Choisir un profil
           </div>
           <div className="cat-tabs">
-            {TIERS.map((t) => {
+            {TIERS.filter((t) => t.key !== 'starter').map((t) => {
               const sel = activeTier === t.key
               return (
                 <button key={t.key} onClick={() => setActiveTier(t.key)}
