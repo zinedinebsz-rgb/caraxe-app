@@ -67,6 +67,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
     { key: 'orders_pipeline', label: t('admin.pipelineOrders') || 'Pipeline Commandes', icon: '📦', color: c.teal },
     { key: 'clients', label: t('nav.clients'), icon: icons.users },
     { key: 'team_chat', label: 'Chat Équipe', icon: icons.msg, color: c.gold },
+    { key: 'audit', label: "Journal d'audit", icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', color: c.textSecondary },
   ]
 
   /* ── Sidebar grouped sections ── */
@@ -76,6 +77,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
     { label: 'COMMERCE', items: ['catalogue', 'boutiques', 'services'] },
     { label: 'CRM', items: ['clients', 'pipeline', 'orders_pipeline'] },
     { label: 'ÉQUIPE', items: ['team_chat', 'formation'] },
+    { label: 'SÉCURITÉ', items: ['audit'] },
   ]
 
   /* ── LOADING — Skeleton Layout ── */
