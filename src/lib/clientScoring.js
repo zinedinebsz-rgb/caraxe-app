@@ -20,7 +20,7 @@
  */
 
 const TIER_WEIGHT = {
-  elite: 5, prestige: 4, royal: 4, gold: 3, silver: 2, bronze: 1, starter: 1, default: 1,
+  grossiste: 5, pro: 4, ecommerce: 3, detaillant: 2, starter: 1, default: 1,
 }
 
 function parseBudget(b) {
