@@ -1434,6 +1434,71 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   }
 }
 
+
+/* Simulateur v3 (curseurs, recalc live) */
+.calc2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s6);max-width:920px;margin:var(--s8) auto 0;align-items:center}
+.calc2-controls{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:var(--s6)}
+.calc2-field{margin-bottom:var(--s6)}.calc2-field:last-child{margin-bottom:0}
+.calc2-field label{display:flex;justify-content:space-between;align-items:center;font-size:var(--text-sm);color:var(--text-mid);margin-bottom:var(--s3);font-family:var(--mono);letter-spacing:.04em}
+.calc2-field label b{color:var(--gold);font-size:var(--text-base);font-family:var(--mono)}
+.calc2-chips{display:flex;flex-wrap:wrap;gap:8px}
+.calc2-chip{font-size:var(--text-xs);padding:7px 13px;border:1px solid var(--border);background:transparent;color:var(--text-mid);cursor:pointer;border-radius:3px;transition:all .2s var(--ease);font-family:var(--sans)}
+.calc2-chip:hover{border-color:var(--gold-dim);color:var(--text)}
+.calc2-chip.on{background:var(--gold-glow);border-color:var(--gold);color:var(--gold)}
+.calc2 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:var(--border-light);outline:none}
+.calc2 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 0 5px var(--gold-glow);transition:transform .15s}
+.calc2 input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+.calc2 input[type=range]::-moz-range-thumb{width:20px;height:20px;border:none;border-radius:50%;background:var(--gold);cursor:pointer}
+.calc2-scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:var(--text-xs);color:var(--text-dim);margin-top:8px}
+.calc2-result{background:linear-gradient(160deg,var(--surface),var(--bg));border:1px solid var(--gold-line);border-radius:4px;padding:var(--s6);text-align:center}
+.calc2-rl{font-family:var(--mono);font-size:var(--text-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.calc2-big{font-family:var(--serif);font-weight:600;font-size:clamp(2.5rem,5vw,3.75rem);line-height:1;margin:var(--s2) 0;color:var(--gold)}
+.calc2-cmp{display:flex;justify-content:space-around;border-top:1px solid var(--border);padding-top:var(--s4);margin-top:var(--s4)}
+.calc2-cl{display:block;font-family:var(--mono);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)}
+.calc2-cv{display:block;font-family:var(--serif);font-size:var(--text-lg);margin-top:4px}
+.calc2-cv.solo{color:var(--text-mid);text-decoration:line-through;text-decoration-color:var(--red)}
+.calc2-cv.crx{color:var(--emerald)}
+.calc2-detail{font-family:var(--mono);font-size:var(--text-xs);color:var(--text-dim);margin-top:var(--s3)}
+.calc2-wa{display:inline-block;margin-top:var(--s4);color:var(--emerald);font-size:var(--text-sm);text-decoration:underline;text-underline-offset:3px}
+@media(max-width:760px){.calc2{grid-template-columns:1fr}}
+
+/* Mockup t\u00e9l\u00e9phone \u2014 app c\u00f4t\u00e9 client */
+.phone-wrap{display:grid;grid-template-columns:1fr auto;gap:clamp(2rem,5vw,4.5rem);align-items:center;max-width:1000px;margin:0 auto}
+.phone-copy{max-width:46ch}
+.phone-feats{list-style:none;margin:var(--s5) 0 0;padding:0}
+.phone-feats li{display:flex;gap:10px;align-items:flex-start;font-size:var(--text-sm);color:var(--text-mid);margin-bottom:var(--s3);line-height:1.5}
+.phone-feats .pf-ic{color:var(--gold);font-size:8px;margin-top:6px;flex-shrink:0}
+.phone{position:relative;width:300px;flex-shrink:0;background:#080604;border:9px solid #1c1812;border-radius:42px;padding:12px 12px 16px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px var(--gold-line);animation:phoneFloat 7s ease-in-out infinite}
+.phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:96px;height:18px;background:#1c1812;border-radius:0 0 12px 12px;z-index:3}
+.phone-screen{background:linear-gradient(180deg,var(--bg-warm),var(--bg));border-radius:30px;padding:22px 16px 18px;overflow:hidden;min-height:520px}
+.ps-top{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.ps-brand{display:flex;align-items:center;gap:7px;font-family:var(--serif);font-weight:600;letter-spacing:.14em;font-size:13px;color:var(--text)}
+.ps-mark{width:16px;height:16px;background:var(--red);transform:rotate(45deg);border-radius:3px;display:inline-block}
+.ps-av{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-dim));display:grid;place-items:center;color:#1a140a;font-weight:600;font-size:12px;font-family:var(--sans)}
+.ps-hello{font-family:var(--serif);font-size:22px;font-weight:500;margin:18px 0 12px;color:var(--text)}
+.ps-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px}
+.ps-row{display:flex;justify-content:space-between;align-items:center}
+.ps-mono{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-mid)}
+.ps-pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:20px;background:var(--emerald-glow);color:var(--emerald);border:1px solid var(--emerald-line)}
+.ps-dot{width:5px;height:5px;border-radius:50%;background:var(--emerald);animation:psPulse 1.8s ease-in-out infinite}
+.ps-ref{font-family:var(--mono);font-size:10px;color:var(--gold);margin:9px 0 2px}
+.ps-stepper{display:flex;align-items:center;margin-top:10px}
+.ps-stepper .psn{width:8px;height:8px;border-radius:50%;background:var(--border-light);flex-shrink:0}
+.ps-stepper .psn.done{background:var(--gold)}
+.ps-stepper .psn.act{background:var(--gold);box-shadow:0 0 0 3px var(--gold-glow);animation:psPulse 1.8s ease-in-out infinite}
+.ps-stepper .psl{flex:1;height:2px;background:var(--border-light)}
+.ps-stepper .psl.done{background:var(--gold)}
+.ps-meta{display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:12px;padding-top:10px}
+.ps-meta div{display:flex;flex-direction:column;font-size:11px;color:var(--text)}
+.ps-meta b{font-family:var(--mono);font-size:8px;color:var(--text-dim);font-weight:400;letter-spacing:.06em;margin-bottom:2px}
+.ps-mini{display:flex;gap:8px;margin-top:12px}
+.ps-mini .psm{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:9px;text-align:center}
+.ps-mini .psm span{display:block;font-family:var(--mono);font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em}
+.ps-mini .psm b{display:block;font-family:var(--serif);font-size:18px;color:var(--text);margin-top:3px}
+@keyframes phoneFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes psPulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media(max-width:820px){.phone-wrap{grid-template-columns:1fr;justify-items:center;text-align:center}.phone-copy{max-width:52ch}.phone-feats li{text-align:left}.section-title{text-align:center!important}}
+@media(prefers-reduced-motion:reduce){.phone{animation:none}}
 </style>
 <script type="application/ld+json">
 {
@@ -1763,20 +1828,47 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 
 <!-- SHOWREEL -->
 <section class="showreel section" id="showreel">
-  <div class="w" style="text-align:center">
-    <div class="section-tag rv" style="justify-content:center">&#9670; Inspections terrain</div>
-    <h2 class="section-title rv rv-d1" style="text-align:center">Prenez le contr&ocirc;le de vos importations <em>d&egrave;s aujourd&rsquo;hui</em></h2>
-    <p class="section-sub rv rv-d2" style="margin-inline:auto">D&eacute;couvrez nos inspections usine en vid&eacute;o. Chaque lot est contr&ocirc;l&eacute; avant exp&eacute;dition.</p>
-    <div class="showreel-frame rv-scale rv-d3">
-      <video id="showreelVideo" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;z-index:1;">
-        <source src="https://media.pixverse.ai/pixverse%2Fmp4%2Fmedia%2Fweb%2Fori%2Ff8e42dd5-fdd0-448e-a5e9-91e03303e2d5_seed1054894379.mp4" type="video/mp4">
-      </video>
-      <div class="showreel-inner" id="playVideo" role="button" tabindex="0" aria-label="Lancer la vid&eacute;o" style="position:relative;z-index:2;background:oklch(0% 0 0 / 0.35);">
-        <div class="play-btn">
-          <div class="play-arrow"></div>
+  <div class="w">
+    <div class="phone-wrap rv">
+      <div class="phone-copy">
+        <div class="section-tag" style="justify-content:flex-start">&#9670; Espace client</div>
+        <h2 class="section-title" style="text-align:left">Votre commande, <em>suivie en temps r&eacute;el</em></h2>
+        <p class="section-sub" style="margin-inline:0">Depuis votre t&eacute;l&eacute;phone&nbsp;: o&ugrave; en est votre conteneur, le QC film&eacute;, l&rsquo;ETA, la douane. Plus jamais dans le flou.</p>
+        <ul class="phone-feats">
+          <li><span class="pf-ic">&#9670;</span> Suivi live de chaque &eacute;tape, du sourcing &agrave; la livraison</li>
+          <li><span class="pf-ic">&#9670;</span> Messagerie directe avec votre agent en Chine</li>
+          <li><span class="pf-ic">&#9670;</span> Documents, factures &amp; QC film&eacute; centralis&eacute;s</li>
+          <li><span class="pf-ic">&#9670;</span> Notifications push &mdash; m&ecirc;me app ferm&eacute;e</li>
+        </ul>
+        <a href="https://app.caraxes.fr" class="btn-ghost" style="margin-top:var(--s4);display:inline-block">Acc&eacute;der &agrave; mon espace &rarr;</a>
+      </div>
+      <div class="phone rv-scale rv-d2">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="ps-top"><span class="ps-brand"><i class="ps-mark"></i>CARAXES</span><span class="ps-av">N</span></div>
+          <div class="ps-hello">Bonjour, Nour</div>
+          <div class="ps-card">
+            <div class="ps-row"><span class="ps-mono">Suivi live</span><span class="ps-pill"><i class="ps-dot"></i>En transit</span></div>
+            <div class="ps-ref">CRX-1039 &middot; &Eacute;picerie halal &middot; FCL 40'</div>
+            <svg viewBox="0 0 280 84" style="width:100%;margin-top:6px">
+              <path d="M18 60 C90 10, 200 10, 262 30" fill="none" stroke="var(--border-light)" stroke-width="2"/>
+              <path d="M18 60 C90 10, 200 10, 262 30" fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="330" stroke-dashoffset="330">
+                <animate attributeName="stroke-dashoffset" from="330" to="0" dur="2.6s" begin="0.4s" fill="freeze"/>
+              </path>
+              <circle cx="18" cy="60" r="3.5" fill="var(--text)"/>
+              <circle cx="262" cy="30" r="3.5" fill="var(--gold)"/>
+              <circle r="4" fill="var(--red)">
+                <animateMotion dur="2.6s" begin="0.4s" fill="freeze" path="M18 60 C90 10, 200 10, 262 30"/>
+              </circle>
+              <text x="12" y="78" fill="var(--text-dim)" font-size="8" font-family="monospace">Yiwu</text>
+              <text x="218" y="22" fill="var(--text-dim)" font-size="8" font-family="monospace">Le Havre</text>
+            </svg>
+            <div class="ps-stepper"><i class="psn done"></i><i class="psl done"></i><i class="psn done"></i><i class="psl done"></i><i class="psn act"></i><i class="psl"></i><i class="psn"></i><i class="psl"></i><i class="psn"></i></div>
+            <div class="ps-meta"><div><b>ETA</b>7 j</div><div><b>QC</b><span style="color:var(--emerald)">&#10003;</span></div><div><b>Douane</b>DDP</div></div>
+          </div>
+          <div class="ps-mini"><div class="psm"><span>Commandes</span><b>3</b></div><div class="psm"><span>Livr&eacute;es</span><b>11</b></div><div class="psm"><span>Messages</span><b style="color:var(--gold)">2</b></div></div>
         </div>
       </div>
-      <p style="font-size:0.7rem; color:var(--text-mid); margin-top:var(--s3); letter-spacing:0.04em;">Inspection lot textile &mdash; Yiwu, mai 2026</p>
     </div>
   </div>
 </section>
@@ -1787,34 +1879,38 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 <section class="section" id="calculateur" style="background: var(--bg-warm);">
   <div class="w">
     <div class="section-tag rv-blur">&#9670; Simulateur</div>
-    <h2 class="section-title rv-blur rv-d1">Estimez vos &eacute;conomies <em>en 30 secondes</em></h2>
-    <p class="section-sub rv-blur rv-d2">Entrez votre volume et votre cat&eacute;gorie produit. On calcule combien vous &eacute;conomisez avec un agent terrain vs un import direct.</p>
-    <div class="calc-wrap rv-blur rv-d3">
-      <div class="calc-field">
-        <label>Cat&eacute;gorie de produit</label>
-        <select id="calcCategory">
-          <option value="textile">Textile &amp; mode</option>
-          <option value="cosmetique">Cosm&eacute;tique &amp; soins</option>
-          <option value="alimentaire">Alimentaire &amp; &eacute;picerie</option>
-          <option value="electronique">&Eacute;lectronique &amp; gadgets</option>
-          <option value="mobilier">Mobilier &amp; d&eacute;co</option>
-          <option value="packaging">Packaging &amp; emballage</option>
-          <option value="bijoux">Bijouterie &amp; accessoires</option>
-          <option value="autre">Autre</option>
-        </select>
-      </div>
-      <div class="calc-field">
-        <label>Volume annuel estim&eacute; (&euro;)</label>
-        <input type="number" id="calcVolume" placeholder="Ex : 15000" min="500" step="500">
-      </div>
-      <button class="calc-btn" onclick="runCalc()">Calculer mes &eacute;conomies &rarr;</button>
-      <div class="calc-result" id="calcResult">
-        <div class="calc-result-val" id="calcSaving">0 &euro;</div>
-        <div class="calc-result-sub" id="calcDetail">par an en &eacute;conomies estim&eacute;es avec CARAXES</div>
-        <a id="calcWhatsApp" href="https://wa.me/8613819652960" target="_blank" rel="noopener" style="display:inline-block;margin-top:var(--s4);color:var(--emerald);font-size:var(--text-sm);text-decoration:underline;text-underline-offset:3px;">Discutons-en sur WhatsApp &rarr;</a>
-        <div style="margin-top:var(--s4);">
-          <a href="javascript:void(0)" onclick="openForm('formComparatif')" class="btn-primary" style="font-size:var(--text-sm);">Obtenir un devis pr&eacute;cis &rarr;</a>
+    <h2 class="section-title rv-blur rv-d1">Combien vous <em>&eacute;conomisez&nbsp;?</em></h2>
+    <p class="section-sub rv-blur rv-d2">Bougez les curseurs. On compare un import en solo &agrave; un import pilot&eacute; par CARAXES &mdash; estimation en direct.</p>
+    <div class="calc2 rv-blur rv-d3">
+      <div class="calc2-controls">
+        <div class="calc2-field">
+          <label>Cat&eacute;gorie de produit</label>
+          <div class="calc2-chips" id="calc2Chips">
+            <button type="button" class="calc2-chip on" data-rate="0.32" data-label="Textile &amp; mode">Textile &amp; mode</button>
+            <button type="button" class="calc2-chip" data-rate="0.28" data-label="Cosm&eacute;tique &amp; soins">Cosm&eacute;tique</button>
+            <button type="button" class="calc2-chip" data-rate="0.22" data-label="Alimentaire &amp; &eacute;picerie">Alimentaire</button>
+            <button type="button" class="calc2-chip" data-rate="0.25" data-label="&Eacute;lectronique &amp; gadgets">&Eacute;lectronique</button>
+            <button type="button" class="calc2-chip" data-rate="0.30" data-label="Mobilier &amp; d&eacute;co">Mobilier</button>
+            <button type="button" class="calc2-chip" data-rate="0.35" data-label="Packaging &amp; emballage">Packaging</button>
+            <button type="button" class="calc2-chip" data-rate="0.27" data-label="Bijouterie &amp; accessoires">Bijouterie</button>
+          </div>
         </div>
+        <div class="calc2-field">
+          <label>Volume annuel d&rsquo;achats <b id="calc2VolOut">15&thinsp;000&nbsp;&euro;</b></label>
+          <input type="range" id="calc2Vol" min="2000" max="100000" step="1000" value="15000" aria-label="Volume annuel d'achats">
+          <div class="calc2-scale"><span>2&thinsp;000&nbsp;&euro;</span><span>100&thinsp;000&nbsp;&euro;</span></div>
+        </div>
+      </div>
+      <div class="calc2-result" id="calcResult">
+        <div class="calc2-rl">&Eacute;conomie estim&eacute;e / an</div>
+        <div class="calc2-big" id="calcSaving">0 &euro;</div>
+        <div class="calc2-cmp">
+          <div><span class="calc2-cl">Import solo</span><span class="calc2-cv solo" id="calc2Solo">0 &euro;</span></div>
+          <div><span class="calc2-cl">Via CARAXES</span><span class="calc2-cv crx" id="calc2Crx">0 &euro;</span></div>
+        </div>
+        <div class="calc2-detail" id="calcDetail">estimation indicative</div>
+        <a id="calcWhatsApp" href="https://wa.me/8613819652960" target="_blank" rel="noopener" class="calc2-wa">Discutons-en sur WhatsApp &rarr;</a>
+        <div style="margin-top:var(--s4);"><a href="javascript:void(0)" onclick="openForm('formComparatif')" class="btn-primary" style="font-size:var(--text-sm);">Obtenir un devis pr&eacute;cis &rarr;</a></div>
       </div>
     </div>
   </div>
@@ -1840,7 +1936,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
         </div>
       </div>
       <div class="testimonial">
-        <p class="testimonial-text">La vid&eacute;o de visite usine a chang&eacute; la donne. Pour la premi&egrave;re fois, on voyait exactement d&rsquo;o&ugrave; venaient nos produits. <a href="#showreel" style="color:var(--gold);text-decoration:underline;text-underline-offset:3px;font-size:0.85em;">Voir une inspection &rarr;</a></p>
+        <p class="testimonial-text">La vid&eacute;o de visite usine a chang&eacute; la donne. Pour la premi&egrave;re fois, on voyait exactement d&rsquo;o&ugrave; venaient nos produits. <a href="#showreel" style="color:var(--gold);text-decoration:underline;text-underline-offset:3px;font-size:0.85em;">Voir l&rsquo;espace client &rarr;</a></p>
         <div class="testimonial-author">
           <div class="testimonial-avatar"><span>S</span></div>
           <div>
@@ -2528,29 +2624,40 @@ document.getElementById('ctaForm').addEventListener('submit', function(e) {
   }
 });
 
-// ── Calculator ──
-function runCalc() {
-  var vol = parseFloat(document.getElementById('calcVolume').value) || 0;
-  if (vol < 500) { alert('Entrez un volume annuel minimum de 500€'); return; }
-  var cat = document.getElementById('calcCategory').value;
-  var rates = { textile: 0.32, cosmetique: 0.28, alimentaire: 0.22, electronique: 0.25, mobilier: 0.30, packaging: 0.35, bijoux: 0.27, autre: 0.25 };
-  var rate = rates[cat] || 0.25;
-  var saving = Math.round(vol * rate);
-  document.getElementById('calcSaving').textContent = saving.toLocaleString('fr-FR') + ' €';
-  var pct = Math.round(rate * 100);
-  document.getElementById('calcDetail').textContent = 'soit ' + pct + '% d’économies estimées par an avec CARAXES';
-  var waLink = document.getElementById('calcWhatsApp');
-  if (waLink) {
-    waLink.textContent = 'Discutons de mon projet (' + saving.toLocaleString('fr-FR') + '€ d\'économies) →';
-    var catLabels = { textile: 'Textile & mode', cosmetique: 'Cosmétique & soins', alimentaire: 'Alimentaire & épicerie', electronique: 'Électronique & gadgets', mobilier: 'Mobilier & déco', packaging: 'Packaging & emballage', bijoux: 'Bijouterie & accessoires', autre: 'Autre' };
-    var catLabel = catLabels[cat] || cat;
-    var waMsg = 'Bonjour CARAXES, j\'ai simulé un projet d\'importation ' + catLabel + ' pour un volume annuel de ' + vol.toLocaleString('fr-FR') + '€. L\'estimation indique ' + saving.toLocaleString('fr-FR') + '€ d\'économies par an. Je souhaite valider cela avec un agent — quelles sont les prochaines étapes ?';
-    waLink.href = 'https://wa.me/8613819652960?text=' + encodeURIComponent(waMsg);
+// Calculator (live recalc)
+(function(){
+  var rate=0.32, label='Textile & mode';
+  function fmt(n){return Math.round(n).toLocaleString('fr-FR')+' \u20ac';}
+  function recalc(){
+    var volEl=document.getElementById('calc2Vol'); if(!volEl) return;
+    var vol=parseFloat(volEl.value)||0;
+    var out=document.getElementById('calc2VolOut'); if(out) out.textContent=fmt(vol);
+    var saving=vol*rate, crx=vol-saving, pct=Math.round(rate*100);
+    var s=document.getElementById('calcSaving'); if(s) s.textContent=fmt(saving);
+    var so=document.getElementById('calc2Solo'); if(so) so.textContent=fmt(vol);
+    var cx=document.getElementById('calc2Crx'); if(cx) cx.textContent=fmt(crx);
+    var d=document.getElementById('calcDetail'); if(d) d.textContent='\u2248 '+pct+'% d\u2019\u00e9conomies \u00b7 estimation indicative';
+    var wa=document.getElementById('calcWhatsApp');
+    if(wa){
+      var msg='Bonjour CARAXES, j\u0027ai simul\u00e9 un projet d\u0027importation '+label+' pour un volume annuel de '+fmt(vol)+'. L\u0027estimation indique '+fmt(saving)+' d\u0027\u00e9conomies par an. Quelles sont les prochaines \u00e9tapes ?';
+      wa.href='https://wa.me/8613819652960?text='+encodeURIComponent(msg);
+    }
   }
-  var result = document.getElementById('calcResult');
-  result.classList.add('show');
-  result.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
+  function init(){
+    var chips=document.querySelectorAll('#calc2Chips .calc2-chip');
+    chips.forEach(function(c){c.addEventListener('click',function(){
+      chips.forEach(function(x){x.classList.remove('on')});
+      c.classList.add('on');
+      rate=parseFloat(c.getAttribute('data-rate'))||0.25;
+      label=c.getAttribute('data-label')||'';
+      recalc();
+    });});
+    var v=document.getElementById('calc2Vol');
+    if(v) v.addEventListener('input',recalc);
+    recalc();
+  }
+  if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded',init);
+})();
 
 // ── Contextual form modals ──
 function openForm(id) {
@@ -2687,7 +2794,6 @@ function resetFormAfterSuccess(btnEl) {
 }
 
 // ── Expose all functions to window for Squarespace scope ──
-window.runCalc = runCalc;
 window.openForm = openForm;
 window.closeForm = closeForm;
 window.submitForm = submitForm;
