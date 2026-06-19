@@ -84,6 +84,13 @@ export default function ExpeditionTab() {
     })
   }
 
+  // Route active (envoi en transit pour la carte couloir logistique)
+  const activeShip = shipments.find(s => normalizeStatus(s.status) === 'transit')
+    || shipments.find(s => normalizeStatus(s.status) !== 'livré')
+    || null
+  const activeIdx = activeShip ? Math.max(0, SHIP_STATUSES.indexOf(normalizeStatus(activeShip.status))) : 3
+  const SHIP_STEP_LABELS = ['Production', 'QC', 'Douanes', 'Transit', 'Livré']
+
   return (
     <>
             <div className="admin-scroll" style={{ flex: 1, overflowY: 'auto', padding: sp[4] }}>
@@ -125,6 +132,44 @@ export default function ExpeditionTab() {
                 <div style={{ padding: sp[3], background: c.bgElevated, border: `1px solid ${c.border}`, borderRadius: '3px' }}>
                   <p style={{ fontSize: size.xs, color: c.textTertiary, fontFamily: f.mono, marginBottom: sp[1] }}>EN ATTENTE</p>
                   <p style={{ fontSize: size.lg, fontWeight: 700, color: c.red }}>{shipments.filter(s => s.status === 'production' || s.status === 'QC' || s.status === 'douanes').length}</p>
+                </div>
+              </div>
+
+              {/* Couloir logistique — carte route animée */}
+              <div style={{ background: c.bgElevated, border: `1px solid ${c.borderGold}`, borderRadius: '3px', padding: sp[4], marginBottom: sp[4], position: 'relative', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
+                  <p style={{ fontSize: size.xs, color: c.gold, fontFamily: f.mono, letterSpacing: '0.12em', textTransform: 'uppercase' }}>◆ Couloir logistique</p>
+                  {activeShip && (
+                    <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textSecondary }}>
+                      {activeShip.tracking_number ? activeShip.tracking_number + ' · ' : ''}{(activeShip.origin || 'Yiwu')} → {(activeShip.destination || 'Le Havre')}
+                    </span>
+                  )}
+                </div>
+                <svg viewBox="0 0 900 120" style={{ width: '100%', height: 'auto', display: 'block' }}>
+                  <path d="M40 90 C260 20, 640 20, 860 50" fill="none" stroke={c.borderLight} strokeWidth="2" />
+                  <path d="M40 90 C260 20, 640 20, 860 50" fill="none" stroke={c.gold} strokeWidth="2" strokeDasharray="1000" strokeDashoffset="1000">
+                    <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="2.8s" begin="0.3s" fill="freeze" />
+                  </path>
+                  <circle cx="40" cy="90" r="5" fill={c.text} />
+                  <circle cx="860" cy="50" r="5" fill={c.gold} />
+                  <circle r="6" fill={c.red}>
+                    <animateMotion dur="2.8s" begin="0.3s" fill="freeze" path="M40 90 C260 20, 640 20, 860 50" />
+                  </circle>
+                  <text x="34" y="112" fill={c.textTertiary} fontSize="11" fontFamily="monospace">{activeShip?.origin || 'Yiwu / Shenzhen'}</text>
+                  <text x="760" y="40" fill={c.textTertiary} fontSize="11" fontFamily="monospace">{activeShip?.destination || 'Le Havre'}</text>
+                </svg>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: sp[2] }}>
+                  {SHIP_STEP_LABELS.map((lab, i) => (
+                    <div key={lab} style={{ display: 'flex', alignItems: 'center', flex: i === SHIP_STEP_LABELS.length - 1 ? '0 0 auto' : 1 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <div style={{ width: 12, height: 12, transform: 'rotate(45deg)', background: i <= activeIdx ? c.gold : 'transparent', border: `1.5px solid ${i <= activeIdx ? c.gold : c.border}`, boxShadow: i === activeIdx ? `0 0 0 4px ${c.goldGlow}` : 'none', transition: `all 0.4s ${ease.out}` }} />
+                        <span style={{ fontFamily: f.mono, fontSize: '9px', letterSpacing: '0.04em', textTransform: 'uppercase', color: i <= activeIdx ? c.gold : c.textTertiary, fontWeight: i === activeIdx ? 700 : 400 }}>{lab}</span>
+                      </div>
+                      {i < SHIP_STEP_LABELS.length - 1 && (
+                        <div style={{ flex: 1, height: 2, margin: '0 4px', marginBottom: '18px', background: i < activeIdx ? c.gold : c.border }} />
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
