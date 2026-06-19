@@ -1663,6 +1663,41 @@ export default function Dashboard({ user, profile, onSignOut }) {
                   accentColor={c.teal}
                 />
               </AnimCard>
+              <AnimCard delay={40}>
+                {(() => {
+                  const activeShip = shipments.find(x => shipStatusKey(x.status) === 'transit') || shipments.find(x => shipStatusKey(x.status) !== 'livré') || null
+                  const shipIdx = activeShip ? Math.max(0, SHIP_STATUSES.indexOf(shipStatusKey(activeShip.status))) : 3
+                  const STEP_LABELS = ['Production', 'QC', 'Douanes', 'Transit', 'Livré']
+                  return (
+                    <GlassCard goldTop={false} style={{ borderTop: `2px solid ${c.gold}`, marginBottom: sp[3] }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp[2] }}>
+                        <span style={{ fontFamily: f.mono, fontSize: '10px', color: c.gold, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600 }}>◆ Couloir logistique</span>
+                        {activeShip && <span style={{ fontFamily: f.mono, fontSize: size.xs, color: c.textSecondary }}>{(activeShip.origin || 'Yiwu')} → {(activeShip.destination || 'Le Havre')}</span>}
+                      </div>
+                      <svg viewBox="0 0 860 120" style={{ width: '100%', height: 'auto', display: 'block' }}>
+                        <path d="M30 90 C250 20, 620 20, 830 50" fill="none" stroke={c.borderLight} strokeWidth="2" />
+                        <path d="M30 90 C250 20, 620 20, 830 50" fill="none" stroke={c.gold} strokeWidth="2" strokeDasharray="1000" strokeDashoffset="1000"><animate attributeName="stroke-dashoffset" from="1000" to="0" dur="2.6s" begin="0.3s" fill="freeze" /></path>
+                        <circle cx="30" cy="90" r="5" fill={c.text} />
+                        <circle cx="830" cy="50" r="5" fill={c.gold} />
+                        <circle r="6" fill={c.red}><animateMotion dur="2.6s" begin="0.3s" fill="freeze" path="M30 90 C250 20, 620 20, 830 50" /></circle>
+                        <text x="24" y="112" fill={c.textTertiary} fontSize="11" fontFamily="monospace">{activeShip?.origin || 'Yiwu / Shenzhen'}</text>
+                        <text x="730" y="40" fill={c.textTertiary} fontSize="11" fontFamily="monospace">{activeShip?.destination || 'Le Havre'}</text>
+                      </svg>
+                      <div style={{ display: 'flex', alignItems: 'center', marginTop: sp[2] }}>
+                        {STEP_LABELS.map((lab, i) => (
+                          <div key={lab} style={{ display: 'flex', alignItems: 'center', flex: i === STEP_LABELS.length - 1 ? '0 0 auto' : 1 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                              <div style={{ width: 12, height: 12, transform: 'rotate(45deg)', background: i <= shipIdx ? c.gold : 'transparent', border: `1.5px solid ${i <= shipIdx ? c.gold : c.border}`, boxShadow: i === shipIdx ? `0 0 0 4px ${c.goldGlow}` : 'none', transition: `all 0.4s ${ease.out}` }} />
+                              <span style={{ fontFamily: f.mono, fontSize: '9px', letterSpacing: '0.04em', textTransform: 'uppercase', color: i <= shipIdx ? c.gold : c.textTertiary, fontWeight: i === shipIdx ? 700 : 400 }}>{lab}</span>
+                            </div>
+                            {i < STEP_LABELS.length - 1 && <div style={{ flex: 1, height: 2, margin: '0 4px', marginBottom: '18px', background: i < shipIdx ? c.gold : c.border }} />}
+                          </div>
+                        ))}
+                      </div>
+                    </GlassCard>
+                  )
+                })()}
+              </AnimCard>
               {shipments.length === 0 ? (
                 <DragonEmptyState text="Aucune expédition" sub="Vos envois apparaîtront ici" />
               ) : (
