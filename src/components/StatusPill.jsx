@@ -1,8 +1,10 @@
-import { c, f, size as sz, ease, STATUSES } from '../lib/theme'
+import { c, f, size as sz, ease, STATUSES, isDelivered, statusKey } from '../lib/theme'
 
 export default function StatusPill({ status, size = 'sm' }) {
   const s = (typeof status === 'number' ? STATUSES[status] : STATUSES.find(x => x.key === status)) || STATUSES[0]
   const isSm = size === 'sm'
+  const k = statusKey(status)
+  const isActive = !isDelivered(status) && k !== 'pending'
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -21,6 +23,8 @@ export default function StatusPill({ status, size = 'sm' }) {
         background: s.color,
         flexShrink: 0,
         transform: 'rotate(45deg)',
+        boxShadow: isActive ? `0 0 6px ${s.color}99` : 'none',
+        animation: isActive ? 'cxDotPulse 1.8s ease-in-out infinite' : 'none',
       }} />
       {s.label}
     </span>
