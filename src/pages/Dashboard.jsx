@@ -1258,6 +1258,16 @@ export default function Dashboard({ user, profile, onSignOut }) {
                       <StatusPill status={selectedOrder.status} />
                     </div>
 
+                    {/* Timeline d'avancement */}
+                    <div style={{ marginBottom: sp[3] }}>
+                      <div style={{ fontFamily: f.mono, fontSize: '10px', color: c.textTertiary, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: sp[1] }}>Avancement</div>
+                      <div style={{ overflowX: 'auto', paddingBottom: '26px' }}>
+                        <div style={{ minWidth: 380 }}>
+                          <PipelineStepper currentStatus={selectedOrder.status} />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* PDF Download */}
                     <button
                       onClick={async () => {
