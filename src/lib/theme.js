@@ -1,71 +1,71 @@
-// ─── CARAXES Design System v8 — Cinematic Noir · Art Deco Premium ───
+// ─── CARAXES Design System v9 — Ember Editorial · Refonte 2026 ───
 // Direction: Warm dark luxury × editorial type × selective gold richness.
 // Depth through subtle shadows. Cinematic through restrained gradients.
 
 export const c = {
   // Backgrounds — warm noir with perceptible layering
-  bg:         '#0c0b09',
-  bgWarm:     '#121110',
-  bgSurface:  '#1a1816',
-  bgElevated: '#221f1c',
-  bgHover:    '#2a2724',
+  bg:         '#0a0806',
+  bgWarm:     '#100c07',
+  bgSurface:  '#15100a',
+  bgElevated: '#1c160e',
+  bgHover:    '#221b12',
   bgOverlay:  'rgba(6, 5, 4, 0.92)',
   bgGlass:    'rgba(18, 17, 14, 0.75)',
-  bgCard:     '#161413',
-  bgInput:    '#100f0d',
+  bgCard:     '#141009',
+  bgInput:    '#0e0a06',
 
   // Brand — Dragon Red
-  red:        '#c43a2f',
-  redDeep:    '#8b2920',
-  redSoft:    'rgba(196, 58, 47, 0.10)',
-  redGlow:    'rgba(196, 58, 47, 0.15)',
-  redMuted:   '#6b3530',
-  redVivid:   '#d94535',
+  red:        '#e04a3d',
+  redDeep:    '#a8362b',
+  redSoft:    'rgba(224, 74, 61, 0.10)',
+  redGlow:    'rgba(224, 74, 61, 0.16)',
+  redMuted:   '#7a3c34',
+  redVivid:   '#ef5b4e',
 
   // Brand — Art Deco Gold
-  gold:       '#c4a35a',
-  goldDim:    '#9a7e45',
-  goldSoft:   'rgba(196, 163, 90, 0.10)',
-  goldGlow:   'rgba(196, 163, 90, 0.15)',
-  goldMuted:  '#6e5c38',
-  goldBright: '#d4b46a',
-  goldLine:   'rgba(196, 163, 90, 0.18)',
+  gold:       '#d8ae5c',
+  goldDim:    '#9a8049',
+  goldSoft:   'rgba(216, 174, 92, 0.10)',
+  goldGlow:   'rgba(216, 174, 92, 0.16)',
+  goldMuted:  '#7a663d',
+  goldBright: '#f1d99c',
+  goldLine:   'rgba(216, 174, 92, 0.20)',
 
   // Semantic — pipeline
   blue:       '#5a8ac4',
   blueSoft:   'rgba(90, 138, 196, 0.10)',
-  purple:     '#8a6ac4',
-  purpleSoft: 'rgba(138, 106, 196, 0.10)',
-  amber:      '#c4a35a',
-  amberSoft:  'rgba(196, 163, 90, 0.10)',
-  teal:       '#5aaa8a',
-  tealSoft:   'rgba(90, 170, 138, 0.10)',
-  green:      '#5aaa6a',
-  greenSoft:  'rgba(90, 170, 106, 0.10)',
+  purple:     '#b3a3e6',
+  purpleSoft: 'rgba(179, 163, 230, 0.12)',
+  amber:      '#d8ae5c',
+  amberSoft:  'rgba(216, 174, 92, 0.10)',
+  teal:       '#56bcc4',
+  tealSoft:   'rgba(86, 188, 196, 0.12)',
+  green:      '#5fc47e',
+  greenSoft:  'rgba(95, 196, 126, 0.12)',
 
   // Text — warm cream with better contrast range
-  text:          '#f5f0e8',
-  textSecondary: '#998f82',
-  textTertiary:  '#80796f',
-  textGhost:     '#5a554e',
+  text:          '#f2ead9',
+  textSecondary: '#aa9d88',
+  textTertiary:  '#8a7f70',
+  textGhost:     '#6f6554',
 
   // Borders — warm with visible gold option
-  border:       '#2e2a26',
-  borderSubtle: '#221f1c',
-  borderFocus:  '#c43a2f',
-  borderGold:   'rgba(196, 163, 90, 0.22)',
-  borderLight:  '#3a3632',
-  borderAccent: 'rgba(196, 163, 90, 0.15)',
+  border:       '#292117',
+  borderSubtle: '#1c160e',
+  borderFocus:  '#e04a3d',
+  borderGold:   'rgba(216, 174, 92, 0.24)',
+  borderLight:  '#3d3122',
+  borderAccent: 'rgba(216, 174, 92, 0.16)',
 
   // Utility
-  white:     '#f5f0e8',
-  black:     '#0c0b09',
+  white:     '#f2ead9',
+  black:     '#0a0806',
 }
 
 export const f = {
-  display: "'Playfair Display', 'Instrument Serif', Georgia, serif",
-  body:    "'DM Sans', 'Plus Jakarta Sans', 'Helvetica Neue', sans-serif",
-  mono:    "'Geist Mono', 'JetBrains Mono', 'SF Mono', monospace",
+  display: "'Fraunces', 'Playfair Display', Georgia, serif",
+  body:    "'Inter', 'DM Sans', system-ui, sans-serif",
+  mono:    "'JetBrains Mono', 'Geist Mono', 'SF Mono', monospace",
 }
 
 export const size = {
