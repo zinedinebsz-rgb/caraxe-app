@@ -22,7 +22,7 @@
 <meta name="twitter:title" content="CARAXES &mdash; Agent de Sourcing Chine">
 <meta name="twitter:description" content="Sourcing direct depuis la Chine. Fournisseurs v&eacute;rifi&eacute;s, n&eacute;gociation terrain, visites film&eacute;es.">
 <meta name="twitter:image" content="https://app.caraxes.fr/og-image.jpg">
-<meta name="theme-color" content="#1a1612">
+<meta name="theme-color" content="#0a0806">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://caraxes.fr">
 <link rel="alternate" hreflang="fr" href="https://caraxes.fr">
@@ -31,7 +31,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='22' height='22' x='5' y='5' rx='2' fill='%23c43a2f' transform='rotate(45 16 16)'/%3E%3Ctext x='16' y='21' text-anchor='middle' fill='white' font-family='Georgia,serif' font-weight='900' font-size='14'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
    CARAXES GATE — Cinematic Dragon · Luminous Noir
@@ -41,35 +41,35 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg:            oklch(14% 0.008 50);
-  --bg-warm:       oklch(16% 0.009 50);
-  --surface:       oklch(20% 0.012 50);
-  --surface-hover: oklch(24% 0.014 50);
-  --border:        oklch(30% 0.012 50 / 0.5);
-  --border-subtle: oklch(27% 0.008 50 / 0.4);
-  --border-glow:   oklch(32% 0.015 55 / 0.5);
+  --bg:            #0a0806;
+  --bg-warm:       #100c07;
+  --surface:       #15100a;
+  --surface-hover: #221b12;
+  --border:        rgba(61, 49, 34, 0.55);
+  --border-subtle: rgba(41, 33, 23, 0.6);
+  --border-glow:   rgba(216, 174, 92, 0.4);
 
-  --red:           oklch(55% 0.22 25);
-  --red-deep:      oklch(42% 0.20 25);
-  --red-hover:     oklch(60% 0.23 25);
-  --red-glow:      oklch(55% 0.22 25 / 0.10);
+  --red:           #e04a3d;
+  --red-deep:      #a8362b;
+  --red-hover:     #ef5b4e;
+  --red-glow:      rgba(224, 74, 61, 0.12);
 
-  --gold:          oklch(75% 0.12 85);
-  --gold-dim:      oklch(60% 0.09 85);
-  --gold-glow:     oklch(75% 0.12 85 / 0.06);
-  --gold-line:     oklch(75% 0.12 85 / 0.15);
+  --gold:          #d8ae5c;
+  --gold-dim:      #9a8049;
+  --gold-glow:     rgba(216, 174, 92, 0.08);
+  --gold-line:     rgba(216, 174, 92, 0.2);
 
-  --emerald:       oklch(72% 0.14 155);
-  --emerald-dim:   oklch(55% 0.10 155);
-  --emerald-glow:  oklch(72% 0.14 155 / 0.06);
-  --emerald-line:  oklch(72% 0.14 155 / 0.12);
+  --emerald:       #5fc47e;
+  --emerald-dim:   #3f8f59;
+  --emerald-glow:  rgba(95, 196, 126, 0.08);
+  --emerald-line:  rgba(95, 196, 126, 0.14);
 
-  --text:          oklch(93% 0.008 60);
-  --text-mid:      oklch(76% 0.012 55);
-  --text-dim:      oklch(70% 0.012 50);
+  --text:          #f2ead9;
+  --text-mid:      #aa9d88;
+  --text-dim:      #8a7f70;
 
-  --serif:  'Playfair Display', Georgia, serif;
-  --sans:   'DM Sans', system-ui, sans-serif;
+  --serif:  'Fraunces', 'Playfair Display', Georgia, serif;
+  --sans:   'Inter', 'DM Sans', system-ui, sans-serif;
   --mono:   'JetBrains Mono', monospace;
 
   --text-xs:   clamp(0.6875rem, 0.64rem + 0.22vw, 0.8125rem);
@@ -172,12 +172,12 @@ h3 { font-size: var(--text-xl); }
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   padding: var(--s4) 0;
-  background: oklch(14% 0.008 50 / 0.8);
+  background: rgba(10, 8, 6, 0.8);
   backdrop-filter: blur(16px) saturate(1.2);
   border-bottom: 1px solid var(--border-subtle);
   transition: padding 0.5s var(--ease), background 0.5s;
 }
-.nav.scrolled { padding: var(--s2) 0; background: oklch(14% 0.008 50 / 0.95); }
+.nav.scrolled { padding: var(--s2) 0; background: rgba(10, 8, 6, 0.95); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; }
 
 .nav-logo { display: flex; align-items: center; gap: var(--s3); text-decoration: none; }
@@ -401,10 +401,10 @@ abbr[title] {
 abbr[title]:hover::after, abbr[title]:focus::after {
   content: attr(title);
   position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-  background: oklch(15% 0.01 50); color: oklch(90% 0.01 70);
+  background: #15100a; color: #e7decd;
   font-size: 0.7rem; font-family: var(--sans); font-style: normal;
   white-space: nowrap; padding: 6px 12px;
-  border: 1px solid oklch(25% 0.01 50);
+  border: 1px solid #221b12;
   pointer-events: none; z-index: 99;
   animation: fadeIn 0.2s ease;
 }
@@ -929,7 +929,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   font-family: var(--sans);
   font-size: var(--text-sm);
   font-weight: 700;
-  color: oklch(45% 0.008 50);
+  color: #6f6554;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: color 0.4s, transform 0.3s var(--ease);
@@ -1216,7 +1216,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
    ═══════════════════ */
 .form-overlay {
   position: fixed; inset: 0; z-index: 9999;
-  background: oklch(5% 0.005 50 / 0.85);
+  background: rgba(5, 4, 3, 0.85);
   backdrop-filter: blur(8px);
   display: none; align-items: center; justify-content: center;
   padding: var(--s4);
@@ -1265,7 +1265,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 .form-modal select,
 .form-modal textarea {
   width: 100%; padding: 10px 14px;
-  background: oklch(11% 0.004 50);
+  background: #0a0806;
   border: 1px solid var(--border);
   color: var(--text); font-family: var(--sans);
   font-size: var(--text-sm);
@@ -1279,7 +1279,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 .form-modal input::placeholder,
 .form-modal textarea::placeholder { color: var(--text-dim); }
 .form-modal select { appearance: none; cursor: pointer; }
-.form-modal select option { background: oklch(11% 0.004 50); color: var(--text); }
+.form-modal select option { background: #0a0806; color: var(--text); }
 .form-modal textarea { resize: vertical; min-height: 60px; }
 .form-modal-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4);
@@ -1294,7 +1294,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   transition: background 0.3s, box-shadow 0.3s;
 }
 .form-modal-submit--gold {
-  background: var(--gold); color: oklch(10% 0.01 50);
+  background: var(--gold); color: #080604;
   box-shadow: 0 0 20px oklch(82% 0.12 85 / 0.2);
 }
 .form-modal-submit--gold:hover { box-shadow: 0 0 30px oklch(82% 0.12 85 / 0.35); }
@@ -1304,7 +1304,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 }
 .form-modal-submit--red:hover { box-shadow: 0 0 30px oklch(55% 0.22 25 / 0.35); }
 .form-modal-submit--emerald {
-  background: var(--emerald); color: oklch(10% 0.01 50);
+  background: var(--emerald); color: #080604;
   box-shadow: 0 0 20px oklch(70% 0.14 160 / 0.2);
 }
 .form-modal-submit--emerald:hover { box-shadow: 0 0 30px oklch(70% 0.14 160 / 0.35); }
@@ -1406,7 +1406,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
   position: fixed; bottom: 6rem; right: 1.5rem; z-index: 150;
   width: 44px; height: 44px;
   display: flex; align-items: center; justify-content: center;
-  background: oklch(17% 0.012 50 / 0.9);
+  background: rgba(28, 22, 14, 0.9);
   border: 1px solid var(--gold-line);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
