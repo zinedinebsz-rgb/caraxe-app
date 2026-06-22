@@ -1526,6 +1526,11 @@ abbr[title]:hover::after, abbr[title]:focus::after {
 #cx-track .cx-belt{animation:cxbelt 3.4s linear infinite}
 @keyframes cxbelt{from{transform:translateX(0)}to{transform:translateX(150px)}}
 @media(max-width:820px){#cx-track .cx-mapcard{grid-template-columns:1fr}#cx-track .cx-feed{border-left:none;border-top:1px solid var(--border)}}
+
+/* CTA collant mobile + ajustements */
+.cx-sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;padding:10px 14px;background:rgba(10,8,6,.93);backdrop-filter:blur(10px);border-top:1px solid var(--border)}
+.cx-sticky a{display:block;text-align:center;background:var(--red);color:#fff;font-weight:600;padding:13px;border-radius:10px;font-size:15px;text-decoration:none;font-family:var(--sans)}
+@media(max-width:760px){.cx-sticky{display:block}body{padding-bottom:72px}}
 </style>
 <script type="application/ld+json">
 {
@@ -1728,7 +1733,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     <div class="trust-items">
       <div class="trust-item">
         <div class="trust-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div><span class="trust-val">500+</span><span class="trust-label">Fournisseurs audit&eacute;s</span></div>
+        <div><span class="trust-val">500+</span><span class="trust-label">Fournisseurs v&eacute;rifi&eacute;s</span></div>
       </div>
       <div class="trust-item">
         <div class="trust-icon"><svg viewBox="0 0 24 24"><path d="M15 10l-4 4-2-2"/><circle cx="12" cy="12" r="10"/></svg></div>
@@ -1745,7 +1750,7 @@ abbr[title]:hover::after, abbr[title]:focus::after {
     </div>
     <!-- Partner logistics logos -->
     <div style="display:flex;justify-content:center;align-items:center;gap:clamp(1.5rem,4vw,3rem);margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--border-subtle);flex-wrap:wrap;">
-      <span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);letter-spacing:0.12em;text-transform:uppercase;">Partenaires&nbsp;:</span>
+      <span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);letter-spacing:0.12em;text-transform:uppercase;">Transporteurs &amp; contr&ocirc;le&nbsp;:</span>
       <span style="font-family:var(--sans);font-size:var(--text-sm);font-weight:600;color:var(--text-dim);letter-spacing:0.04em;opacity:0.6;">CMA&nbsp;CGM</span>
       <span style="font-family:var(--sans);font-size:var(--text-sm);font-weight:600;color:var(--text-dim);letter-spacing:0.04em;opacity:0.6;">COSCO</span>
       <span style="font-family:var(--sans);font-size:var(--text-sm);font-weight:600;color:var(--text-dim);letter-spacing:0.04em;opacity:0.6;">DHL</span>
@@ -2935,6 +2940,23 @@ window.resetFormAfterSuccess = resetFormAfterSuccess;
   var feed=document.getElementById('cxFeed');if(!feed)return;var k=0;function p(n){return n<10?'0'+n:n}
   function add(){var e=EV[k%EV.length];k++;var d=new Date();var t=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());var el=document.createElement('div');el.className='cx-fitem';el.innerHTML='<span class="d" style="background:'+e[0]+'"></span><div><div class="x"><span class="r">'+e[1]+'</span> \u00b7 '+e[2]+'</div><div class="t">'+t+'</div></div>';feed.prepend(el);while(feed.children.length>5)feed.removeChild(feed.lastChild);}
   for(var i=0;i<5;i++)add();setInterval(add,2600);
+})();
+</script>
+
+<div class="cx-sticky"><a href="javascript:void(0)" onclick="openForm('formComparatif');if(typeof gtag==='function')gtag('event','cta_click',{location:'sticky_mobile'})">Recevoir mon comparatif gratuit &rarr;</a></div>
+<script>
+(function(){
+  var shown=false;
+  document.addEventListener('mouseout',function(e){if(shown)return;if(!e.relatedTarget&&e.clientY<=0){shown=true;if(typeof openForm==='function'){openForm('formComparatif');if(typeof gtag==='function')gtag('event','exit_intent_open',{});}}});
+  var marks={25:0,50:0,75:0,100:0};
+  window.addEventListener('scroll',function(){var h=document.documentElement;var d=(h.scrollHeight-h.clientHeight);if(d<=0)return;var sc=h.scrollTop/d*100;[25,50,75,100].forEach(function(m){if(sc>=m&&!marks[m]){marks[m]=1;if(typeof gtag==='function')gtag('event','scroll_depth',{percent:m});}});},{passive:true});
+  var st;function simEv(){clearTimeout(st);st=setTimeout(function(){var v=document.getElementById('calc2Vol');var on=document.querySelector('#calc2Chips .calc2-chip.on');if(typeof gtag==='function')gtag('event','simulator_use',{volume:v?+v.value:0,categorie:on?on.getAttribute('data-label'):''});},700);}
+  var sl=document.getElementById('calc2Vol');if(sl)sl.addEventListener('input',simEv);
+  document.querySelectorAll('#calc2Chips .calc2-chip').forEach(function(c){c.addEventListener('click',simEv);});
+  var track=document.getElementById('cx-track');
+  if(track&&'IntersectionObserver'in window){var svg=track.querySelector('.cx-mapbox svg');var seen=false;
+    new IntersectionObserver(function(es){es.forEach(function(en){if(svg){try{en.isIntersecting?svg.unpauseAnimations():svg.pauseAnimations();}catch(_){}}if(en.isIntersecting&&!seen){seen=true;if(typeof gtag==='function')gtag('event','view_tracking_map',{});}});},{threshold:.15}).observe(track);
+  }
 })();
 </script>
 </body>

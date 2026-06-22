@@ -1,22 +1,4 @@
-# CARAXES — robots.txt
 User-agent: *
 Allow: /
-Allow: /blog/
-Allow: /blog-import-chine-france.html
-Allow: /blog-sourcing-halal.html
-Allow: /blog-ecommerce-fournisseur-chine.html
-Allow: /landing.html
-Allow: /particuliers.html
-Allow: /commercants.html
 
-# Block internal app routes from crawlers
-Disallow: /admin
-Disallow: /settings
-Disallow: /onboarding
-Disallow: /reset-password
-
-# Sitemaps
-Sitemap: https://app.caraxes.fr/sitemap.xml
-
-# Crawl-delay
-Crawl-delay: 2
+Sitemap: https://caraxes.fr/sitemap.xml
