@@ -55,6 +55,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
   /* ── Main tabs definition ── */
   const mainTabs = [
     { key: 'overview', label: t('admin.overview') || "Vue d'ensemble", icon: icons.trending },
+    { key: 'todo', label: 'À traiter', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', color: c.red },
     { key: 'commandes', label: t('nav.orders'), icon: icons.file },
     { key: 'catalogue', label: t('admin.catalogueSuppliers') || 'Catalogue & Fournisseurs', icon: icons.doc },
     { key: 'expedition', label: t('nav.shipping'), icon: icons.send, color: c.teal },
@@ -72,7 +73,7 @@ export default function AdminLayout({ children, commandesSidebar }) {
 
   /* ── Sidebar grouped sections ── */
   const sidebarGroups = [
-    { label: null, items: ['overview'] },
+    { label: null, items: ['overview', 'todo'] },
     { label: 'OPÉRATIONS', items: ['commandes', 'expedition', 'stock', 'vehicules'] },
     { label: 'COMMERCE', items: ['catalogue', 'boutiques', 'services'] },
     { label: 'CRM', items: ['clients', 'pipeline', 'orders_pipeline'] },
