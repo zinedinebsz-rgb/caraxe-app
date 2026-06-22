@@ -27,6 +27,7 @@ const OrdersPipelineTab = lazy(() => import('./admin/PipelineTab').then(m => ({ 
 const ClientsTab = lazy(() => import('./admin/ClientsTab'))
 const TeamChatTab = lazy(() => import('./admin/TeamChatTab'))
 const AuditLogTab = lazy(() => import('./admin/AuditLogTab'))
+const TodoTab = lazy(() => import('./admin/TodoTab'))
 
 // Minimal loading fallback
 const TabLoader = () => (
@@ -48,6 +49,7 @@ function AdminContent() {
       commandesSidebar={mainTab === 'commandes' ? <Suspense fallback={null}><CommandesSidebarLazy selectedId={selectedOrderId} setSelectedId={setSelectedOrderId} setMobileShowDetail={setMobileShowDetail} mobileShowDetail={mobileShowDetail} /></Suspense> : null}
     >
       {mainTab === 'overview' && <ErrorBoundary name="Overview"><OverviewTab /></ErrorBoundary>}
+        {mainTab === 'todo' && <ErrorBoundary name="ATraiter"><TodoTab /></ErrorBoundary>}
       <Suspense fallback={<TabLoader />}>
         {mainTab === 'commandes' && <ErrorBoundary name="Commandes"><CommandesTab selectedId={selectedOrderId} setMobileShowDetail={setMobileShowDetail} /></ErrorBoundary>}
         {mainTab === 'catalogue' && <ErrorBoundary name="Catalogue"><CatalogueTab /></ErrorBoundary>}
