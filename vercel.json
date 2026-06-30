@@ -1,26 +1,66 @@
 {
   "redirects": [
     {
+      "source": "/landing-v2.html",
+      "destination": "/landing.html",
+      "permanent": true
+    },
+    {
+      "source": "/landing-v10-backup.html",
+      "destination": "/landing.html",
+      "permanent": true
+    },
+    {
+      "source": "/landing-v11.html",
+      "destination": "/landing.html",
+      "permanent": true
+    },
+    {
+      "source": "/landing-monolith-backup.html",
+      "destination": "/landing.html",
+      "permanent": true
+    },
+    {
       "source": "/login",
-      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:www.)?caraxes.fr"
+        }
+      ],
       "destination": "https://app.caraxes.fr/login",
       "permanent": false
     },
     {
       "source": "/admin",
-      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:www.)?caraxes.fr"
+        }
+      ],
       "destination": "https://app.caraxes.fr/admin",
       "permanent": false
     },
     {
       "source": "/dashboard",
-      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:www.)?caraxes.fr"
+        }
+      ],
       "destination": "https://app.caraxes.fr/dashboard",
       "permanent": false
     },
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "(?:www.)?caraxes.fr" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:www.)?caraxes.fr"
+        }
+      ],
       "destination": "/landing.html",
       "permanent": false
     }
@@ -29,108 +69,273 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
-        { "key": "X-XSS-Protection", "value": "0" }
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "0"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.app.n8n.cloud; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self' https://*.supabase.co" }
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://*.app.n8n.cloud; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self' https://*.supabase.co"
+        }
       ]
     },
     {
       "source": "/landing.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     },
     {
       "source": "/landing-v10.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=60" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60"
+        }
+      ]
     },
     {
       "source": "/offre-formation-ecom.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     },
     {
       "source": "/offre-creation-boutique.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     },
     {
       "source": "/merci.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     },
     {
       "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/icons/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
     },
     {
       "source": "/og-image.jpg",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
     },
     {
       "source": "/manifest.webmanifest",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" },
-        { "key": "Content-Type", "value": "application/manifest+json" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
       ]
     },
     {
       "source": "/sitemap.xml",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" },
-        { "key": "Content-Type", "value": "application/xml" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/xml"
+        }
       ]
     },
     {
       "source": "/blog/(.*).html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
     },
     {
       "source": "/particuliers.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     },
     {
       "source": "/commercants.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     },
     {
       "source": "/export-vehicules.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
     }
   ],
   "rewrites": [
-    { "source": "/offre-formation-ecom.html", "destination": "/offre-formation-ecom.html" },
-    { "source": "/offre-creation-boutique.html", "destination": "/offre-creation-boutique.html" },
-    { "source": "/merci.html", "destination": "/merci.html" },
-    { "source": "/rendez-vous.html", "destination": "/rendez-vous.html" },
-    { "source": "/landing.html", "destination": "/landing.html" },
-    { "source": "/landing-v10.html", "destination": "/landing-v10.html" },
-    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/blog/:path*", "destination": "/blog/:path*" },
-    { "source": "/particuliers.html", "destination": "/particuliers.html" },
-    { "source": "/commercants.html", "destination": "/commercants.html" },
-    { "source": "/export-vehicules.html", "destination": "/export-vehicules.html" },
-    { "source": "/sourcing.html", "destination": "/sourcing.html" },
-    { "source": "/ecommerce.html", "destination": "/ecommerce.html" },
-    { "source": "/vehicules.html", "destination": "/vehicules.html" },
-    { "source": "/blog-import-chine-france.html", "destination": "/blog-import-chine-france.html" },
-    { "source": "/blog-sourcing-halal.html", "destination": "/blog-sourcing-halal.html" },
-    { "source": "/blog-ecommerce-fournisseur-chine.html", "destination": "/blog-ecommerce-fournisseur-chine.html" },
-    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
-    { "source": "/og-image.jpg", "destination": "/og-image.jpg" },
-    { "source": "/formation/:path*", "destination": "/formation/:path*" },
-    { "source": "/programme-formation-caraxes.pdf", "destination": "/programme-formation-caraxes.pdf" },
+    {
+      "source": "/offre-formation-ecom.html",
+      "destination": "/offre-formation-ecom.html"
+    },
+    {
+      "source": "/offre-creation-boutique.html",
+      "destination": "/offre-creation-boutique.html"
+    },
+    {
+      "source": "/merci.html",
+      "destination": "/merci.html"
+    },
+    {
+      "source": "/rendez-vous.html",
+      "destination": "/rendez-vous.html"
+    },
+    {
+      "source": "/landing.html",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/landing-v10.html",
+      "destination": "/landing-v10.html"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "/blog/:path*"
+    },
+    {
+      "source": "/particuliers.html",
+      "destination": "/particuliers.html"
+    },
+    {
+      "source": "/commercants.html",
+      "destination": "/commercants.html"
+    },
+    {
+      "source": "/export-vehicules.html",
+      "destination": "/export-vehicules.html"
+    },
+    {
+      "source": "/sourcing.html",
+      "destination": "/sourcing.html"
+    },
+    {
+      "source": "/ecommerce.html",
+      "destination": "/ecommerce.html"
+    },
+    {
+      "source": "/vehicules.html",
+      "destination": "/vehicules.html"
+    },
+    {
+      "source": "/blog-import-chine-france.html",
+      "destination": "/blog-import-chine-france.html"
+    },
+    {
+      "source": "/blog-sourcing-halal.html",
+      "destination": "/blog-sourcing-halal.html"
+    },
+    {
+      "source": "/blog-ecommerce-fournisseur-chine.html",
+      "destination": "/blog-ecommerce-fournisseur-chine.html"
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "destination": "/manifest.webmanifest"
+    },
+    {
+      "source": "/og-image.jpg",
+      "destination": "/og-image.jpg"
+    },
+    {
+      "source": "/formation/:path*",
+      "destination": "/formation/:path*"
+    },
+    {
+      "source": "/programme-formation-caraxes.pdf",
+      "destination": "/programme-formation-caraxes.pdf"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
