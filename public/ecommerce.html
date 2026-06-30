@@ -1747,7 +1747,6 @@ function submitForm(e, formType) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tdXF6emVkbHhpbG5icG5hbHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjI3NDIsImV4cCI6MjA5MDg5ODc0Mn0.HvrL1uQxHccBiOwHPj1LWi-o-l-J5N2Ga_beDy2TANs',
       'Prefer': 'return=minimal'
     },
     body: JSON.stringify({ name: data.name || data.nom, email: data.email, phone: data.phone || data.tel, product: data.product || data.produit, source: data.source, message: data.message || data.notes || '', data: data })

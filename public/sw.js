@@ -2,7 +2,7 @@
  * Minimal PWA: app-shell cache + navigation fallback + push notifications
  * Keeps it intentionally simple to avoid staleness issues on a SPA.
  */
-const CACHE_VERSION = 'caraxes-v2-2026-04-19';
+const CACHE_VERSION = 'caraxes-v3-2026-06-30';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
